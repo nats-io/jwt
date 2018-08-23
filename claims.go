@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
-// Struct representing a claim
+// Claims is a JWT claims
 type Claims struct {
 	Issuer    string                 `json:"iss,omitempty"`
 	Subject   string                 `json:"sub,omitempty"`
@@ -23,7 +23,7 @@ type Claims struct {
 	Nats      map[string]interface{} `json:"nats,omitempty"`
 }
 
-// Creates a Claims
+// NewClaims creates a Claims
 func NewClaims() *Claims {
 	c := Claims{}
 	c.Nats = make(map[string]interface{})
@@ -64,7 +64,7 @@ func (c *Claims) doEncode(header *Header, kp nkeys.KeyPair) (string, error) {
 	return fmt.Sprintf("%s.%s.%s", h, payload, eSig), nil
 }
 
-// Encodes a claim into a JWT token. The claim is signed with the
+// Encode encodes a claim into a JWT token. The claim is signed with the
 // provided nkey's private key
 func (c *Claims) Encode(kp nkeys.KeyPair) (string, error) {
 	return c.doEncode(&Header{TokenTypeJwt, AlgorithmNkey}, kp)
@@ -111,8 +111,8 @@ func (c *Claims) Verify(payload string, sig []byte) bool {
 	return true
 }
 
-// Validates that a claim is valid, that is, it is not
-// expired, and the token is not used before it is valid.
+// Valid validates a claim to make sure it is valid. Validity checks
+// include expiration and use before constraints.
 func (c *Claims) Valid() error {
 	now := time.Now().UTC().Unix()
 	if c.NotBefore > 0 && c.NotBefore > now {
@@ -125,10 +125,10 @@ func (c *Claims) Valid() error {
 	return nil
 }
 
-// Decodes a JWT token and returns the claims. If
-// the token header doesn't match the expected algorithm,
-// or the claim is not valid or verification fails
-// an error is returned
+// Decode takes a JWT string decodes it and validates it
+// and return the embedded Claims. If the token header
+// doesn't match the expected algorithm, or the claim is
+// not valid or verification fails an error is returned
 func Decode(token string) (*Claims, error) {
 	// must have 3 chunks
 	chunks := strings.Split(token, ".")

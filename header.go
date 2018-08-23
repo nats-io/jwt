@@ -6,13 +6,15 @@ import (
 	"fmt"
 )
 
-// The type of JWT token
+// TokenTypeJwt is the JWT token type supported JWT tokens
+// encoded and decoded by this library
 const TokenTypeJwt = "JWT"
 
-// The algorithm supported by JWT tokens encoded and decoded by this library
+// AlgorithmNkey is the algorithm supported by JWT tokens
+// encoded and decoded by this library
 const AlgorithmNkey = "NKEY"
 
-// A JWT Jose Header
+// Header is a JWT Jose Header
 type Header struct {
 	Type      string `json:"typ"`
 	Algorithm string `json:"alg"`
@@ -35,8 +37,8 @@ func parseHeaders(s string) (*Header, error) {
 	return &header, nil
 }
 
-// Returns nil if the Header is a JWT header, and the algorithm used
-// is the NKEY algorithm.
+// Valid validates the Header. It returns nil if the Header is
+// a JWT header, and the algorithm used is the NKEY algorithm.
 func (h *Header) Valid() error {
 	if TokenTypeJwt != h.Type {
 		return fmt.Errorf("not supported type %q", h.Type)
