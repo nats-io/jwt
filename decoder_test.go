@@ -256,5 +256,41 @@ func TestIssuedAtIsSet(t *testing.T) {
 	if claim.IssuedAt == 0 {
 		t.Fatalf("issued at is not set")
 	}
+}
 
+func TestSample(t *testing.T) {
+
+	// Need a private key to sign the claim
+	kp, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Fatal("unable to create account key", err)
+	}
+
+	claims := NewClaims()
+	// add a bunch of claims
+	claims.Nats["foo"] = "bar"
+
+	// serialize the claim to a JWT token
+	token, err := claims.Encode(kp)
+	if err != nil {
+		t.Fatal("error encoding token", err)
+	}
+
+	// on the receiving side, decode the token
+	c, err := Decode(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// if the token was decoded, it means that it
+	// validated and it wasn't tampered. the remaining and
+	// required test is to insure the issuer is trusted
+	pk, err := kp.PublicKey()
+	if err != nil {
+		t.Fatalf("unable to read public key: %v", err)
+	}
+
+	if c.Issuer != pk {
+		t.Fatalf("the public key is not trusted")
+	}
 }
