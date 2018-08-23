@@ -14,4 +14,6 @@ script:
 - go test -v
 - go test -v --race
 - go test -v -covermode=count -coverprofile=coverage.out
-- $HOME/gopath/bin/goveralls -coverprofile coverage.out -service travis-ci
+
+after_success:
+- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then $HOME/gopath/bin/goveralls -coverprofile coverage.out -service travis-ci; fi
