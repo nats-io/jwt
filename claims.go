@@ -2,23 +2,32 @@ package jwt
 
 import (
 	"encoding/base64"
-	"fmt"
 	"encoding/json"
-	"strings"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/nats-io/nkeys"
 )
 
+// Struct representing a claim
 type Claims struct {
-	Issuer    string            `json:"iss,omitempty"`
-	Subject   string            `json:"nbf,omitempty"`
-	Audience  string            `json:"aud,omitempty"`
-	Expires   int64             `json:"exp,omitempty"`
-	NotBefore int64             `json:"nbf,omitempty"`
-	ID        string            `json:"jti,omitempty"`
-	IssuedAt  int64             `json:"iat,omitempty"`
-	Nats      map[string]string `json:"nats,omitempty"`
+	Issuer    string                 `json:"iss,omitempty"`
+	Subject   string                 `json:"sub,omitempty"`
+	Audience  string                 `json:"aud,omitempty"`
+	Expires   int64                  `json:"exp,omitempty"`
+	NotBefore int64                  `json:"nbf,omitempty"`
+	ID        string                 `json:"jti,omitempty"`
+	IssuedAt  int64                  `json:"iat,omitempty"`
+	Nats      map[string]interface{} `json:"nats,omitempty"`
+}
+
+// Creates a Claims
+func NewClaims() *Claims {
+	c := Claims{}
+	c.Nats = make(map[string]interface{})
+	return &c
 }
 
 func encode(v interface{}) (string, error) {
@@ -29,8 +38,8 @@ func encode(v interface{}) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(j), nil
 }
 
-func (c *Claims) Encode(kp nkeys.KeyPair) (string, error) {
-	header, err := encode(Header{"jwt", "nkey"})
+func (c *Claims) doEncode(header *Header, kp nkeys.KeyPair) (string, error) {
+	h, err := encode(header)
 	if err != nil {
 		return "", err
 	}
@@ -39,17 +48,29 @@ func (c *Claims) Encode(kp nkeys.KeyPair) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
+	c.IssuedAt = time.Now().UTC().Unix()
+
 	payload, err := encode(c)
 	if err != nil {
 		return "", err
 	}
 
 	sig, err := kp.Sign([]byte(payload))
-	esig := base64.RawStdEncoding.EncodeToString(sig)
-
-	return fmt.Sprintf("%s.%s.%s", header, payload, esig), nil
+	if err != nil {
+		return "", err
+	}
+	eSig := base64.RawStdEncoding.EncodeToString(sig)
+	return fmt.Sprintf("%s.%s.%s", h, payload, eSig), nil
 }
 
+// Encodes a claim into a JWT token. The claim is signed with the
+// provided nkey's private key
+func (c *Claims) Encode(kp nkeys.KeyPair) (string, error) {
+	return c.doEncode(&Header{TokenTypeJwt, AlgorithmNkey}, kp)
+}
+
+// Returns a JSON representation of the claim
 func (c *Claims) String() string {
 	j, err := json.Marshal(c)
 	if err != nil {
@@ -58,7 +79,7 @@ func (c *Claims) String() string {
 	return string(j)
 }
 
-func ParseClaims(s string) (*Claims, error) {
+func parseClaims(s string) (*Claims, error) {
 	h, err := base64.RawStdEncoding.DecodeString(s)
 	if err != nil {
 		return nil, err
@@ -67,19 +88,18 @@ func ParseClaims(s string) (*Claims, error) {
 	if err := json.Unmarshal(h, &claims); err != nil {
 		return nil, err
 	}
+	if err := claims.Valid(); err != nil {
+		return nil, err
+	}
 	return &claims, nil
 }
 
-func (c *Claims) KnownIssuer(keys []string) bool {
-	for _, k := range keys {
-		if k == c.Issuer {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Claims) Valid(payload string, sig []byte) (bool) {
+// Verify verifies that the encoded payload was signed by the
+// provided public key. Verify is called automatically with
+// the claims portion of the token and the public key in the claim.
+// Client code need to insure that the public key in the
+// claim is trusted.
+func (c *Claims) Verify(payload string, sig []byte) bool {
 	// decode the public key
 	kp, err := nkeys.FromPublicKey(c.Issuer)
 	if err != nil {
@@ -91,21 +111,37 @@ func (c *Claims) Valid(payload string, sig []byte) (bool) {
 	return true
 }
 
-func Decode(keys []string, token string) (*Claims, error) {
+// Validates that a claim is valid, that is, it is not
+// expired, and the token is not used before it is valid.
+func (c *Claims) Valid() error {
+	now := time.Now().UTC().Unix()
+	if c.NotBefore > 0 && c.NotBefore > now {
+		return errors.New("claim is not yet valid")
+	}
+	if c.Expires > 0 && now > c.Expires {
+		return errors.New("claim is expired")
+	}
+
+	return nil
+}
+
+// Decodes a JWT token and returns the claims. If
+// the token header doesn't match the expected algorithm,
+// or the claim is not valid or verification fails
+// an error is returned
+func Decode(token string) (*Claims, error) {
+	// must have 3 chunks
 	chunks := strings.Split(token, ".")
 	if len(chunks) != 3 {
 		return nil, errors.New("expected 3 chunks")
 	}
 
-	header, err := ParseHeader(chunks[0])
+	_, err := parseHeaders(chunks[0])
 	if err != nil {
 		return nil, err
 	}
-	if !header.Valid() {
-		return nil, errors.New("unable to validate the JWT header")
-	}
 
-	claims, err := ParseClaims(chunks[1])
+	claims, err := parseClaims(chunks[1])
 	if err != nil {
 		return nil, err
 	}
@@ -115,12 +151,8 @@ func Decode(keys []string, token string) (*Claims, error) {
 		return nil, err
 	}
 
-	if !claims.KnownIssuer(keys) {
-		return nil, errors.New("claim issuer is unknown")
-	}
-
-	if !claims.Valid(chunks[1], sig) {
-		return nil, errors.New("claim was not valid")
+	if !claims.Verify(chunks[1], sig) {
+		return nil, errors.New("claim failed signature verification")
 	}
 
 	return claims, nil

@@ -1,10 +1,11 @@
 package jwt
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
-	"reflect"
-	"fmt"
 
 	"github.com/nats-io/nkeys"
 )
@@ -15,9 +16,7 @@ func TestNewToken(t *testing.T) {
 		t.Error("unable to create account key", err)
 	}
 
-	claims := &Claims{}
-	claims.NotBefore = time.Now().UTC().Unix()
-	claims.Nats = make(map[string]string)
+	claims := NewClaims()
 	claims.Nats["foo"] = "bar"
 
 	token, err := claims.Encode(kp)
@@ -25,14 +24,7 @@ func TestNewToken(t *testing.T) {
 		t.Error("error encoding token", err)
 	}
 
-	fmt.Println(token)
-
-	pk, err := kp.PublicKey()
-	if err != nil {
-		t.Error(err)
-	}
-
-	c, err := Decode([]string{pk}, token)
+	c, err := Decode(token)
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,4 +40,221 @@ func TestNewToken(t *testing.T) {
 	if !reflect.DeepEqual(claims.Nats, c.Nats) {
 		t.Error("nats sections don't match")
 	}
+}
+
+func TestBadType(t *testing.T) {
+	kp, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+
+	h := Header{"JWS", AlgorithmNkey}
+	c := NewClaims()
+	c.Nats["foo"] = "bar"
+
+	token, err := c.doEncode(&h, kp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	claim, err := Decode(token)
+	if claim != nil {
+		t.Error("non nil claim on bad token")
+	}
+
+	if err == nil {
+		t.Error("nil error on bad token")
+	}
+
+	if err.Error() != fmt.Sprintf("not supported type %q", "JWS") {
+		t.Error("expected not supported type error")
+	}
+}
+
+func TestBadAlgo(t *testing.T) {
+	kp, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+
+	h := Header{TokenTypeJwt, "foobar"}
+	c := NewClaims()
+	c.Nats["foo"] = "bar"
+
+	token, err := c.doEncode(&h, kp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	claim, err := Decode(token)
+	if claim != nil {
+		t.Error("non nil claim on bad token")
+	}
+
+	if err == nil {
+		t.Error("nil error on bad token")
+	}
+
+	if err.Error() != fmt.Sprintf("unexpected %q algorithm", "foobar") {
+		t.Error("expected unexpected algorithm")
+	}
+}
+
+func TestBadSignature(t *testing.T) {
+	kp, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+
+	h := Header{TokenTypeJwt, AlgorithmNkey}
+	c := NewClaims()
+	c.Nats["foo"] = "bar"
+
+	token, err := c.doEncode(&h, kp)
+	if err != nil {
+		t.Error(err)
+	}
+
+	token = token + "A"
+
+	claim, err := Decode(token)
+	if claim != nil {
+		t.Error("non nil claim on bad token")
+	}
+
+	if err == nil {
+		t.Error("nil error on bad token")
+	}
+
+	if err.Error() != "claim failed signature verification" {
+		m := fmt.Sprintf("expected failed signature: %q", err.Error())
+		t.Error(m)
+	}
+}
+
+func TestDifferentPayload(t *testing.T) {
+	kp1, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+
+	c1 := NewClaims()
+	c1.Nats["foo"] = "barz"
+
+	token1, err := c1.Encode(kp1)
+	if err != nil {
+		t.Error(err)
+	}
+	c1t := strings.Split(token1, ".")
+
+	c1.Nats["foo"] = "bar"
+
+	kp2, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+
+	token2, err := c1.Encode(kp2)
+	if err != nil {
+		t.Error(err)
+	}
+	c2t := strings.Split(token2, ".")
+
+	c1t[1] = c2t[1]
+
+	claim, err := Decode(fmt.Sprintf("%s.%s.%s", c1t[0], c1t[1], c1t[2]))
+	if claim != nil {
+		t.Error("non nil claim on bad token")
+	}
+
+	if err == nil {
+		t.Error("nil error on bad token")
+	}
+
+	if err.Error() != "claim failed signature verification" {
+		m := fmt.Sprintf("expected failed signature: %q", err.Error())
+		t.Error(m)
+	}
+}
+
+func TestExpiredToken(t *testing.T) {
+	kp1, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+	c := NewClaims()
+	c.Expires = time.Now().UTC().Unix() - 100
+	c.Nats["foo"] = "barz"
+
+	token, err := c.Encode(kp1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	claim, err := Decode(token)
+	if claim != nil {
+		t.Error("non nil claim on bad token")
+	}
+
+	if err == nil {
+		t.Error("nil error on bad token")
+	}
+
+	if err.Error() != "claim is expired" {
+		m := fmt.Sprintf("expected expired claim: %q", err.Error())
+		t.Error(m)
+	}
+}
+
+func TestNotYetValid(t *testing.T) {
+	kp1, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+	c := NewClaims()
+	now := time.Now().UTC().Unix()
+	c.NotBefore = now + 100
+	c.Nats["foo"] = "barz"
+
+	token, err := c.Encode(kp1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	claim, err := Decode(token)
+	if claim != nil {
+		t.Fatalf("non nil claim on bad token: %q", claim.String())
+	}
+
+	if err == nil {
+		t.Fatalf("nil error on bad token")
+	}
+
+	if err.Error() != "claim is not yet valid" {
+		t.Fatalf("expected not yet valid claim: %q", err.Error())
+	}
+}
+
+func TestIssuedAtIsSet(t *testing.T) {
+	kp1, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Error("unable to create account key", err)
+	}
+	c := NewClaims()
+	c.Nats["foo"] = "barz"
+
+	token, err := c.Encode(kp1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	claim, err := Decode(token)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if claim.IssuedAt == 0 {
+		t.Fatalf("issued at is not set")
+	}
+
 }
