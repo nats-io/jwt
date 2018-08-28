@@ -72,7 +72,7 @@ func (c *Claims) Encode(kp nkeys.KeyPair) (string, error) {
 
 // Returns a JSON representation of the claim
 func (c *Claims) String() string {
-	j, err := json.Marshal(c)
+	j, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return ""
 	}
