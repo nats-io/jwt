@@ -7,6 +7,7 @@ go:
 install:
 - go get -t ./...
 - go get github.com/mattn/goveralls
+- go get github.com/wadey/gocovmerge
 
 before_script:
 - $(exit $(go fmt ./... | wc -l))
