@@ -7,7 +7,8 @@ Nkeys use [Ed25519](https://ed25519.cr.yp.to/) to provide authentication of JWT 
 [![ReportCard](http://goreportcard.com/badge/nats-io/jwt)](http://goreportcard.com/report/nats-io/jwt)
 [![Build Status](https://travis-ci.org/nats-io/jwt.svg?branch=master)](http://travis-ci.org/nats-io/jwt)
 [![GoDoc](http://godoc.org/github.com/nats-io/jwt?status.png)](http://godoc.org/github.com/nats-io/jwt)
-[![Coverage Status](https://coveralls.io/repos/github/nats-io/jwt/badge.svg?branch=master&service=github)](https://coveralls.io/github/nats-io/jwt?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/nats-io/jwt/badge.svg?branch=master&t=NmEFup)](https://coveralls.io/github/nats-io/jwt?branch=master)
+
 ```go
 // Need a private key to sign the claim, nkeys makes it easy to create
 kp, err := nkeys.CreateAccount(nil)
