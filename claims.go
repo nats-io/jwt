@@ -39,6 +39,14 @@ func encode(v interface{}) (string, error) {
 }
 
 func (c *Claims) doEncode(header *Header, kp nkeys.KeyPair) (string, error) {
+	if header == nil {
+		return "", errors.New("header is required")
+	}
+
+	if kp == nil {
+		return "", errors.New("keypair is required")
+	}
+
 	h, err := encode(header)
 	if err != nil {
 		return "", err
