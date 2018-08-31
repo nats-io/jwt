@@ -8,12 +8,9 @@ install:
 - go get -t ./...
 - go get github.com/mattn/goveralls
 
-script:
-- go fmt ./...
+before_script:
+- $(exit $(go fmt ./... | wc -l))
 - go vet ./...
-- go test -v
-- go test -v --race
-- go test -v -covermode=count -coverprofile=coverage.out
 
-after_success:
-- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then $HOME/gopath/bin/goveralls -coverprofile coverage.out -service travis-ci; fi
+script:
+- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then ./scripts/cov.sh TRAVIS; else go test -race ./...; fi
