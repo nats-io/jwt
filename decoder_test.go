@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"encoding/base64"
+	"encoding/json"
 	"github.com/nats-io/nkeys"
 )
 
@@ -324,5 +326,105 @@ func TestSample(t *testing.T) {
 
 	if c.Issuer != pk {
 		t.Fatalf("the public key is not trusted")
+	}
+}
+
+func TestBadHeaderEncoding(t *testing.T) {
+	// the '=' will be illegal
+	_, err := parseHeaders("=hello=")
+	if err == nil {
+		t.Fatal("should have failed it is not encoded")
+	}
+}
+
+func TestBadClaimsEncoding(t *testing.T) {
+	// the '=' will be illegal
+	_, err := parseClaims("=hello=")
+	if err == nil {
+		t.Fatal("should have failed it is not encoded")
+	}
+}
+
+func TestBadHeaderJSON(t *testing.T) {
+	payload := base64.RawStdEncoding.EncodeToString([]byte("{foo: bar}"))
+	_, err := parseHeaders(payload)
+	if err == nil {
+		t.Fatal("should have failed bad json")
+	}
+}
+
+func TestBadClaimsJSON(t *testing.T) {
+	payload := base64.RawStdEncoding.EncodeToString([]byte("{foo: bar}"))
+	_, err := parseClaims(payload)
+	if err == nil {
+		t.Fatal("should have failed bad json")
+	}
+}
+
+func TestBadPublicKeyDecode(t *testing.T) {
+	c := &Claims{}
+	c.Issuer = "foo"
+	if ok := c.Verify("foo", []byte("bar")); ok {
+		t.Fatal("Should have failed to verify")
+	}
+}
+
+func TestBadSig(t *testing.T) {
+
+	// Need a private key to sign the claim
+	kp, err := nkeys.CreateAccount(nil)
+	if err != nil {
+		t.Fatal("unable to create account key", err)
+	}
+
+	claims := NewClaims()
+	// add a bunch of claims
+	claims.Nats["foo"] = "bar"
+
+	// serialize the claim to a JWT token
+	token, err := claims.Encode(kp)
+	if err != nil {
+		t.Fatal("error encoding token", err)
+	}
+
+	tokens := strings.Split(token, ".")
+	badToken := fmt.Sprintf("%s.%s.=hello=", tokens[0], tokens[1])
+	_, err = Decode(badToken)
+	if err == nil {
+		t.Fatal("should have failed to base64  decode signature")
+	}
+}
+
+func TestClaimsStringIsJSON(t *testing.T) {
+	claims := NewClaims()
+	// add a bunch of claims
+	claims.Nats["foo"] = "bar"
+
+	claims2 := NewClaims()
+	json.Unmarshal([]byte(claims.String()), claims2)
+	if claims2.Nats["foo"] != "bar" {
+		t.Fatal("Failed to decode expected claim from String representation")
+	}
+}
+
+func TestDoEncodeNilHeader(t *testing.T) {
+	claims := NewClaims()
+	_, err := claims.doEncode(nil, nil)
+	if err == nil {
+		t.Fatal("should have failed to encode")
+	}
+	if err.Error() != "header is required" {
+		t.Fatalf("unexpected error on encode: %v", err)
+	}
+}
+
+func TestDoEncodeNilKeyPair(t *testing.T) {
+	claims := NewClaims()
+	_, err := claims.doEncode(&Header{}, nil)
+	if err == nil {
+		t.Fatal("should have failed to encode")
+	}
+	if err.Error() != "keypair is required" {
+		t.Fatalf("unexpected error on encode: %v", err)
 	}
 }

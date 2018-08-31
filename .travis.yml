@@ -7,13 +7,11 @@ go:
 install:
 - go get -t ./...
 - go get github.com/mattn/goveralls
+- go get github.com/wadey/gocovmerge
+
+before_script:
+- $(exit $(go fmt ./... | wc -l))
+- go vet ./...
 
 script:
-- go fmt ./...
-- go vet ./...
-- go test -v
-- go test -v --race
-- go test -v -covermode=count -coverprofile=coverage.out
-
-after_success:
-- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then $HOME/gopath/bin/goveralls -coverprofile coverage.out -service travis-ci; fi
+- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then ./scripts/cov.sh TRAVIS; else go test -v -race ./...; fi
