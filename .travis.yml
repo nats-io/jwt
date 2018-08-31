@@ -13,4 +13,4 @@ before_script:
 - go vet ./...
 
 script:
-- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then ./scripts/cov.sh TRAVIS; else go test -race ./...; fi
+- if [[ "$TRAVIS_GO_VERSION" == 1.10.* ]] ; then ./scripts/cov.sh TRAVIS; else go test -v -race ./...; fi
