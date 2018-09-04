@@ -4,15 +4,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // TokenTypeJwt is the JWT token type supported JWT tokens
 // encoded and decoded by this library
-const TokenTypeJwt = "JWT"
+const TokenTypeJwt = "jwt"
 
 // AlgorithmNkey is the algorithm supported by JWT tokens
 // encoded and decoded by this library
-const AlgorithmNkey = "NKEY"
+const AlgorithmNkey = "ed25519"
 
 // Header is a JWT Jose Header
 type Header struct {
@@ -40,11 +41,11 @@ func parseHeaders(s string) (*Header, error) {
 // Valid validates the Header. It returns nil if the Header is
 // a JWT header, and the algorithm used is the NKEY algorithm.
 func (h *Header) Valid() error {
-	if TokenTypeJwt != h.Type {
+	if TokenTypeJwt != strings.ToLower(h.Type) {
 		return fmt.Errorf("not supported type %q", h.Type)
 	}
 
-	if AlgorithmNkey != h.Algorithm {
+	if AlgorithmNkey != strings.ToLower(h.Algorithm) {
 		return fmt.Errorf("unexpected %q algorithm", h.Algorithm)
 	}
 	return nil
