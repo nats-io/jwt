@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewAccountClaims(t *testing.T) {
-	okp, err := nkeys.CreateOperator(nil)
+	okp, err := nkeys.CreateOperator()
 	if err != nil {
 		t.Fatal("error creating operator kp", err)
 	}
@@ -23,7 +23,7 @@ func TestNewAccountClaims(t *testing.T) {
 		t.Fatal("error encoding activation jwt", err)
 	}
 
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("error creating account kp", err)
 	}

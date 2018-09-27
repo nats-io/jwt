@@ -13,7 +13,7 @@ import (
 )
 
 func TestNewToken(t *testing.T) {
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -45,7 +45,7 @@ func TestNewToken(t *testing.T) {
 }
 
 func TestBadType(t *testing.T) {
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -74,7 +74,7 @@ func TestBadType(t *testing.T) {
 }
 
 func TestBadAlgo(t *testing.T) {
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -103,7 +103,7 @@ func TestBadAlgo(t *testing.T) {
 }
 
 func TestBadJWT(t *testing.T) {
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -135,7 +135,7 @@ func TestBadJWT(t *testing.T) {
 }
 
 func TestBadSignature(t *testing.T) {
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -167,7 +167,7 @@ func TestBadSignature(t *testing.T) {
 }
 
 func TestDifferentPayload(t *testing.T) {
-	kp1, err := nkeys.CreateAccount(nil)
+	kp1, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -183,7 +183,7 @@ func TestDifferentPayload(t *testing.T) {
 
 	c1.Data["foo"] = "bar"
 
-	kp2, err := nkeys.CreateAccount(nil)
+	kp2, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -212,7 +212,7 @@ func TestDifferentPayload(t *testing.T) {
 }
 
 func TestExpiredToken(t *testing.T) {
-	kp1, err := nkeys.CreateAccount(nil)
+	kp1, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -241,7 +241,7 @@ func TestExpiredToken(t *testing.T) {
 }
 
 func TestNotYetValid(t *testing.T) {
-	kp1, err := nkeys.CreateAccount(nil)
+	kp1, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -270,7 +270,7 @@ func TestNotYetValid(t *testing.T) {
 }
 
 func TestIssuedAtIsSet(t *testing.T) {
-	kp1, err := nkeys.CreateAccount(nil)
+	kp1, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -295,7 +295,7 @@ func TestIssuedAtIsSet(t *testing.T) {
 func TestSample(t *testing.T) {
 
 	// Need a private key to sign the claim
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
@@ -374,7 +374,7 @@ func TestBadPublicKeyDecodeGeneric(t *testing.T) {
 func TestBadSig(t *testing.T) {
 
 	// Need a private key to sign the claim
-	kp, err := nkeys.CreateAccount(nil)
+	kp, err := nkeys.CreateAccount()
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
