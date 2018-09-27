@@ -18,15 +18,15 @@ func TestNewToken(t *testing.T) {
 		t.Fatal("unable to create account key", err)
 	}
 
-	claims := NewClaims()
-	claims.Nats["foo"] = "bar"
+	claims := NewGenericClaims()
+	claims.Data["foo"] = "bar"
 
 	token, err := claims.Encode(kp)
 	if err != nil {
 		t.Fatal("error encoding token", err)
 	}
 
-	c, err := Decode(token)
+	c, err := DecodeGeneric(token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,8 +39,8 @@ func TestNewToken(t *testing.T) {
 		t.Fatal("notbefore don't match")
 	}
 
-	if !reflect.DeepEqual(claims.Nats, c.Nats) {
-		t.Fatal("nats sections don't match")
+	if !reflect.DeepEqual(claims.Data, c.Data) {
+		t.Fatal("data sections don't match")
 	}
 }
 
@@ -51,15 +51,15 @@ func TestBadType(t *testing.T) {
 	}
 
 	h := Header{"JWS", AlgorithmNkey}
-	c := NewClaims()
-	c.Nats["foo"] = "bar"
+	c := NewGenericClaims()
+	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp)
+	token, err := c.doEncode(&h, kp, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -80,15 +80,15 @@ func TestBadAlgo(t *testing.T) {
 	}
 
 	h := Header{TokenTypeJwt, "foobar"}
-	c := NewClaims()
-	c.Nats["foo"] = "bar"
+	c := NewGenericClaims()
+	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp)
+	token, err := c.doEncode(&h, kp, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -109,10 +109,10 @@ func TestBadJWT(t *testing.T) {
 	}
 
 	h := Header{"JWS", AlgorithmNkey}
-	c := NewClaims()
-	c.Nats["foo"] = "bar"
+	c := NewGenericClaims()
+	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp)
+	token, err := c.doEncode(&h, kp, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func TestBadJWT(t *testing.T) {
 	chunks := strings.Split(token, ".")
 	badToken := fmt.Sprintf("%s.%s", chunks[0], chunks[1])
 
-	claim, err := Decode(badToken)
+	claim, err := DecodeGeneric(badToken)
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -141,17 +141,17 @@ func TestBadSignature(t *testing.T) {
 	}
 
 	h := Header{TokenTypeJwt, AlgorithmNkey}
-	c := NewClaims()
-	c.Nats["foo"] = "bar"
+	c := NewGenericClaims()
+	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp)
+	token, err := c.doEncode(&h, kp, &c)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	token = token + "A"
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -172,8 +172,8 @@ func TestDifferentPayload(t *testing.T) {
 		t.Fatal("unable to create account key", err)
 	}
 
-	c1 := NewClaims()
-	c1.Nats["foo"] = "barz"
+	c1 := NewGenericClaims()
+	c1.Data["foo"] = "barz"
 
 	token1, err := c1.Encode(kp1)
 	if err != nil {
@@ -181,7 +181,7 @@ func TestDifferentPayload(t *testing.T) {
 	}
 	c1t := strings.Split(token1, ".")
 
-	c1.Nats["foo"] = "bar"
+	c1.Data["foo"] = "bar"
 
 	kp2, err := nkeys.CreateAccount(nil)
 	if err != nil {
@@ -196,7 +196,7 @@ func TestDifferentPayload(t *testing.T) {
 
 	c1t[1] = c2t[1]
 
-	claim, err := Decode(fmt.Sprintf("%s.%s.%s", c1t[0], c1t[1], c1t[2]))
+	claim, err := DecodeGeneric(fmt.Sprintf("%s.%s.%s", c1t[0], c1t[1], c1t[2]))
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -216,16 +216,16 @@ func TestExpiredToken(t *testing.T) {
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
-	c := NewClaims()
+	c := NewGenericClaims()
 	c.Expires = time.Now().UTC().Unix() - 100
-	c.Nats["foo"] = "barz"
+	c.Data["foo"] = "barz"
 
 	token, err := c.Encode(kp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if claim != nil {
 		t.Fatal("non nil claim on bad token")
 	}
@@ -245,17 +245,17 @@ func TestNotYetValid(t *testing.T) {
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
-	c := NewClaims()
+	c := NewGenericClaims()
 	now := time.Now().UTC().Unix()
 	c.NotBefore = now + 100
-	c.Nats["foo"] = "barz"
+	c.Data["foo"] = "barz"
 
 	token, err := c.Encode(kp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if claim != nil {
 		t.Fatalf("non nil claim on bad token: %q", claim.String())
 	}
@@ -274,15 +274,15 @@ func TestIssuedAtIsSet(t *testing.T) {
 	if err != nil {
 		t.Fatal("unable to create account key", err)
 	}
-	c := NewClaims()
-	c.Nats["foo"] = "barz"
+	c := NewGenericClaims()
+	c.Data["foo"] = "barz"
 
 	token, err := c.Encode(kp1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	claim, err := Decode(token)
+	claim, err := DecodeGeneric(token)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -300,9 +300,9 @@ func TestSample(t *testing.T) {
 		t.Fatal("unable to create account key", err)
 	}
 
-	claims := NewClaims()
+	claims := NewGenericClaims()
 	// add a bunch of claims
-	claims.Nats["foo"] = "bar"
+	claims.Data["foo"] = "bar"
 
 	// serialize the claim to a JWT token
 	token, err := claims.Encode(kp)
@@ -311,7 +311,7 @@ func TestSample(t *testing.T) {
 	}
 
 	// on the receiving side, decode the token
-	c, err := Decode(token)
+	c, err := DecodeGeneric(token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,7 +339,8 @@ func TestBadHeaderEncoding(t *testing.T) {
 
 func TestBadClaimsEncoding(t *testing.T) {
 	// the '=' will be illegal
-	_, err := parseClaims("=hello=")
+	c := GenericClaims{}
+	err := parseClaims("=hello=", &c)
 	if err == nil {
 		t.Fatal("should have failed it is not encoded")
 	}
@@ -355,14 +356,15 @@ func TestBadHeaderJSON(t *testing.T) {
 
 func TestBadClaimsJSON(t *testing.T) {
 	payload := base64.RawStdEncoding.EncodeToString([]byte("{foo: bar}"))
-	_, err := parseClaims(payload)
+	c := GenericClaims{}
+	err := parseClaims(payload, &c)
 	if err == nil {
 		t.Fatal("should have failed bad json")
 	}
 }
 
-func TestBadPublicKeyDecode(t *testing.T) {
-	c := &Claims{}
+func TestBadPublicKeyDecodeGeneric(t *testing.T) {
+	c := &GenericClaims{}
 	c.Issuer = "foo"
 	if ok := c.Verify("foo", []byte("bar")); ok {
 		t.Fatal("Should have failed to verify")
@@ -377,9 +379,9 @@ func TestBadSig(t *testing.T) {
 		t.Fatal("unable to create account key", err)
 	}
 
-	claims := NewClaims()
+	claims := NewGenericClaims()
 	// add a bunch of claims
-	claims.Nats["foo"] = "bar"
+	claims.Data["foo"] = "bar"
 
 	// serialize the claim to a JWT token
 	token, err := claims.Encode(kp)
@@ -389,27 +391,27 @@ func TestBadSig(t *testing.T) {
 
 	tokens := strings.Split(token, ".")
 	badToken := fmt.Sprintf("%s.%s.=hello=", tokens[0], tokens[1])
-	_, err = Decode(badToken)
+	_, err = DecodeGeneric(badToken)
 	if err == nil {
 		t.Fatal("should have failed to base64  decode signature")
 	}
 }
 
 func TestClaimsStringIsJSON(t *testing.T) {
-	claims := NewClaims()
+	claims := NewGenericClaims()
 	// add a bunch of claims
-	claims.Nats["foo"] = "bar"
+	claims.Data["foo"] = "bar"
 
-	claims2 := NewClaims()
+	claims2 := NewGenericClaims()
 	json.Unmarshal([]byte(claims.String()), claims2)
-	if claims2.Nats["foo"] != "bar" {
-		t.Fatal("Failed to decode expected claim from String representation")
+	if claims2.Data["foo"] != "bar" {
+		t.Fatalf("Failed to decode expected claim from String representation: %q", claims.String())
 	}
 }
 
 func TestDoEncodeNilHeader(t *testing.T) {
-	claims := NewClaims()
-	_, err := claims.doEncode(nil, nil)
+	claims := NewGenericClaims()
+	_, err := claims.doEncode(nil, nil, &claims)
 	if err == nil {
 		t.Fatal("should have failed to encode")
 	}
@@ -419,8 +421,8 @@ func TestDoEncodeNilHeader(t *testing.T) {
 }
 
 func TestDoEncodeNilKeyPair(t *testing.T) {
-	claims := NewClaims()
-	_, err := claims.doEncode(&Header{}, nil)
+	claims := NewGenericClaims()
+	_, err := claims.doEncode(&Header{}, nil, &claims)
 	if err == nil {
 		t.Fatal("should have failed to encode")
 	}

@@ -10,7 +10,7 @@ test:
 	go test -v --race
 
 fmt:
-	go fmt -r -s *.go
+	gofmt -w -s *.go
 
 cover:
 	 go test -v -covermode=count -coverprofile=coverage.out
