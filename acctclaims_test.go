@@ -13,7 +13,18 @@ func TestNewAccountClaims(t *testing.T) {
 		t.Fatal("error creating operator kp", err)
 	}
 
-	activation := NewActivationClaims()
+	akp, err := nkeys.CreateAccount()
+	if err != nil {
+		t.Fatal("error creating account kp", err)
+	}
+
+	pk, err := akp.PublicKey()
+	if err != nil {
+		t.Fatal("error getting public key from account", err)
+	}
+
+
+	activation := NewActivationClaims(pk)
 	activation.Mps = 100
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
@@ -23,16 +34,12 @@ func TestNewAccountClaims(t *testing.T) {
 		t.Fatal("error encoding activation jwt", err)
 	}
 
-	kp, err := nkeys.CreateAccount()
-	if err != nil {
-		t.Fatal("error creating account kp", err)
-	}
 
 	account := NewAccountClaims()
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
 	account.AppendActivation(actJwt)
 
-	accJwt, err := account.Encode(kp)
+	accJwt, err := account.Encode(akp)
 	if err != nil {
 		t.Fatal("error generating account jwt", err)
 	}
