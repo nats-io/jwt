@@ -4,7 +4,7 @@ import "github.com/nats-io/nkeys"
 
 type GenericClaims struct {
 	ClaimsData
-	Data map[string]interface{} `json:"data,omitempty"`
+	Data map[string]interface{} `json:"nats,omitempty"`
 }
 
 // NewClaims creates a Claims
@@ -26,8 +26,8 @@ func (gc *GenericClaims) Claims() *ClaimsData {
 	return &gc.ClaimsData
 }
 
-func (gc *GenericClaims) Payload() interface{} {
-	return gc.Data
+func (a *GenericClaims) Payload() interface{} {
+	return &a.Data
 }
 
 func (gc *GenericClaims) Encode(pair nkeys.KeyPair) (string, error) {

@@ -1,6 +1,8 @@
 package jwt
 
 import (
+	"crypto/sha512"
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -14,23 +16,23 @@ import (
 // Claims is a JWT claims
 type Claims interface {
 	Claims() *ClaimsData
-	Payload() interface{}
-	Valid() error
-	Verify(payload string, sig []byte) bool
 	Encode(kp nkeys.KeyPair) (string, error)
 	ExpectedPrefixes() []nkeys.PrefixByte
+	Payload() interface{}
 	String() string
+	Valid() error
+	Verify(payload string, sig []byte) bool
 }
 
 // ClaimsData is the base struct for all claims
 type ClaimsData struct {
-	Issuer    string `json:"iss,omitempty"`
-	Subject   string `json:"sub,omitempty"`
 	Audience  string `json:"aud,omitempty"`
 	Expires   int64  `json:"exp,omitempty"`
-	NotBefore int64  `json:"nbf,omitempty"`
 	ID        string `json:"jti,omitempty"`
 	IssuedAt  int64  `json:"iat,omitempty"`
+	Issuer    string `json:"iss,omitempty"`
+	NotBefore int64  `json:"nbf,omitempty"`
+	Subject   string `json:"sub,omitempty"`
 }
 
 type Prefix struct {
@@ -66,6 +68,11 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim interface{
 
 	c.IssuedAt = time.Now().UTC().Unix()
 
+	c.ID, err = c.hash()
+	if err != nil {
+		return "", err
+	}
+
 	payload, err := serialize(claim)
 	if err != nil {
 		return "", err
@@ -77,6 +84,16 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim interface{
 	}
 	eSig := base64.RawStdEncoding.EncodeToString(sig)
 	return fmt.Sprintf("%s.%s.%s", h, payload, eSig), nil
+}
+
+func (c *ClaimsData) hash() (string, error) {
+	j, err := json.Marshal(c)
+	if err != nil {
+		return "", err
+	}
+	h := sha512.New512_256()
+	h.Write(j)
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(h.Sum(nil)), nil
 }
 
 // encode encodes a claim into a JWT token. The claim is signed with the

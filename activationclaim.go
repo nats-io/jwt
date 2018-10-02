@@ -2,31 +2,9 @@ package jwt
 
 import "github.com/nats-io/nkeys"
 
-type Limits struct {
-	Mps      int64          `json:"mps,omitempty"`
-	Bps      int64          `json:"bps,omitempty"`
-	Max      int64          `json:"max,omitempty"`
-	Src      string         `json:"src,omitempty"`
-	Times    []int64        `json:"times,omitempty"`
-}
-
-type Avt struct {
-	Lnk      string         `json:"lnk,omitempty"`
-	Streams  SubjectMapList `json:"streams,omitempty"`
-	Services SubjectMapList `json:"services,omitempty"`
-	Subs     int64          `json:"subs,omitempty"`
-	Conn     int64          `json:"conn,omitempty"`
-	Maps     int64          `json:"maps,omitempty"`
-	Limits
-}
-
-func (a *Avt) Valid() error {
-	return nil
-}
-
 type ActivationClaims struct {
 	ClaimsData
-	Avt `json:"natsact,omitempty"`
+	Activation `json:"nats,omitempty"`
 }
 
 func NewActivationClaims(subject string) *ActivationClaims {
@@ -48,14 +26,14 @@ func DecodeActivationClaims(token string) (*ActivationClaims, error) {
 }
 
 func (a *ActivationClaims) Payload() interface{} {
-	return a.Avt
+	return a.Activation
 }
 
 func (a *ActivationClaims) Valid() error {
 	if err := a.ClaimsData.Valid(); err != nil {
 		return err
 	}
-	if err := a.Avt.Valid(); err != nil {
+	if err := a.Activation.Valid(); err != nil {
 		return err
 	}
 	return nil
