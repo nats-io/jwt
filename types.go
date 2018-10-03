@@ -6,6 +6,11 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
+type ImportExportType string
+
+const ImportExportTypeStream = "stream"
+const ImportExportTypeService = "service"
+
 type Import struct {
 	Type    ImportExportType `json:"type,omitempty"`
 	Account string           `json:"account,omitempty"`
@@ -75,24 +80,37 @@ type OperatorLimits struct {
 	Maps int64 `json:"maps,omitempty"`
 }
 
-type ImportExportType string
-
-const ImportExportTypeStream = "stream"
-const ImportExportTypeService = "service"
-
-type User struct {
-	Pub []string `json:"pub,omitempty"`
-	Sub []string `json:"sub,omitempty"`
-	Limits
+type Permissions struct {
+	Pub     Subjects `json:"pub,omitempty"`
+	Sub     Subjects `json:"sub,omitempty"`
+	Cluster string   `json:"cluster,omitempty"`
 }
 
-func (u *User) AddPub(p string) {
-	if u.canAdd(&u.Pub, p) {
+type Subjects []string
+
+func (u *Subjects) contains(p string) bool {
+	for _, t := range *u {
+		if t == p {
+			return true
+		}
+	}
+	return false
+}
+
+
+func (u *Permissions) AddPub(p string) {
+	if !u.Pub.contains(p) {
 		u.Pub = append(u.Pub, p)
 	}
 }
 
-func (u *User) RemovePub(p string) {
+func (u *Permissions) AddSub(p string) {
+	if !u.Sub.contains(p) {
+		u.Sub = append(u.Sub, p)
+	}
+}
+
+func (u *Permissions) RemovePub(p string) {
 	for i, t := range u.Pub {
 		if t == p {
 			u.Pub = append(u.Pub[:i], u.Pub[i+1:]...)
@@ -101,7 +119,7 @@ func (u *User) RemovePub(p string) {
 	}
 }
 
-func (u *User) RemoveSub(p string) {
+func (u *Permissions) RemoveSub(p string) {
 	for i, t := range u.Sub {
 		if t == p {
 			u.Sub = append(u.Pub[:i], u.Pub[i+1:]...)
@@ -110,26 +128,7 @@ func (u *User) RemoveSub(p string) {
 	}
 }
 
-func (u *User) AddSub(p string) {
-	if u.canAdd(&u.Sub, p) {
-		u.Sub = append(u.Sub, p)
-	}
-}
-
-func (u *User) contains(a *[]string, p string) bool {
-	for _, t := range *a {
-		if t == p {
-			return true
-		}
-	}
-	return false
-}
-
-func (u *User) canAdd(a *[]string, s string) bool {
-	return !u.contains(a, s)
-}
-
-func (u *User) Valid() error {
+func (u *Permissions) Valid() error {
 	return nil
 }
 
@@ -163,4 +162,25 @@ func (a *Activation) Valid() error {
 		}
 	}
 	return nil
+}
+
+type Identity struct {
+	ID    string `json:"id,omitempty"`
+	Proof string `json:"id,omitempty"`
+}
+
+type Operator struct {
+	Identities []Identity `json:"identity,omitempty"`
+}
+
+type Cluster struct {
+	Trust []string `json:"identity,omitempty"`
+	Accounts []string `json:"accts,omitempty"`
+	AccountURL string `json:"accturl,omitempty"`
+	OperatorURL string `json:"opurl,omitempty"`
+}
+
+
+type Server struct {
+	Permissions
 }

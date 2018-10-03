@@ -7,7 +7,7 @@ import (
 
 type UserClaims struct {
 	ClaimsData
-	User `json:"nats,omitempty"`
+	Permissions `json:"nats,omitempty"`
 }
 
 func NewUserClaim(subject string) *UserClaims {
@@ -39,7 +39,7 @@ func (u *UserClaims) Valid() error {
 	if err := u.ClaimsData.Valid(); err != nil {
 		return err
 	}
-	if err := u.User.Valid(); err != nil {
+	if err := u.Permissions.Valid(); err != nil {
 		return err
 	}
 	return nil
@@ -54,7 +54,7 @@ func (u *UserClaims) Claims() *ClaimsData {
 }
 
 func (u *UserClaims) Payload() interface{} {
-	return &u.User
+	return &u.Permissions
 }
 
 func (u *UserClaims) String() string {
