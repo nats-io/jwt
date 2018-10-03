@@ -97,7 +97,6 @@ func (u *Subjects) contains(p string) bool {
 	return false
 }
 
-
 func (u *Permissions) AddPub(p string) {
 	if !u.Pub.contains(p) {
 		u.Pub = append(u.Pub, p)
@@ -166,7 +165,7 @@ func (a *Activation) Valid() error {
 
 type Identity struct {
 	ID    string `json:"id,omitempty"`
-	Proof string `json:"id,omitempty"`
+	Proof string `json:"proof,omitempty"`
 }
 
 type Operator struct {
@@ -174,12 +173,11 @@ type Operator struct {
 }
 
 type Cluster struct {
-	Trust []string `json:"identity,omitempty"`
-	Accounts []string `json:"accts,omitempty"`
-	AccountURL string `json:"accturl,omitempty"`
-	OperatorURL string `json:"opurl,omitempty"`
+	Trust       []string `json:"identity,omitempty"`
+	Accounts    []string `json:"accts,omitempty"`
+	AccountURL  string   `json:"accturl,omitempty"`
+	OperatorURL string   `json:"opurl,omitempty"`
 }
-
 
 type Server struct {
 	Permissions
