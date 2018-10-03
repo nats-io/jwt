@@ -97,31 +97,17 @@ func (u *Subjects) contains(p string) bool {
 	return false
 }
 
-func (u *Permissions) AddPub(p string) {
-	if !u.Pub.contains(p) {
-		u.Pub = append(u.Pub, p)
+func (u *Subjects) Add(p string) {
+	if !u.contains(p) {
+		*u = append(*u, p)
 	}
 }
 
-func (u *Permissions) AddSub(p string) {
-	if !u.Sub.contains(p) {
-		u.Sub = append(u.Sub, p)
-	}
-}
-
-func (u *Permissions) RemovePub(p string) {
-	for i, t := range u.Pub {
+func (u *Subjects) Remove(p string) {
+	for i, t := range *u {
 		if t == p {
-			u.Pub = append(u.Pub[:i], u.Pub[i+1:]...)
-			break
-		}
-	}
-}
-
-func (u *Permissions) RemoveSub(p string) {
-	for i, t := range u.Sub {
-		if t == p {
-			u.Sub = append(u.Pub[:i], u.Pub[i+1:]...)
+			a := *u
+			*u = append(a[:i], a[i+1:]...)
 			break
 		}
 	}
