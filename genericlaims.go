@@ -8,8 +8,12 @@ type GenericClaims struct {
 }
 
 // NewClaims creates a Claims
-func NewGenericClaims() *GenericClaims {
+func NewGenericClaims(subject string) *GenericClaims {
+	if subject == "" {
+		return nil
+	}
 	c := GenericClaims{}
+	c.Subject = subject
 	c.Data = make(map[string]interface{})
 	return &c
 }

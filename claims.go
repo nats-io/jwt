@@ -13,6 +13,14 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
+type ClaimType string
+
+const (
+	AccountClaim    = "account"
+	ActivationClaim = "activation"
+	UserClaim       = "user"
+)
+
 // Claims is a JWT claims
 type Claims interface {
 	Claims() *ClaimsData
@@ -26,13 +34,15 @@ type Claims interface {
 
 // ClaimsData is the base struct for all claims
 type ClaimsData struct {
-	Audience  string `json:"aud,omitempty"`
-	Expires   int64  `json:"exp,omitempty"`
-	ID        string `json:"jti,omitempty"`
-	IssuedAt  int64  `json:"iat,omitempty"`
-	Issuer    string `json:"iss,omitempty"`
-	NotBefore int64  `json:"nbf,omitempty"`
-	Subject   string `json:"sub,omitempty"`
+	Audience  string    `json:"aud,omitempty"`
+	Expires   int64     `json:"exp,omitempty"`
+	ID        string    `json:"jti,omitempty"`
+	IssuedAt  int64     `json:"iat,omitempty"`
+	Issuer    string    `json:"iss,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	NotBefore int64     `json:"nbf,omitempty"`
+	Subject   string    `json:"sub,omitempty"`
+	Type      ClaimType `json:"string,omitempty"`
 }
 
 type Prefix struct {
@@ -47,13 +57,17 @@ func serialize(v interface{}) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(j), nil
 }
 
-func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim interface{}) (string, error) {
+func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (string, error) {
 	if header == nil {
 		return "", errors.New("header is required")
 	}
 
 	if kp == nil {
 		return "", errors.New("keypair is required")
+	}
+
+	if c.Subject == "" {
+		return "", errors.New("subject is not set")
 	}
 
 	h, err := serialize(header)
@@ -70,6 +84,10 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim interface{
 
 	c.ID, err = c.hash()
 	if err != nil {
+		return "", err
+	}
+
+	if err := claim.Valid(); err != nil {
 		return "", err
 	}
 
@@ -98,7 +116,7 @@ func (c *ClaimsData) hash() (string, error) {
 
 // encode encodes a claim into a JWT token. The claim is signed with the
 // provided nkey's private key
-func (c *ClaimsData) encode(kp nkeys.KeyPair, payload interface{}) (string, error) {
+func (c *ClaimsData) encode(kp nkeys.KeyPair, payload Claims) (string, error) {
 	return c.doEncode(&Header{TokenTypeJwt, AlgorithmNkey}, kp, payload)
 }
 
@@ -122,6 +140,14 @@ func parseClaims(s string, target Claims) error {
 	if err := target.Valid(); err != nil {
 		return err
 	}
+
+	// validity on decoding enforces NotBefore - this cannot be tested
+	// on Valid() as that is used on generation.
+	now := time.Now().UTC().Unix()
+	if target.Claims().NotBefore > 0 && target.Claims().NotBefore > now {
+		return errors.New("claim is not yet valid")
+	}
+
 	return nil
 }
 
@@ -143,17 +169,18 @@ func (c *ClaimsData) Verify(payload string, sig []byte) bool {
 }
 
 // Valid validates a claim to make sure it is valid. Validity checks
-// include expiration and use before constraints.
+// include expiration constraints.
 func (c *ClaimsData) Valid() error {
 	now := time.Now().UTC().Unix()
-	if c.NotBefore > 0 && c.NotBefore > now {
-		return errors.New("claim is not yet valid")
-	}
 	if c.Expires > 0 && now > c.Expires {
 		return errors.New("claim is expired")
 	}
 
 	return nil
+}
+
+func (c *ClaimsData) IsSelfSigned() bool {
+	return c.Issuer == c.Subject
 }
 
 // Decode takes a JWT string decodes it and validates it
@@ -188,12 +215,20 @@ func Decode(token string, target Claims) error {
 	prefixes := target.ExpectedPrefixes()
 	if prefixes != nil {
 		ok := false
+		issuer := target.Claims().Issuer
 		for _, p := range prefixes {
-			if _, err := nkeys.Decode(p, target.Claims().Issuer); err != nil {
-				continue
+			switch p {
+			case nkeys.PrefixByteAccount:
+				if nkeys.IsValidPublicAccountKey(issuer) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteOperator:
+				if nkeys.IsValidPublicOperatorKey(issuer) {
+					ok = true
+					break
+				}
 			}
-			ok = true
-			break
 		}
 		if !ok {
 			return fmt.Errorf("unable to validate expected prefixes - %v", prefixes)

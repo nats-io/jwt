@@ -1,6 +1,9 @@
 package jwt
 
-import "github.com/nats-io/nkeys"
+import (
+	"errors"
+	"github.com/nats-io/nkeys"
+)
 
 type ActivationClaims struct {
 	ClaimsData
@@ -8,13 +11,20 @@ type ActivationClaims struct {
 }
 
 func NewActivationClaims(subject string) *ActivationClaims {
+	if subject == "" {
+		return nil
+	}
 	ac := &ActivationClaims{}
 	ac.Subject = subject
 	return ac
 }
 
 func (a *ActivationClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	return a.ClaimsData.encode(pair, &a)
+	if a.Subject != "public" && !nkeys.IsValidPublicAccountKey(a.Subject) {
+		return "", errors.New("expected subject 'public' or an account")
+	}
+	a.ClaimsData.Type = ActivationClaim
+	return a.ClaimsData.encode(pair, a)
 }
 
 func DecodeActivationClaims(token string) (*ActivationClaims, error) {
@@ -36,6 +46,13 @@ func (a *ActivationClaims) Valid() error {
 	if err := a.Activation.Valid(); err != nil {
 		return err
 	}
+
+	if !nkeys.IsValidPublicOperatorKey(a.Issuer) && !a.IsSelfSigned() {
+		if a.OperatorLimits.Conn > 0 || a.OperatorLimits.Maps > 0 || a.OperatorLimits.Subs > 0 {
+			return errors.New("operator limits can only be set by operators or self-signed")
+		}
+	}
+
 	return nil
 }
 

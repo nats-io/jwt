@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"github.com/nats-io/nkeys"
+	"github.com/pkg/errors"
 )
 
 type AccountClaims struct {
@@ -9,12 +10,21 @@ type AccountClaims struct {
 	Account `json:"nats,omitempty"`
 }
 
-func NewAccountClaims() *AccountClaims {
-	return &AccountClaims{}
+func NewAccountClaims(subject string) *AccountClaims {
+	if subject == "" {
+		return nil
+	}
+	c := &AccountClaims{}
+	c.Subject = subject
+	return c
 }
 
 func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	return a.ClaimsData.encode(pair, &a)
+	if !nkeys.IsValidPublicAccountKey(a.Subject) {
+		return "", errors.New("expected subject to be account public key")
+	}
+	a.ClaimsData.Type = AccountClaim
+	return a.ClaimsData.encode(pair, a)
 }
 
 func DecodeAccountClaims(token string) (*AccountClaims, error) {
