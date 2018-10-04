@@ -10,7 +10,7 @@ type UserClaims struct {
 	Permissions `json:"nats,omitempty"`
 }
 
-func NewUserClaim(subject string) *UserClaims {
+func NewUserClaims(subject string) *UserClaims {
 	if subject == "" {
 		return nil
 	}

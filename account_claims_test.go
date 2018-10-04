@@ -34,7 +34,7 @@ func TestNewAccountClaims(t *testing.T) {
 
 func TestInvalidAccountClaimIssuer(t *testing.T) {
 	ukp := createUserNKey(t)
-	uc := NewUserClaim(publicKey(ukp, t))
+	uc := NewUserClaims(publicKey(ukp, t))
 	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	uJwt := encode(uc, createAccountNKey(t), t)
 

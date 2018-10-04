@@ -19,6 +19,8 @@ const (
 	AccountClaim    = "account"
 	ActivationClaim = "activation"
 	UserClaim       = "user"
+	ServerClaim     = "server"
+	ClusterClaim    = "cluster"
 )
 
 // Claims is a JWT claims
@@ -42,7 +44,7 @@ type ClaimsData struct {
 	Name      string    `json:"name,omitempty"`
 	NotBefore int64     `json:"nbf,omitempty"`
 	Subject   string    `json:"sub,omitempty"`
-	Type      ClaimType `json:"string,omitempty"`
+	Type      ClaimType `json:"type,omitempty"`
 }
 
 type Prefix struct {
@@ -225,6 +227,21 @@ func Decode(token string, target Claims) error {
 				}
 			case nkeys.PrefixByteOperator:
 				if nkeys.IsValidPublicOperatorKey(issuer) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteServer:
+				if nkeys.IsValidPublicServerKey(issuer) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteCluster:
+				if nkeys.IsValidPublicClusterKey(issuer) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteUser:
+				if nkeys.IsValidPublicUserKey(issuer) {
 					ok = true
 					break
 				}
