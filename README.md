@@ -11,16 +11,22 @@ Nkeys use [Ed25519](https://ed25519.cr.yp.to/) to provide authentication of JWT 
 
 ```go
 // Need a private key to sign the claim, nkeys makes it easy to create
-kp, err := nkeys.CreateAccount(nil)
+kp, err := nkeys.CreateAccount()
 if err != nil {
     t.Fatal("unable to create account key", err)
 }
 
-// create a new claim
-claims := NewClaims()
+pk, err := kp.PublicKey()
+if err != nil {
+	t.Fatal("error getting public key", err)
+}
 
-// add details
-claims.Nats["foo"] = "bar"
+// create a new claim
+claims := NewAccountClaims(pk)
+claims.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+
+
+// add details by modifying claims.Account
 
 // serialize the claim to a JWT token
 token, err := claims.Encode(kp)
@@ -29,7 +35,7 @@ if err != nil {
 }
 
 // on the receiving side, decode the token
-c, err := Decode(token)
+c, err := DecodeAccountClaims(token)
 if err != nil {
     t.Fatal(err)
 }

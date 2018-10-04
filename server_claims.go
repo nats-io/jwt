@@ -35,7 +35,6 @@ func DecodeServerClaims(token string) (*ServerClaims, error) {
 	return &v, nil
 }
 
-
 func (s *ServerClaims) String() string {
 	return s.ClaimsData.String(s)
 }
