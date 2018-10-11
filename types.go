@@ -158,6 +158,10 @@ type Operator struct {
 	Identities []Identity `json:"identity,omitempty"`
 }
 
+func (u *Operator) Valid() error {
+	return nil
+}
+
 type Cluster struct {
 	Trust       []string `json:"identity,omitempty"`
 	Accounts    []string `json:"accts,omitempty"`
@@ -167,4 +171,32 @@ type Cluster struct {
 
 type Server struct {
 	Permissions
+}
+
+type Revocation struct {
+	Revoked string `json:"revoked,omitempty"`
+	JWT     string `json:"jwt,omitempty"`
+	Reason  string `json:"reason,omitempty"`
+}
+
+func (u *Revocation) Valid() error {
+	if u.JWT == "" {
+		return fmt.Errorf("error validating revocation token, no JWT to revoke")
+	}
+
+	if u.Revoked == "" {
+		return fmt.Errorf("error validating revocation token, no revoked id specified")
+	}
+
+	theJWT, err := DecodeGeneric(u.JWT)
+
+	if err != nil {
+		return err
+	}
+
+	if theJWT.ID != u.Revoked {
+		return fmt.Errorf("error validating revocation token, id in the child JWT doesn't match revoked id")
+	}
+
+	return nil
 }
