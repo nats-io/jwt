@@ -21,6 +21,8 @@ const (
 	UserClaim       = "user"
 	ServerClaim     = "server"
 	ClusterClaim    = "cluster"
+	OperatorClaim   = "operator"
+	RevocationClaim = "revocation"
 )
 
 // Claims is a JWT claims
