@@ -3,6 +3,7 @@ package jwt
 import (
 	"errors"
 	"fmt"
+
 	"github.com/nats-io/nkeys"
 )
 
@@ -55,7 +56,7 @@ func (a *Account) Valid() error {
 
 	tokenMap := make(map[string]bool)
 	for _, t := range activations {
-		tokenMap[t.Activation.Name] = true
+		tokenMap[t.Name] = true
 	}
 
 	for _, t := range a.Imports {
@@ -98,7 +99,7 @@ func (u *Subjects) contains(p string) bool {
 }
 
 func (u *Subjects) Add(p string) {
-	if !u.contains(p) {
+	if !u.contains(p) && p != "" {
 		*u = append(*u, p)
 	}
 }
@@ -134,7 +135,6 @@ func (e *Export) Valid() error {
 }
 
 type Activation struct {
-	Name    string   `json:"name,omitempty"`
 	Exports []Export `json:"exports,omitempty"`
 	Limits
 	OperatorLimits
@@ -143,7 +143,7 @@ type Activation struct {
 func (a *Activation) Valid() error {
 	for i, t := range a.Exports {
 		if err := t.Valid(); err != nil {
-			return fmt.Errorf("error validating activation %q (index %d):%v", a.Name, i, err)
+			return fmt.Errorf("error validating activation (index %d):%v", i, err)
 		}
 	}
 	return nil
