@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+
 	"github.com/nats-io/nkeys"
 )
 

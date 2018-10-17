@@ -2,12 +2,13 @@ package jwt
 
 import (
 	"errors"
+
 	"github.com/nats-io/nkeys"
 )
 
 type UserClaims struct {
 	ClaimsData
-	Permissions `json:"nats,omitempty"`
+	User `json:"nats,omitempty"`
 }
 
 func NewUserClaims(subject string) *UserClaims {

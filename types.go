@@ -70,7 +70,7 @@ func (a *Account) Valid() error {
 
 type Limits struct {
 	Max     int64   `json:"max,omitempty"`
-	Pyaload int64   `json:"payload,omitempty"`
+	Payload int64   `json:"payload,omitempty"`
 	Src     string  `json:"src,omitempty"`
 	Times   []int64 `json:"times,omitempty"`
 }
@@ -82,9 +82,8 @@ type OperatorLimits struct {
 }
 
 type Permissions struct {
-	Pub     Subjects `json:"pub,omitempty"`
-	Sub     Subjects `json:"sub,omitempty"`
-	Cluster string   `json:"cluster,omitempty"`
+	Pub Subjects `json:"pub,omitempty"`
+	Sub Subjects `json:"sub,omitempty"`
 }
 
 type Subjects []string
@@ -171,6 +170,12 @@ type Cluster struct {
 
 type Server struct {
 	Permissions
+	Cluster string `json:"cluster,omitempty"`
+}
+
+type User struct {
+	Permissions
+	Limits
 }
 
 type Revocation struct {

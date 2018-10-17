@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 	"time"
-
 	"encoding/base64"
 	"encoding/json"
+
 	"github.com/nats-io/nkeys"
 )
 

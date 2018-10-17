@@ -3,10 +3,11 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"github.com/nats-io/nkeys"
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/nats-io/nkeys"
 )
 
 func Trace(message string) string {

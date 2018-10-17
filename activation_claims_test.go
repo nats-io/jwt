@@ -2,9 +2,10 @@ package jwt
 
 import (
 	"fmt"
-	"github.com/nats-io/nkeys"
 	"testing"
 	"time"
+
+	"github.com/nats-io/nkeys"
 )
 
 func TestNewActivationClaims(t *testing.T) {
