@@ -81,14 +81,19 @@ type OperatorLimits struct {
 	Maps int64 `json:"maps,omitempty"`
 }
 
-type Permissions struct {
-	Pub Subjects `json:"pub,omitempty"`
-	Sub Subjects `json:"sub,omitempty"`
+type Permission struct {
+	Allow StringList `json:"allow,omitempty"`
+	Deny  StringList `json:"deny,omitempty"`
 }
 
-type Subjects []string
+type Permissions struct {
+	Pub Permission `json:"pub,omitempty"`
+	Sub Permission `json:"sub,omitempty"`
+}
 
-func (u *Subjects) contains(p string) bool {
+type StringList []string
+
+func (u *StringList) contains(p string) bool {
 	for _, t := range *u {
 		if t == p {
 			return true
@@ -97,18 +102,22 @@ func (u *Subjects) contains(p string) bool {
 	return false
 }
 
-func (u *Subjects) Add(p string) {
-	if !u.contains(p) && p != "" {
-		*u = append(*u, p)
+func (u *StringList) Add(p ...string) {
+	for _, v := range p {
+		if !u.contains(v) && v != "" {
+			*u = append(*u, v)
+		}
 	}
 }
 
-func (u *Subjects) Remove(p string) {
-	for i, t := range *u {
-		if t == p {
-			a := *u
-			*u = append(a[:i], a[i+1:]...)
-			break
+func (u *StringList) Remove(p ...string) {
+	for _, v := range p {
+		for i, t := range *u {
+			if t == v {
+				a := *u
+				*u = append(a[:i], a[i+1:]...)
+				break
+			}
 		}
 	}
 }

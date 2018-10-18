@@ -1,13 +1,13 @@
 package jwt
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
-	"encoding/base64"
-	"encoding/json"
 
 	"github.com/nats-io/nkeys"
 )
