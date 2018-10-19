@@ -4,7 +4,8 @@ build:
 	go build
 
 test:
-	go fmt ./...
+	gofmt -s -w *.go
+	goimports -w *.go
 	go vet ./...
 	go test -v
 	go test -v --race
@@ -15,6 +16,3 @@ fmt:
 cover:
 	 go test -v -covermode=count -coverprofile=coverage.out
 	 go tool cover -html=coverage.out
-
-test:
-	go test -v

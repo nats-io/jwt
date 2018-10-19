@@ -3,66 +3,24 @@ package jwt
 import (
 	"errors"
 	"fmt"
-
-	"github.com/nats-io/nkeys"
 )
 
-type ImportExportType string
-
-const ImportExportTypeStream = "stream"
-const ImportExportTypeService = "service"
-
-type Import struct {
-	Type    ImportExportType `json:"type,omitempty"`
-	Account string           `json:"account,omitempty"`
-	Subject string           `json:"subject,omitempty"`
-	To      string           `json:"to,omitempty"`
-	Prefix  string           `json:"prefix,omitempty"`
-}
-
-func (a *Import) Valid() error {
-	if a.Type != ImportExportTypeService && a.Type != ImportExportTypeStream {
-		return fmt.Errorf("import type %q is invalid", a.Type)
-	}
-	return nil
-}
-
 type Account struct {
-	Imports []Import `json:"imports,omitempty"`
-	Act     []string `json:"act,omitempty"`
-}
-
-func (a *Account) AppendActivation(act string) {
-	a.Act = append(a.Act, act)
-}
-
-func (a *Account) Activations() ([]*ActivationClaims, error) {
-	var buf []*ActivationClaims
-	for i, s := range a.Act {
-		ac, err := DecodeActivationClaims(s)
-		if err != nil {
-			return nil, fmt.Errorf("error decoding activation [%d]: %v", i, err)
-		}
-		buf = append(buf, ac)
-	}
-	return buf, nil
+	Imports Imports `json:"imports,omitempty"`
+	Exports Exports `json:"exports,omitempty"`
+	Access  string  `json:"access,omitempty"`
 }
 
 func (a *Account) Valid() error {
-	activations, err := a.Activations()
-	if err != nil {
+	if a.Access == "" {
+		return errors.New("account jwts require an access token")
+	}
+	if _, err := DecodeActivationClaims(a.Access); err != nil {
+		return fmt.Errorf("access is not valid: %v", err)
+	}
+
+	if err := a.Imports.Valid(); err != nil {
 		return err
-	}
-
-	tokenMap := make(map[string]bool)
-	for _, t := range activations {
-		tokenMap[t.Name] = true
-	}
-
-	for _, t := range a.Imports {
-		if !nkeys.IsValidPublicAccountKey(t.Account) && !tokenMap[t.Account] {
-			return fmt.Errorf("import references account %q - but it is not an account pk nor an activation token name", t.Account)
-		}
 	}
 
 	return nil
@@ -123,22 +81,6 @@ func (u *StringList) Remove(p ...string) {
 }
 
 func (u *Permissions) Valid() error {
-	return nil
-}
-
-type Export struct {
-	Type    ImportExportType `json:"type,omitempty"`
-	Subject string           `json:"subject,omitempty"`
-}
-
-func (e *Export) Valid() error {
-	if e.Type != ImportExportTypeService && e.Type != ImportExportTypeStream {
-		return fmt.Errorf("export type %q is invalid", e.Type)
-	}
-	if e.Subject == "" {
-		return errors.New("export subject is empty")
-	}
-
 	return nil
 }
 

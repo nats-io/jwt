@@ -20,7 +20,7 @@ func TestNewAccountClaims(t *testing.T) {
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
 
 	okp := createOperatorNKey(t)
-	account.AppendActivation(encode(activation, okp, t))
+	account.Access = encode(activation, okp, t)
 
 	actJwt := encode(account, akp, t)
 
@@ -85,9 +85,19 @@ func TestInvalidAccountSubjects(t *testing.T) {
 		{"cluster", createClusterNKey(t), false},
 	}
 
+	operator := createOperatorNKey(t)
+
 	for _, i := range inputs {
-		c := NewAccountClaims(publicKey(i.kp, t))
-		_, err := c.Encode(createOperatorNKey(t))
+		pk := publicKey(i.kp, t)
+		activation := NewActivationClaims(pk)
+		var err error
+
+		c := NewAccountClaims(pk)
+		c.Access, err = activation.Encode(operator)
+		if i.ok && err != nil {
+			t.Fatalf("error encoding activation: %v", err)
+		}
+		_, err = c.Encode(i.kp)
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
 		}

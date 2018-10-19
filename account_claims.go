@@ -44,10 +44,11 @@ func (a *AccountClaims) Payload() interface{} {
 }
 
 func (a *AccountClaims) Valid() error {
-	if err := a.ClaimsData.Valid(); err != nil {
+	var err error
+	if err = a.ClaimsData.Valid(); err != nil {
 		return err
 	}
-	if err := a.Account.Valid(); err != nil {
+	if err = a.Account.Valid(); err != nil {
 		return err
 	}
 	return nil
