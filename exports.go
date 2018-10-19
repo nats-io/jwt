@@ -32,6 +32,10 @@ func (es *ExportedStreams) Valid() error {
 	return nil
 }
 
+func (es *ExportedStreams) Add(s ExportedStream) {
+	*es = append(*es, s)
+}
+
 type ExportedService struct {
 	Export
 }
@@ -48,6 +52,10 @@ func (es *ExportedService) Valid() error {
 	return nil
 }
 
+func (es *ExportedServices) Add(s ExportedService) {
+	*es = append(*es, s)
+}
+
 type ExportedServices []ExportedService
 
 func (es *ExportedServices) Valid() error {
@@ -62,4 +70,14 @@ func (es *ExportedServices) Valid() error {
 type Exports struct {
 	Streams  ExportedStreams  `json:"streams,omitempty"`
 	Services ExportedServices `json:"services,omitempty"`
+}
+
+func (e *Exports) Valid() error {
+	if err := e.Services.Valid(); err != nil {
+		return err
+	}
+	if err := e.Streams.Valid(); err != nil {
+		return err
+	}
+	return nil
 }

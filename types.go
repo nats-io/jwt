@@ -85,18 +85,13 @@ func (u *Permissions) Valid() error {
 }
 
 type Activation struct {
-	Exports []Export `json:"exports,omitempty"`
+	Exports Exports `json:"exports,omitempty"`
 	Limits
 	OperatorLimits
 }
 
 func (a *Activation) Valid() error {
-	for i, t := range a.Exports {
-		if err := t.Valid(); err != nil {
-			return fmt.Errorf("error validating activation (index %d):%v", i, err)
-		}
-	}
-	return nil
+	return a.Exports.Valid()
 }
 
 type Identity struct {
