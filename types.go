@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -12,13 +11,6 @@ type Account struct {
 }
 
 func (a *Account) Valid() error {
-	if a.Access == "" {
-		return errors.New("account jwts require an access token")
-	}
-	if _, err := DecodeActivationClaims(a.Access); err != nil {
-		return fmt.Errorf("access is not valid: %v", err)
-	}
-
 	if err := a.Imports.Valid(); err != nil {
 		return err
 	}
