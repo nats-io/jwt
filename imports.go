@@ -41,7 +41,7 @@ func (i *Import) Valid() error {
 		return err
 	}
 
-	if i.Auth != "" {
+	if i.Auth == "" {
 		return fmt.Errorf("authentication token is not specified")
 	}
 
