@@ -48,7 +48,7 @@ func (a *AccountClaims) Valid() error {
 	if err = a.ClaimsData.Valid(); err != nil {
 		return err
 	}
-	if err = a.Account.Valid(a.Subject); err != nil {
+	if err = a.Account.Valid(); err != nil {
 		return err
 	}
 	return nil
