@@ -18,10 +18,10 @@ func (ns *NamedSubject) Valid() error {
 
 type Import struct {
 	NamedSubject
-	Auth   string `json:"auth,omitempty"`
-	To     string `json:"to,omitempty"`
-	Prefix string `json:"prefix,omitempty"`
-	Type   string `json:"type,omitempty"`
+	Auth   string  `json:"auth,omitempty"`
+	To     Subject `json:"to,omitempty"`
+	Prefix Subject `json:"prefix,omitempty"`
+	Type   string  `json:"type,omitempty"`
 }
 
 func (i *Import) IsService() bool {
