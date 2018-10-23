@@ -23,17 +23,17 @@ func (ns *NamedSubject) Valid() error {
 
 type ImportDescriptor struct {
 	NamedSubject
-	Account string `json:"account,omitempty"`
-	To      string `json:"to,omitempty"`
-	Prefix  string `json:"prefix,omitempty"`
+	Auth   string `json:"auth,omitempty"`
+	To     string `json:"to,omitempty"`
+	Prefix string `json:"prefix,omitempty"`
 }
 
 func (a *ImportDescriptor) Valid() error {
 	if err := a.NamedSubject.Valid(); err != nil {
 		return err
 	}
-	if a.Account != "public" && !nkeys.IsValidPublicAccountKey(a.Account) {
-		return fmt.Errorf("account %q is not a valid account public key", a.Account)
+	if a.Auth != "public" && !nkeys.IsValidPublicAccountKey(a.Auth) {
+		return fmt.Errorf("account %q is not a valid account public key", a.Auth)
 	}
 
 	return nil
@@ -136,9 +136,9 @@ func (i *Imports) Valid(subject string) error {
 	}
 
 	for _, t := range i.Streams {
-		actvs := m[t.Account]
+		actvs := m[t.Auth]
 		if actvs == nil || len(actvs) == 0 {
-			return fmt.Errorf("imported stream references account %q - but provides no matching activation", t.Account)
+			return fmt.Errorf("imported stream references account %q - but provides no matching activation", t.Auth)
 		}
 		found := false
 		for _, act := range actvs {
@@ -148,14 +148,14 @@ func (i *Imports) Valid(subject string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("an export for %q in a stream from account %q was not included", t.Subject, t.Account)
+			return fmt.Errorf("an export for %q in a stream from account %q was not included", t.Subject, t.Auth)
 		}
 	}
 
 	for _, t := range i.Services {
-		actvs := m[t.Account]
+		actvs := m[t.Auth]
 		if actvs == nil || len(actvs) == 0 {
-			return fmt.Errorf("imported service references account %q - but provides no matching activation", t.Account)
+			return fmt.Errorf("imported service references account %q - but provides no matching activation", t.Auth)
 		}
 		found := false
 		for _, act := range actvs {
@@ -165,7 +165,7 @@ func (i *Imports) Valid(subject string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("an export for %q in a service from account %q was not included", t.Subject, t.Account)
+			return fmt.Errorf("an export for %q in a service from account %q was not included", t.Subject, t.Auth)
 		}
 	}
 
