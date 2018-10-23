@@ -81,3 +81,21 @@ func (e *Exports) Valid() error {
 	}
 	return nil
 }
+
+func (e *Exports) HasStreamWithSubject(subject string) bool {
+	for _, s := range e.Streams {
+		if s.Subject == subject {
+			return true
+		}
+	}
+	return false
+}
+
+func (e *Exports) HasServiceWithSubject(subject string) bool {
+	for _, s := range e.Services {
+		if s.Subject == subject {
+			return true
+		}
+	}
+	return false
+}

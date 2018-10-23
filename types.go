@@ -10,8 +10,8 @@ type Account struct {
 	Access  string  `json:"access,omitempty"`
 }
 
-func (a *Account) Valid() error {
-	if err := a.Imports.Valid(); err != nil {
+func (a *Account) Valid(subject string) error {
+	if err := a.Imports.Valid(subject); err != nil {
 		return err
 	}
 

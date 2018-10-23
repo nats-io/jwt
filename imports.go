@@ -107,7 +107,7 @@ func (i *Imports) Activations() ([]*ActivationClaims, error) {
 	return buf, nil
 }
 
-func (i *Imports) Valid() error {
+func (i *Imports) Valid(subject string) error {
 	if err := i.Streams.Valid(); err != nil {
 		return err
 	}
@@ -120,22 +120,52 @@ func (i *Imports) Valid() error {
 		return err
 	}
 
-	tokenMap := make(map[string]bool)
-	tokenMap["public"] = true
+	m := make(map[string][]*ActivationClaims)
 
-	for _, t := range activations {
-		tokenMap[t.Name] = true
+	for i, t := range activations {
+		if !strings.EqualFold("public", t.Subject) && t.Subject != subject {
+			return fmt.Errorf("activation [%d] has a subject of %q - which is not 'public' or matching %q", i, t.Subject, subject)
+		}
+
+		a, ok := m[t.Issuer]
+		if !ok {
+			a = make([]*ActivationClaims, 0, 0)
+			m[t.Issuer] = a
+		}
+		a = append(a, t)
 	}
 
 	for _, t := range i.Streams {
-		if !tokenMap[t.Account] {
+		actvs := m[t.Account]
+		if actvs == nil || len(actvs) == 0 {
 			return fmt.Errorf("imported stream references account %q - but provides no matching activation", t.Account)
+		}
+		found := false
+		for _, act := range actvs {
+			if act.Exports.HasStreamWithSubject(t.Subject) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("an export for %q in a stream from account %q was not included", t.Subject, t.Account)
 		}
 	}
 
-	for _, t := range i.Streams {
-		if !tokenMap[t.Account] {
-			return fmt.Errorf("import service references account %q - but provides no matching activation", t.Account)
+	for _, t := range i.Services {
+		actvs := m[t.Account]
+		if actvs == nil || len(actvs) == 0 {
+			return fmt.Errorf("imported service references account %q - but provides no matching activation", t.Account)
+		}
+		found := false
+		for _, act := range actvs {
+			if act.Exports.HasServiceWithSubject(t.Subject) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("an export for %q in a service from account %q was not included", t.Subject, t.Account)
 		}
 	}
 
