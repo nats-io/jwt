@@ -117,9 +117,8 @@ type User struct {
 }
 
 type Revocation struct {
-	Revoked string `json:"revoked,omitempty"`
-	JWT     string `json:"jwt,omitempty"`
-	Reason  string `json:"reason,omitempty"`
+	JWT    string `json:"jwt,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 func (u *Revocation) Valid() error {
@@ -127,18 +126,10 @@ func (u *Revocation) Valid() error {
 		return fmt.Errorf("error validating revocation token, no JWT to revoke")
 	}
 
-	if u.Revoked == "" {
-		return fmt.Errorf("error validating revocation token, no revoked id specified")
-	}
-
-	theJWT, err := DecodeGeneric(u.JWT)
+	_, err := DecodeGeneric(u.JWT)
 
 	if err != nil {
 		return err
-	}
-
-	if theJWT.ID != u.Revoked {
-		return fmt.Errorf("error validating revocation token, id in the child JWT doesn't match revoked id")
 	}
 
 	return nil

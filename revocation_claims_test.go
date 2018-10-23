@@ -20,7 +20,6 @@ func TestNewRevocationClaims(t *testing.T) {
 	revocation := NewRevocationClaims(apk)
 	revocation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	revocation.JWT = actJwt
-	revocation.Revoked = activation.ID
 	revocation.Reason = "Closing account"
 
 	revJWT := encode(revocation, okp, t)
@@ -47,7 +46,6 @@ func TestIssuerMustMatch(t *testing.T) {
 	revocation := NewRevocationClaims(apk)
 	revocation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	revocation.JWT = actJwt
-	revocation.Revoked = activation.ID
 	revocation.Reason = "Closing account"
 
 	_, err := revocation.Encode(akp)
@@ -62,7 +60,6 @@ func TestBadJWTInRevocation(t *testing.T) {
 	revocation := NewRevocationClaims(apk)
 	revocation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	revocation.JWT = "invalidjwt"
-	revocation.Revoked = "fakeid"
 	revocation.Reason = "Closing account"
 
 	_, err := revocation.Encode(akp)
