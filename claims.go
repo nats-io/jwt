@@ -79,10 +79,11 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (s
 		return "", err
 	}
 
-	c.Issuer, err = kp.PublicKey()
+	issuerBytes, err := kp.PublicKey()
 	if err != nil {
 		return "", err
 	}
+	c.Issuer = string(issuerBytes)
 
 	c.IssuedAt = time.Now().UTC().Unix()
 
@@ -162,7 +163,7 @@ func parseClaims(s string, target Claims) error {
 // claim is trusted.
 func (c *ClaimsData) Verify(payload string, sig []byte) bool {
 	// decode the public key
-	kp, err := nkeys.FromPublicKey(c.Issuer)
+	kp, err := nkeys.FromPublicKey([]byte(c.Issuer))
 	if err != nil {
 		return false
 	}
@@ -219,7 +220,7 @@ func Decode(token string, target Claims) error {
 	prefixes := target.ExpectedPrefixes()
 	if prefixes != nil {
 		ok := false
-		issuer := target.Claims().Issuer
+		issuer := []byte(target.Claims().Issuer)
 		for _, p := range prefixes {
 			switch p {
 			case nkeys.PrefixByteAccount:

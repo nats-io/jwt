@@ -78,7 +78,7 @@ func publicKey(kp nkeys.KeyPair, t *testing.T) string {
 	if err != nil {
 		t.Fatal("error reading public key", err)
 	}
-	return pk
+	return string(pk)
 }
 
 func encode(c Claims, kp nkeys.KeyPair, t *testing.T) string {

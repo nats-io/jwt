@@ -20,7 +20,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 }
 
 func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicAccountKey(a.Subject) {
+	if !nkeys.IsValidPublicAccountKey([]byte(a.Subject)) {
 		return "", errors.New("expected subject to be account public key")
 	}
 	a.ClaimsData.Type = AccountClaim

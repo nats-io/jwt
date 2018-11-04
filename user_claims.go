@@ -21,7 +21,7 @@ func NewUserClaims(subject string) *UserClaims {
 }
 
 func (u *UserClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicUserKey(u.Subject) {
+	if !nkeys.IsValidPublicUserKey([]byte(u.Subject)) {
 		return "", errors.New("expected subject to be user public key")
 	}
 	u.ClaimsData.Type = UserClaim

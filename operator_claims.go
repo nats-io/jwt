@@ -21,7 +21,7 @@ func NewOperatorClaims(subject string) *OperatorClaims {
 }
 
 func (s *OperatorClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicOperatorKey(s.Subject) {
+	if !nkeys.IsValidPublicOperatorKey(([]byte(s.Subject))) {
 		return "", errors.New("expected subject to be an operator public key")
 	}
 	s.ClaimsData.Type = OperatorClaim

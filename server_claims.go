@@ -21,7 +21,7 @@ func NewServerClaims(subject string) *ServerClaims {
 }
 
 func (s *ServerClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicServerKey(s.Subject) {
+	if !nkeys.IsValidPublicServerKey([]byte(s.Subject)) {
 		return "", errors.New("expected subject to be a server public key")
 	}
 	s.ClaimsData.Type = ServerClaim
