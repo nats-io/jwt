@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"fmt"
+	"strings"
 )
 
 type Account struct {
@@ -46,7 +47,7 @@ type Permissions struct {
 
 type StringList []string
 
-func (u *StringList) contains(p string) bool {
+func (u *StringList) Contains(p string) bool {
 	for _, t := range *u {
 		if t == p {
 			return true
@@ -57,7 +58,7 @@ func (u *StringList) contains(p string) bool {
 
 func (u *StringList) Add(p ...string) {
 	for _, v := range p {
-		if !u.contains(v) && v != "" {
+		if !u.Contains(v) && v != "" {
 			*u = append(*u, v)
 		}
 	}
@@ -65,6 +66,41 @@ func (u *StringList) Add(p ...string) {
 
 func (u *StringList) Remove(p ...string) {
 	for _, v := range p {
+		for i, t := range *u {
+			if t == v {
+				a := *u
+				*u = append(a[:i], a[i+1:]...)
+				break
+			}
+		}
+	}
+}
+
+// TagList is a unique array of lower case strings
+type TagList []string
+
+func (u *TagList) Contains(p string) bool {
+	p = strings.ToLower(p)
+	for _, t := range *u {
+		if t == p {
+			return true
+		}
+	}
+	return false
+}
+
+func (u *TagList) Add(p ...string) {
+	for _, v := range p {
+		v = strings.ToLower(v)
+		if !u.Contains(v) && v != "" {
+			*u = append(*u, v)
+		}
+	}
+}
+
+func (u *TagList) Remove(p ...string) {
+	for _, v := range p {
+		v = strings.ToLower(v)
 		for i, t := range *u {
 			if t == v {
 				a := *u

@@ -117,15 +117,15 @@ func TestSubjects(t *testing.T) {
 	if len(s) != 0 {
 		t.Fatalf("expected len 0")
 	}
-	if s.contains("a") {
+	if s.Contains("a") {
 		t.Fatalf("didn't expect 'a'")
 	}
 	s.Add("a")
-	if !s.contains("a") {
+	if !s.Contains("a") {
 		t.Fatalf("expected 'a'")
 	}
 	s.Remove("a")
-	if s.contains("a") {
+	if s.Contains("a") {
 		t.Fatalf("didn't expect 'a' after removing")
 	}
 }

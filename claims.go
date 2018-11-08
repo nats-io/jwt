@@ -46,6 +46,7 @@ type ClaimsData struct {
 	Name      string    `json:"name,omitempty"`
 	NotBefore int64     `json:"nbf,omitempty"`
 	Subject   string    `json:"sub,omitempty"`
+	Tags      TagList   `json:"tags,omitempty"`
 	Type      ClaimType `json:"type,omitempty"`
 }
 

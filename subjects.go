@@ -22,5 +22,8 @@ func (s Subject) HasWildCards() bool {
 	v := string(s)
 	return strings.HasSuffix(v, ".>") ||
 		strings.Contains(v, ".*.") ||
-		strings.HasSuffix(v, ".*")
+		strings.HasSuffix(v, ".*") ||
+		strings.HasPrefix(v, "*.") ||
+		v == "*" ||
+		v == ">"
 }
