@@ -22,7 +22,7 @@ func (i *Import) IsStream() bool {
 
 // Validate checks if an import is valid for the wrapping account
 func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
-	if i.Type != ServiceType && i.Type != StreamType {
+	if !i.IsService() && !i.IsStream() {
 		vr.AddError("invalid import type: %q", i.Type)
 	}
 
@@ -56,6 +56,8 @@ func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
 		if act.Subject != acct.Subject {
 			vr.AddWarning("activation token doesn't match account it is being included in, %s", i.Subject)
 		}
+	} else {
+		vr.AddWarning("no activation provided for import %s", i.Subject)
 	}
 
 	//FIXME: validate token URL
@@ -63,7 +65,7 @@ func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
 }
 
 // Imports is a list of import structs
-type Imports []Import
+type Imports []*Import
 
 // Validate checks if an import is valid for the wrapping account
 func (i *Imports) Validate(acct *AccountClaims, vr *ValidationResults) {
@@ -73,6 +75,6 @@ func (i *Imports) Validate(acct *AccountClaims, vr *ValidationResults) {
 }
 
 // Add is a simple way to add imports
-func (i *Imports) Add(a ...Import) {
+func (i *Imports) Add(a ...*Import) {
 	*i = append(*i, a...)
 }

@@ -19,7 +19,7 @@ func (e *Export) IsStream() bool {
 
 // Validate appends validation issues to the passed in results list
 func (e *Export) Validate(vr *ValidationResults) {
-	if e.Type != ServiceType && e.Type != StreamType {
+	if !e.IsService() && !e.IsStream() {
 		vr.AddError("invalid export type: %q", e.Type)
 	}
 
@@ -33,10 +33,10 @@ func (e *Export) Validate(vr *ValidationResults) {
 }
 
 // Exports is an array of exports
-type Exports []Export
+type Exports []*Export
 
 // Add appends exports to the list
-func (e *Exports) Add(i ...Export) {
+func (e *Exports) Add(i ...*Export) {
 	*e = append(*e, i...)
 }
 

@@ -15,20 +15,20 @@ func (ve *ValidationIssue) Error() string {
 
 // ValidationResults is a list of ValidationIssue pointers
 type ValidationResults struct {
-	issues []*ValidationIssue
+	Issues []*ValidationIssue
 }
 
 // CreateValidationResults creates an empty list of validation issues
 func CreateValidationResults() *ValidationResults {
 	issues := []*ValidationIssue{}
 	return &ValidationResults{
-		issues: issues,
+		Issues: issues,
 	}
 }
 
 //Add appends an issue to the list
 func (v *ValidationResults) Add(vi *ValidationIssue) {
-	v.issues = append(v.issues, vi)
+	v.Issues = append(v.Issues, vi)
 }
 
 // AddError creates a new validation error and adds it to the list
@@ -60,7 +60,7 @@ func (v *ValidationResults) AddWarning(format string, args ...interface{}) {
 
 // IsBlocking returns true if the list contains a blocking error
 func (v *ValidationResults) IsBlocking(includeTimeChecks bool) bool {
-	for _, i := range v.issues {
+	for _, i := range v.Issues {
 		if i.Blocking {
 			return true
 		}
@@ -74,5 +74,5 @@ func (v *ValidationResults) IsBlocking(includeTimeChecks bool) bool {
 
 // IsEmpty returns true if the list is empty
 func (v *ValidationResults) IsEmpty() bool {
-	return len(v.issues) == 0
+	return len(v.Issues) == 0
 }
