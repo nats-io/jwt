@@ -6,32 +6,37 @@ func TestSubjectValid(t *testing.T) {
 	var s Subject
 
 	s = ""
-	err := s.Valid()
-	if err == nil {
+	vr := CreateValidationResults()
+	s.Validate(vr)
+	if !vr.IsBlocking(false) {
 		t.Fatalf("Empty string is not a valid subjects")
 	}
 
 	s = "has spaces"
-	err = s.Valid()
-	if err == nil {
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if !vr.IsBlocking(false) {
 		t.Fatalf("Subjects cannot contain spaces")
 	}
 
 	s = "has.spa ces.and.tokens"
-	err = s.Valid()
-	if err == nil {
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if !vr.IsBlocking(false) {
 		t.Fatalf("Subjects cannot have spaces")
 	}
 
 	s = "one"
-	err = s.Valid()
-	if err != nil {
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if !vr.IsEmpty() {
 		t.Fatalf("%s is a valid subject", s)
 	}
 
 	s = "one.two.three"
-	err = s.Valid()
-	if err != nil {
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if !vr.IsEmpty() {
 		t.Fatalf("%s is a valid subject", s)
 	}
 }

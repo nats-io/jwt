@@ -199,9 +199,14 @@ func TestExpiredToken(t *testing.T) {
 	c.Expires = time.Now().UTC().Unix() - 100
 	c.Data["foo"] = "barz"
 
-	_, err := c.Encode(akp)
-	if err == nil {
-		t.Fatal("shouldn't be able to encode an expired claim")
+	vr := CreateValidationResults()
+	c.Validate(vr)
+	if !vr.IsBlocking(true) {
+		t.Fatalf("expired tokens should be blocking when time is included")
+	}
+
+	if vr.IsBlocking(false) {
+		t.Fatalf("expired tokens should not be blocking when time is not included")
 	}
 }
 
@@ -211,23 +216,16 @@ func TestNotYetValid(t *testing.T) {
 		t.Fatal("unable to create account key", err)
 	}
 	c := NewGenericClaims(publicKey(akp1, t))
-	now := time.Now().UTC().Unix()
-	c.NotBefore = now + 100
-	c.Data["foo"] = "barz"
+	c.NotBefore = time.Now().Add(time.Duration(1) * time.Hour).UTC().Unix()
 
-	token := encode(c, akp1, t)
-
-	claim, err := DecodeGeneric(token)
-	if claim != nil {
-		t.Fatalf("non nil claim on bad token: %q", claim.String())
+	vr := CreateValidationResults()
+	c.Validate(vr)
+	if !vr.IsBlocking(true) {
+		t.Fatalf("not yet valid tokens should be blocking when time is included")
 	}
 
-	if err == nil {
-		t.Fatalf("nil error on bad token")
-	}
-
-	if err.Error() != "claim is not yet valid" {
-		t.Fatalf("expected not yet valid claim: %q", err.Error())
+	if vr.IsBlocking(false) {
+		t.Fatalf("not yet valid tokens should not be blocking when time is not included")
 	}
 }
 

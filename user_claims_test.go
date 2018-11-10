@@ -81,7 +81,7 @@ func TestUserSubjects(t *testing.T) {
 
 	for _, i := range inputs {
 		c := NewUserClaims(publicKey(i.kp, t))
-		_, err := c.Encode(createOperatorNKey(t))
+		_, err := c.Encode(createAccountNKey(t))
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
 		}

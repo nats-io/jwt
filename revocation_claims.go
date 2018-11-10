@@ -1,16 +1,35 @@
 package jwt
 
 import (
-	"fmt"
-
 	"github.com/nats-io/nkeys"
 )
 
+// Revocation defines the custom parts of a revocation JWt
+type Revocation struct {
+	JWT    string `json:"jwt,omitempty"`
+	Reason string `json:"reason,omitempty"`
+}
+
+// Validate checks the JWT and reason for a revocation
+func (u *Revocation) Validate(vr *ValidationResults) {
+	if u.JWT == "" {
+		vr.AddError("revocation token has no JWT to revoke")
+	}
+
+	_, err := DecodeGeneric(u.JWT)
+
+	if err != nil {
+		vr.AddError("revocation token has an invalid JWT")
+	}
+}
+
+// RevocationClaims defines a revocation tokens data
 type RevocationClaims struct {
 	ClaimsData
 	Revocation `json:"nats,omitempty"`
 }
 
+// NewRevocationClaims creates a new revocation JWT for the specified subject/public key
 func NewRevocationClaims(subject string) *RevocationClaims {
 	if subject == "" {
 		return nil
@@ -20,11 +39,13 @@ func NewRevocationClaims(subject string) *RevocationClaims {
 	return c
 }
 
-func (s *RevocationClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	s.ClaimsData.Type = RevocationClaim
-	return s.ClaimsData.encode(pair, s)
+// Encode translates the claims to a JWT string
+func (rc *RevocationClaims) Encode(pair nkeys.KeyPair) (string, error) {
+	rc.ClaimsData.Type = RevocationClaim
+	return rc.ClaimsData.encode(pair, rc)
 }
 
+// DecodeRevocationClaims tries to parse a JWT string as a RevocationClaims
 func DecodeRevocationClaims(token string) (*RevocationClaims, error) {
 	v := RevocationClaims{}
 	if err := Decode(token, &v); err != nil {
@@ -33,38 +54,37 @@ func DecodeRevocationClaims(token string) (*RevocationClaims, error) {
 	return &v, nil
 }
 
-func (s *RevocationClaims) String() string {
-	return s.ClaimsData.String(s)
+func (rc *RevocationClaims) String() string {
+	return rc.ClaimsData.String(rc)
 }
 
-func (s *RevocationClaims) Payload() interface{} {
-	return &s.Revocation
+// Payload returns the revocation specific part of the claims
+func (rc *RevocationClaims) Payload() interface{} {
+	return &rc.Revocation
 }
 
-func (s *RevocationClaims) Valid() error {
-	if err := s.ClaimsData.Valid(); err != nil {
-		return err
-	}
-	if err := s.Revocation.Valid(); err != nil {
-		return err
-	}
+// Validate checks the generic and revocation parts of the claims
+func (rc *RevocationClaims) Validate(vr *ValidationResults) {
+	rc.ClaimsData.Validate(vr)
+	rc.Revocation.Validate(vr)
 
-	theJWT, err := DecodeGeneric(s.Revocation.JWT)
+	theJWT, err := DecodeGeneric(rc.Revocation.JWT)
 	if err != nil {
-		return err
+		vr.AddError("revocation contains an invalid JWT")
+		return // can't do the remaining checks
 	}
 
-	if theJWT.Issuer != s.Issuer {
-		return fmt.Errorf("Revocation issuer doesn't match JWT to revoke")
+	if theJWT.Issuer != rc.Issuer {
+		vr.AddError("Revocation issuer doesn't match JWT to revoke")
 	}
-
-	return nil
 }
 
-func (s *RevocationClaims) ExpectedPrefixes() []nkeys.PrefixByte {
+// ExpectedPrefixes defines who can sign a revocation token, account or operator
+func (rc *RevocationClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 	return []nkeys.PrefixByte{nkeys.PrefixByteOperator, nkeys.PrefixByteAccount}
 }
 
-func (s *RevocationClaims) Claims() *ClaimsData {
-	return &s.ClaimsData
+// Claims returns the generic part of the claims
+func (rc *RevocationClaims) Claims() *ClaimsData {
+	return &rc.ClaimsData
 }

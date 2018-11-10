@@ -48,9 +48,10 @@ func TestIssuerMustMatch(t *testing.T) {
 	revocation.JWT = actJwt
 	revocation.Reason = "Closing account"
 
-	_, err := revocation.Encode(akp)
-	if err == nil {
-		t.Fatal("encode/decode should fail with different issuer", err)
+	vr := CreateValidationResults()
+	revocation.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Fatal("validation should fail with a different issuer")
 	}
 }
 
@@ -62,9 +63,10 @@ func TestBadJWTInRevocation(t *testing.T) {
 	revocation.JWT = "invalidjwt"
 	revocation.Reason = "Closing account"
 
-	_, err := revocation.Encode(akp)
-	if err == nil {
-		t.Fatal("encode/decode should fail with bad JWT string in revocation", err)
+	vr := CreateValidationResults()
+	revocation.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Fatal("validation should fail with bad JWT string in revocation")
 	}
 }
 

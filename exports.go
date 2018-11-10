@@ -1,56 +1,54 @@
 package jwt
 
-import (
-	"fmt"
-)
-
+// Export represents a single export
 type Export struct {
 	NamedSubject
 	Type string `json:"type,omitempty"`
 	Limits
 }
 
+// IsService returns true if an export is for a service
 func (e *Export) IsService() bool {
 	return e.Type == ServiceType
 }
 
+// IsStream returns true if an export is for a stream
 func (e *Export) IsStream() bool {
 	return e.Type == StreamType
 }
 
-func (e *Export) Valid() error {
+// Validate appends validation issues to the passed in results list
+func (e *Export) Validate(vr *ValidationResults) {
 	if e.Type != ServiceType && e.Type != StreamType {
-		return fmt.Errorf("invalid export type: %q", e.Type)
-	}
-
-	if err := e.NamedSubject.Valid(); err != nil {
-		return err
+		vr.AddError("invalid export type: %q", e.Type)
 	}
 
 	if e.IsService() {
 		if e.NamedSubject.Subject.HasWildCards() {
-			return fmt.Errorf("services cannot have wildcard subject: %q", e.NamedSubject.Subject)
+			vr.AddWarning("services cannot have wildcard subject: %q", e.NamedSubject.Subject)
 		}
 	}
 
-	return e.NamedSubject.Valid()
+	e.NamedSubject.Validate(vr)
 }
 
+// Exports is an array of exports
 type Exports []Export
 
+// Add appends exports to the list
 func (e *Exports) Add(i ...Export) {
 	*e = append(*e, i...)
 }
 
-func (e *Exports) Valid() error {
+// Validate calls validate on all of the exports
+func (e *Exports) Validate(vr *ValidationResults) error {
 	for _, v := range *e {
-		if err := v.Valid(); err != nil {
-			return err
-		}
+		v.Validate(vr)
 	}
 	return nil
 }
 
+// HasExportWithSubject checks if the export list has an export with the provided subject
 func (e *Exports) HasExportWithSubject(subject string) bool {
 	for _, s := range *e {
 		if string(s.Subject) == subject {

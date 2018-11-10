@@ -13,15 +13,23 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
+// ClaimType is used to indicate the type of JWT being stored in a Claim
 type ClaimType string
 
 const (
-	AccountClaim    = "account"
+	// AccountClaim is the type of an Account JWT
+	AccountClaim = "account"
+	//ActivationClaim is the type of an activation JWT
 	ActivationClaim = "activation"
-	UserClaim       = "user"
-	ServerClaim     = "server"
-	ClusterClaim    = "cluster"
-	OperatorClaim   = "operator"
+	//UserClaim is the type of an user JWT
+	UserClaim = "user"
+	//ServerClaim is the type of an server JWT
+	ServerClaim = "server"
+	//ClusterClaim is the type of an cluster JWT
+	ClusterClaim = "cluster"
+	//OperatorClaim is the type of an operator JWT
+	OperatorClaim = "operator"
+	//RevocationClaim is the type of an revocation JWT
 	RevocationClaim = "revocation"
 )
 
@@ -32,7 +40,7 @@ type Claims interface {
 	ExpectedPrefixes() []nkeys.PrefixByte
 	Payload() interface{}
 	String() string
-	Valid() error
+	Validate(vr *ValidationResults)
 	Verify(payload string, sig []byte) bool
 }
 
@@ -50,6 +58,7 @@ type ClaimsData struct {
 	Type      ClaimType `json:"type,omitempty"`
 }
 
+// Prefix holds the prefix byte for an NKey
 type Prefix struct {
 	nkeys.PrefixByte
 }
@@ -84,16 +93,49 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (s
 	if err != nil {
 		return "", err
 	}
-	c.Issuer = string(issuerBytes)
 
+	prefixes := claim.ExpectedPrefixes()
+	if prefixes != nil {
+		ok := false
+		for _, p := range prefixes {
+			switch p {
+			case nkeys.PrefixByteAccount:
+				if nkeys.IsValidPublicAccountKey(issuerBytes) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteOperator:
+				if nkeys.IsValidPublicOperatorKey(issuerBytes) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteServer:
+				if nkeys.IsValidPublicServerKey(issuerBytes) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteCluster:
+				if nkeys.IsValidPublicClusterKey(issuerBytes) {
+					ok = true
+					break
+				}
+			case nkeys.PrefixByteUser:
+				if nkeys.IsValidPublicUserKey(issuerBytes) {
+					ok = true
+					break
+				}
+			}
+		}
+		if !ok {
+			return "", fmt.Errorf("unable to validate expected prefixes - %v", prefixes)
+		}
+	}
+
+	c.Issuer = string(issuerBytes)
 	c.IssuedAt = time.Now().UTC().Unix()
 
 	c.ID, err = c.hash()
 	if err != nil {
-		return "", err
-	}
-
-	if err := claim.Valid(); err != nil {
 		return "", err
 	}
 
@@ -143,16 +185,6 @@ func parseClaims(s string, target Claims) error {
 	if err := json.Unmarshal(h, &target); err != nil {
 		return err
 	}
-	if err := target.Valid(); err != nil {
-		return err
-	}
-
-	// validity on decoding enforces NotBefore - this cannot be tested
-	// on Valid() as that is used on generation.
-	now := time.Now().UTC().Unix()
-	if target.Claims().NotBefore > 0 && target.Claims().NotBefore > now {
-		return errors.New("claim is not yet valid")
-	}
 
 	return nil
 }
@@ -174,17 +206,20 @@ func (c *ClaimsData) Verify(payload string, sig []byte) bool {
 	return true
 }
 
-// Valid validates a claim to make sure it is valid. Validity checks
-// include expiration constraints.
-func (c *ClaimsData) Valid() error {
+// Validate checks a claim to make sure it is valid. Validity checks
+// include expiration and not before constraints.
+func (c *ClaimsData) Validate(vr *ValidationResults) {
 	now := time.Now().UTC().Unix()
 	if c.Expires > 0 && now > c.Expires {
-		return errors.New("claim is expired")
+		vr.AddTimeCheck("claim is expired")
 	}
 
-	return nil
+	if c.NotBefore > 0 && c.NotBefore > now {
+		vr.AddTimeCheck("claim is not yet valid")
+	}
 }
 
+// IsSelfSigned returns true if the claims issuer is the subject
 func (c *ClaimsData) IsSelfSigned() bool {
 	return c.Issuer == c.Subject
 }

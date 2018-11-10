@@ -1,87 +1,78 @@
 package jwt
 
-import (
-	"fmt"
-)
-
-type NamedSubject struct {
-	Name    string  `json:"name,omitempty"`
-	Subject Subject `json:"subject,omitempty"`
-}
-
-const ServiceType = "service"
-const StreamType = "stream"
-
-func (ns *NamedSubject) Valid() error {
-	return ns.Subject.Valid()
-}
-
+// Import describes a mapping from another account into this one
 type Import struct {
 	NamedSubject
-	Auth   string  `json:"auth,omitempty"`
-	To     Subject `json:"to,omitempty"`
-	Prefix Subject `json:"prefix,omitempty"`
-	Type   string  `json:"type,omitempty"`
+	Account  string  `json:"account,omitempty"`
+	Token    string  `json:"token_jwt,omitempty"`
+	TokenURL string  `json:"token_url,omitempty"`
+	To       Subject `json:"to,omitempty"`
+	Type     string  `json:"type,omitempty"`
 }
 
+// IsService returns true if the import is of type service
 func (i *Import) IsService() bool {
 	return i.Type == ServiceType
 }
 
+// IsStream returns true if the import is of type stream
 func (i *Import) IsStream() bool {
 	return i.Type == StreamType
 }
 
-func (i *Import) Valid() error {
+// Validate checks if an import is valid for the wrapping account
+func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
 	if i.Type != ServiceType && i.Type != StreamType {
-		return fmt.Errorf("invalid import type: %q", i.Type)
+		vr.AddError("invalid import type: %q", i.Type)
 	}
 
-	if err := i.NamedSubject.Valid(); err != nil {
-		return err
+	if i.Account == "" {
+		vr.AddWarning("account to import from is not specified")
 	}
 
-	if i.Auth == "" {
-		return fmt.Errorf("authentication token is not specified")
-	}
+	i.NamedSubject.Validate(vr)
 
 	if i.IsService() {
 		if i.NamedSubject.Subject.HasWildCards() {
-			return fmt.Errorf("services cannot have wildcard subject: %q", i.NamedSubject.Subject)
-		}
-
-		if i.Prefix != "" {
-			return fmt.Errorf("services cannot have a prefix specified: %q", i.Prefix)
+			vr.AddWarning("services cannot have wildcard subject: %q", i.Subject)
 		}
 	}
 
-	if i.IsStream() {
-		if i.To != "" {
-			return fmt.Errorf("streams cannot have a target subject specified: %q", i.To)
+	var act *ActivationClaims
+
+	if i.Token != "" {
+		var err error
+		act, err = DecodeActivationClaims(i.Token)
+		if err != nil {
+			vr.AddWarning("import %s contains an invalid activation token", i.Subject)
 		}
 	}
 
-	_, err := DecodeActivationClaims(i.Auth)
-	if err != nil {
-		return err
+	if act != nil {
+		if act.Issuer != i.Account {
+			vr.AddWarning("activation token doesn't match account for import %s", i.Subject)
+		}
+
+		if act.Subject != acct.Subject {
+			vr.AddWarning("activation token doesn't match account it is being included in, %s", i.Subject)
+		}
 	}
 
-	//FIXME: validate activation claim contains specified subject
-
-	return nil
+	//FIXME: validate token URL
+	//FIXME: check subjects
 }
 
+// Imports is a list of import structs
 type Imports []Import
 
-func (i *Imports) Valid() error {
-	for idx, v := range *i {
-		if err := v.Valid(); err != nil {
-			return fmt.Errorf("error validating [%d] import: %v", idx, err)
-		}
+// Validate checks if an import is valid for the wrapping account
+func (i *Imports) Validate(acct *AccountClaims, vr *ValidationResults) {
+	for _, v := range *i {
+		v.Validate(acct, vr)
 	}
-	return nil
 }
 
+// Add is a simple way to add imports
 func (i *Imports) Add(a ...Import) {
 	*i = append(*i, a...)
 }

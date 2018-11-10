@@ -51,6 +51,44 @@ func TestOperatorSubjects(t *testing.T) {
 	}
 }
 
+func TestInvalidOperatorClaimIssuer(t *testing.T) {
+	akp := createOperatorNKey(t)
+	ac := NewOperatorClaims(publicKey(akp, t))
+	ac.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	aJwt := encode(ac, akp, t)
+
+	temp, err := DecodeGeneric(aJwt)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	type kpInputs struct {
+		name string
+		kp   nkeys.KeyPair
+		ok   bool
+	}
+
+	inputs := []kpInputs{
+		{"account", createAccountNKey(t), false},
+		{"user", createUserNKey(t), false},
+		{"operator", createOperatorNKey(t), true},
+		{"server", createServerNKey(t), false},
+		{"cluster", createClusterNKey(t), false},
+	}
+
+	for _, i := range inputs {
+		bad := encode(temp, i.kp, t)
+		_, err = DecodeOperatorClaims(bad)
+		if i.ok && err != nil {
+			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+		}
+		if !i.ok && err == nil {
+			t.Logf("should have failed to decode account signed by %q", i.name)
+			t.Fail()
+		}
+	}
+}
+
 func TestNewNilOperatorClaims(t *testing.T) {
 	v := NewOperatorClaims("")
 	if v != nil {

@@ -1,23 +1,24 @@
 package jwt
 
 import (
-	"errors"
 	"strings"
 )
 
+// Subject is a string that represents a NATS subject
 type Subject string
 
-func (s Subject) Valid() error {
+// Validate checks that a subject string is valid, ie not empty and without spaces
+func (s Subject) Validate(vr *ValidationResults) {
 	v := string(s)
 	if v == "" {
-		return errors.New("subject cannot be empty")
+		vr.AddError("subject cannot be empty")
 	}
 	if strings.Index(v, " ") != -1 {
-		return errors.New("subject cannot have spaces")
+		vr.AddError("subject %q cannot have spaces", v)
 	}
-	return nil
 }
 
+// HasWildCards is used to check if a subject contains a > or *
 func (s Subject) HasWildCards() bool {
 	v := string(s)
 	return strings.HasSuffix(v, ".>") ||

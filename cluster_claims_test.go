@@ -8,15 +8,15 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
-func TestNewServerClaims(t *testing.T) {
+func TestNewClusterClaims(t *testing.T) {
 	ckp := createClusterNKey(t)
-	skp := createServerNKey(t)
+	skp := createClusterNKey(t)
 
-	uc := NewServerClaims(publicKey(skp, t))
+	uc := NewClusterClaims(publicKey(skp, t))
 	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	uJwt := encode(uc, ckp, t)
 
-	uc2, err := DecodeServerClaims(uJwt)
+	uc2, err := DecodeClusterClaims(uJwt)
 	if err != nil {
 		t.Fatal("failed to decode", err)
 	}
@@ -24,11 +24,11 @@ func TestNewServerClaims(t *testing.T) {
 	AssertEquals(uc.String(), uc2.String(), t)
 }
 
-func TestServerClaimsIssuer(t *testing.T) {
+func TestClusterClaimsIssuer(t *testing.T) {
 	ckp := createClusterNKey(t)
-	skp := createServerNKey(t)
+	skp := createClusterNKey(t)
 
-	uc := NewServerClaims(publicKey(skp, t))
+	uc := NewClusterClaims(publicKey(skp, t))
 	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	uJwt := encode(uc, ckp, t)
 
@@ -53,18 +53,18 @@ func TestServerClaimsIssuer(t *testing.T) {
 
 	for _, i := range inputs {
 		bad := encode(temp, i.kp, t)
-		_, err = DecodeServerClaims(bad)
+		_, err = DecodeClusterClaims(bad)
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
 		}
 		if !i.ok && err == nil {
-			t.Logf("should have failed to decode server signed by %q", i.name)
+			t.Logf("should have failed to decode cluster signed by %q", i.name)
 			t.Fail()
 		}
 	}
 }
 
-func TestServerSubjects(t *testing.T) {
+func TestClusterSubjects(t *testing.T) {
 	type kpInputs struct {
 		name string
 		kp   nkeys.KeyPair
@@ -73,42 +73,42 @@ func TestServerSubjects(t *testing.T) {
 
 	inputs := []kpInputs{
 		{"account", createAccountNKey(t), false},
-		{"cluster", createClusterNKey(t), false},
+		{"server", createServerNKey(t), false},
 		{"operator", createOperatorNKey(t), false},
-		{"server", createServerNKey(t), true},
+		{"cluster", createClusterNKey(t), true},
 		{"user", createUserNKey(t), false},
 	}
 
 	for _, i := range inputs {
-		c := NewServerClaims(publicKey(i.kp, t))
+		c := NewClusterClaims(publicKey(i.kp, t))
 		_, err := c.Encode(createOperatorNKey(t))
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
 		}
 		if !i.ok && err == nil {
-			t.Logf("should have failed to encode server with with %q subject", i.name)
+			t.Logf("should have failed to encode cluster with with %q subject", i.name)
 			t.Fail()
 		}
 	}
 }
 
-func TestNewNilServerClaims(t *testing.T) {
-	v := NewServerClaims("")
+func TestNewNilClusterClaims(t *testing.T) {
+	v := NewClusterClaims("")
 	if v != nil {
 		t.Fatal(fmt.Sprintf("expected nil user claim"))
 	}
 }
 
-func TestServerType(t *testing.T) {
-	c := NewServerClaims(publicKey(createServerNKey(t), t))
+func TestClusterType(t *testing.T) {
+	c := NewClusterClaims(publicKey(createClusterNKey(t), t))
 	s := encode(c, createClusterNKey(t), t)
-	u, err := DecodeServerClaims(s)
+	u, err := DecodeClusterClaims(s)
 	if err != nil {
-		t.Fatalf("failed to decode server claim: %v", err)
+		t.Fatalf("failed to decode cluster claim: %v", err)
 	}
 
-	if ServerClaim != u.Type {
-		t.Fatalf("type is unexpected %q (wanted server)", u.Type)
+	if ClusterClaim != u.Type {
+		t.Fatalf("type is unexpected %q (wanted cluster)", u.Type)
 	}
 
 }
