@@ -40,7 +40,7 @@ type Account struct {
 
 // Validate checks if the account is valid, based on the wrapper
 func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
-	a.Imports.Validate(acct, vr)
+	a.Imports.Validate(acct.Subject, vr)
 	a.Exports.Validate(vr)
 	a.OperatorLimits.Validate(vr)
 

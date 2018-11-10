@@ -1,5 +1,11 @@
 package jwt
 
+import (
+	"io/ioutil"
+	"net/http"
+	"net/url"
+)
+
 // Import describes a mapping from another account into this one
 type Import struct {
 	NamedSubject
@@ -21,7 +27,7 @@ func (i *Import) IsStream() bool {
 }
 
 // Validate checks if an import is valid for the wrapping account
-func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
+func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	if !i.IsService() && !i.IsStream() {
 		vr.AddError("invalid import type: %q", i.Type)
 	}
@@ -48,29 +54,57 @@ func (i *Import) Validate(acct *AccountClaims, vr *ValidationResults) {
 		}
 	}
 
+	if i.TokenURL != "" {
+		url, err := url.Parse(i.TokenURL)
+
+		if err != nil {
+			vr.AddWarning("import %s contains an invalid token URL %q", i.Subject, i.TokenURL)
+		} else {
+			resp, err := http.Get(url.String())
+			if err != nil {
+				vr.AddWarning("import %s contains an unreachable token URL %q", i.Subject, i.TokenURL)
+			}
+
+			if resp != nil {
+				defer resp.Body.Close()
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					vr.AddWarning("import %s contains an unreadable token URL %q", i.Subject, i.TokenURL)
+				} else {
+					act, err = DecodeActivationClaims(string(body))
+					if err != nil {
+						vr.AddWarning("import %s contains a url %q with an invalid activation token", i.Subject, i.TokenURL)
+					}
+				}
+			}
+		}
+	}
+
 	if act != nil {
 		if act.Issuer != i.Account {
 			vr.AddWarning("activation token doesn't match account for import %s", i.Subject)
 		}
 
-		if act.Subject != acct.Subject {
+		if act.Subject != actPubKey {
 			vr.AddWarning("activation token doesn't match account it is being included in, %s", i.Subject)
+		}
+
+		if !act.Exports.HasExportContainingSubject(i.Subject) {
+			vr.AddWarning("activation token include the subject trying to be imported, %s", i.Subject)
 		}
 	} else {
 		vr.AddWarning("no activation provided for import %s", i.Subject)
 	}
 
-	//FIXME: validate token URL
-	//FIXME: check subjects
 }
 
 // Imports is a list of import structs
 type Imports []*Import
 
 // Validate checks if an import is valid for the wrapping account
-func (i *Imports) Validate(acct *AccountClaims, vr *ValidationResults) {
+func (i *Imports) Validate(acctPubKey string, vr *ValidationResults) {
 	for _, v := range *i {
-		v.Validate(acct, vr)
+		v.Validate(acctPubKey, vr)
 	}
 }
 

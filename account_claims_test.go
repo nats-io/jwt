@@ -42,6 +42,13 @@ func TestNewAccountClaims(t *testing.T) {
 			Type:    StreamType,
 		})
 
+	vr := CreateValidationResults()
+	account.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Fatal("Valid account will have no validation results")
+	}
+
 	actJwt := encode(account, akp, t)
 
 	account2, err := DecodeAccountClaims(actJwt)
@@ -50,6 +57,7 @@ func TestNewAccountClaims(t *testing.T) {
 	}
 
 	AssertEquals(account.String(), account2.String(), t)
+	AssertEquals(account2.IsSelfSigned(), true, t)
 }
 
 func TestAccountCantSignOperatorLimits(t *testing.T) {
@@ -108,6 +116,7 @@ func TestOperatorCanSignClaims(t *testing.T) {
 	}
 
 	AssertEquals(account.String(), account2.String(), t)
+	AssertEquals(account2.IsSelfSigned(), false, t)
 }
 
 func TestInvalidAccountClaimIssuer(t *testing.T) {
@@ -203,5 +212,102 @@ func TestNewNilAccountClaim(t *testing.T) {
 	v := NewAccountClaims("")
 	if v != nil {
 		t.Fatal(fmt.Sprintf("expected nil account claim"))
+	}
+}
+
+func TestLimitValidationInAccount(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.OperatorLimits.Conn = 10
+	account.OperatorLimits.Maps = 10
+	account.OperatorLimits.Subs = 10
+	account.Identities = []Identity{
+		{
+			ID:    "stephen",
+			Proof: "yougotit",
+		},
+	}
+
+	vr := CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 0 {
+		t.Fatal("valid account should have no validation issues")
+	}
+
+	account.OperatorLimits.Conn = -1
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Fatal("bad limit is error")
+	}
+
+	account.OperatorLimits.Conn = 10
+	account.OperatorLimits.Maps = -1
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Fatal("bad limit is error")
+	}
+
+	account.OperatorLimits.Maps = 10
+	account.OperatorLimits.Subs = -1
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Fatal("bad limit is error")
+	}
+
+	account.OperatorLimits.Subs = 199
+	op := createOperatorNKey(t)
+	opk := publicKey(op, t)
+	account.Issuer = opk
+
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Fatal("operator can encode limits and identity")
+	}
+
+	account.Identities = nil
+	account.Issuer = apk
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Fatal("bad issuer should be blocking")
+	}
+
+	account.Identities = []Identity{
+		{
+			ID:    "stephen",
+			Proof: "yougotit",
+		},
+	}
+	account.OperatorLimits.Subs = 0
+	account.OperatorLimits.Conn = 0
+	account.OperatorLimits.Maps = 0
+	account.Issuer = apk
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Fatal("bad issuer should be blocking")
+	}
+
+	account.Identities = nil
+	account.Issuer = apk
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Fatal("account can encode without limits and identity")
 	}
 }

@@ -18,7 +18,7 @@ func TestNewUserClaims(t *testing.T) {
 
 	uc2, err := DecodeUserClaims(uJwt)
 	if err != nil {
-		t.Fatal("failed to decode activation", err)
+		t.Fatal("failed to decode uc", err)
 	}
 
 	AssertEquals(uc.String(), uc2.String(), t)
@@ -127,5 +127,118 @@ func TestSubjects(t *testing.T) {
 	s.Remove("a")
 	if s.Contains("a") {
 		t.Fatalf("didn't expect 'a' after removing")
+	}
+}
+
+func TestUserValidation(t *testing.T) {
+	ukp := createUserNKey(t)
+
+	uc := NewUserClaims(publicKey(ukp, t))
+	uc.Permissions.Pub.Allow.Add("a")
+	uc.Permissions.Pub.Deny.Add("b")
+	uc.Permissions.Sub.Allow.Add("a")
+	uc.Permissions.Sub.Deny.Add("b")
+	uc.Limits.Max = 10
+	uc.Limits.Payload = 10
+	uc.Limits.Src = "1.1.1.1"
+	uc.Limits.Times = []TimeRange{
+		{
+			Start: "01:15:00",
+			End:   "03:15:00",
+		},
+		{
+			Start: "06:15:00",
+			End:   "09:15:00",
+		},
+	}
+
+	vr := CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("valid user permissions should be valid")
+	}
+	uc.Limits.Max = -1
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad limit should be invalid")
+	}
+
+	uc.Limits.Max = 10
+	uc.Limits.Payload = -1
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad limit should be invalid")
+	}
+
+	uc.Limits.Payload = 10
+	uc.Limits.Src = "hello world"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad limit should be invalid")
+	}
+
+	uc.Limits.Payload = 10
+	uc.Limits.Src = "hello world"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad limit should be invalid")
+	}
+
+	tr := TimeRange{
+		Start: "hello",
+		End:   "03:15:00",
+	}
+	uc.Limits.Src = "1.1.1.1"
+	uc.Limits.Times = append(uc.Limits.Times, tr)
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad limit should be invalid")
+	}
+
+	uc.Limits.Times = []TimeRange{}
+	uc.Permissions.Pub.Allow.Add("bad subject")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad permission should be invalid")
+	}
+
+	uc.Permissions.Pub.Allow.Remove("bad subject")
+	uc.Permissions.Sub.Allow.Add("bad subject")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad permission should be invalid")
+	}
+
+	uc.Permissions.Sub.Allow.Remove("bad subject")
+	uc.Permissions.Pub.Deny.Add("bad subject")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad permission should be invalid")
+	}
+
+	uc.Permissions.Pub.Deny.Remove("bad subject")
+	uc.Permissions.Sub.Deny.Add("bad subject")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
+		t.Error("bad permission should be invalid")
 	}
 }

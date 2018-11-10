@@ -48,10 +48,10 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 	return nil
 }
 
-// HasExportWithSubject checks if the export list has an export with the provided subject
-func (e *Exports) HasExportWithSubject(subject string) bool {
+// HasExportContainingSubject checks if the export list has an export with the provided subject
+func (e *Exports) HasExportContainingSubject(subject Subject) bool {
 	for _, s := range *e {
-		if string(s.Subject) == subject {
+		if subject.IsContainedIn(s.Subject) {
 			return true
 		}
 	}

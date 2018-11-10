@@ -94,15 +94,15 @@ func TestExportsValidation(t *testing.T) {
 		t.Errorf("export with wildcard should not be blocking")
 	}
 
-	if !exports.HasExportWithSubject("foo") {
+	if !exports.HasExportContainingSubject("foo") {
 		t.Errorf("Export list has the subject, and should say so")
 	}
 
-	if !exports.HasExportWithSubject("foo.*") {
+	if !exports.HasExportContainingSubject("foo.*") {
 		t.Errorf("Export list has the subject, and should say so")
 	}
 
-	if exports.HasExportWithSubject("bar.*") {
+	if exports.HasExportContainingSubject("bar.*") {
 		t.Errorf("Export list does not has the subject, and should say so")
 	}
 }
