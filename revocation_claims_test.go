@@ -30,6 +30,9 @@ func TestNewRevocationClaims(t *testing.T) {
 	}
 
 	AssertEquals(revocation.String(), revocation2.String(), t)
+
+	AssertEquals(revocation.Claims() != nil, true, t)
+	AssertEquals(revocation.Payload() != nil, true, t)
 }
 
 func TestIssuerMustMatch(t *testing.T) {

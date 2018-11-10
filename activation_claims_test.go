@@ -35,6 +35,9 @@ func TestNewActivationClaims(t *testing.T) {
 	}
 
 	AssertEquals(activation.String(), activation2.String(), t)
+
+	AssertEquals(activation.Claims() != nil, true, t)
+	AssertEquals(activation.Payload() != nil, true, t)
 }
 
 func TestInvalidActivationSubjects(t *testing.T) {

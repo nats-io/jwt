@@ -22,6 +22,9 @@ func TestNewUserClaims(t *testing.T) {
 	}
 
 	AssertEquals(uc.String(), uc2.String(), t)
+
+	AssertEquals(uc.Claims() != nil, true, t)
+	AssertEquals(uc.Payload() != nil, true, t)
 }
 
 func TestUserClaimIssuer(t *testing.T) {

@@ -58,6 +58,9 @@ func TestNewAccountClaims(t *testing.T) {
 
 	AssertEquals(account.String(), account2.String(), t)
 	AssertEquals(account2.IsSelfSigned(), true, t)
+
+	AssertEquals(account2.Claims() != nil, true, t)
+	AssertEquals(account2.Payload() != nil, true, t)
 }
 
 func TestAccountCantSignOperatorLimits(t *testing.T) {

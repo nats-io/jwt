@@ -39,4 +39,7 @@ func TestNewGenericClaims(t *testing.T) {
 	AssertEquals("one", uc2.Tags[0], t)
 	AssertEquals("two", uc2.Tags[1], t)
 	AssertEquals("three", uc2.Tags[2], t)
+
+	AssertEquals(uc.Claims() != nil, true, t)
+	AssertEquals(uc.Payload() != nil, true, t)
 }
