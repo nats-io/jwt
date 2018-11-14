@@ -13,7 +13,7 @@ import (
 // OperatorLimits are used to limit access by an account
 type OperatorLimits struct {
 	Subs    int64  `json:"subs,omitempty"`
-	Conn    int64  `json:"con,omitempty"`
+	Conn    int64  `json:"conn,omitempty"`
 	Imports int64  `json:"imports,omitempty"`
 	Exports int64  `json:"exports,omitempty"`
 	Data    string `json:"data,omitempty"`
@@ -73,6 +73,14 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 
 	for _, i := range a.Identities {
 		i.Validate(vr)
+	}
+
+	if !a.OperatorLimits.IsEmpty() && a.OperatorLimits.Imports >= 0 && int64(len(a.Imports)) > a.OperatorLimits.Imports {
+		vr.AddError("the account contains more imports than allowed by the operator limits")
+	}
+
+	if !a.OperatorLimits.IsEmpty() && a.OperatorLimits.Exports >= 0 && int64(len(a.Exports)) > a.OperatorLimits.Exports {
+		vr.AddError("the account contains more exports than allowed by the operator limits")
 	}
 }
 
