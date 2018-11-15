@@ -12,49 +12,22 @@ import (
 
 // OperatorLimits are used to limit access by an account
 type OperatorLimits struct {
-	Subs    int64  `json:"subs,omitempty"`
-	Conn    int64  `json:"conn,omitempty"`
-	Imports int64  `json:"imports,omitempty"`
-	Exports int64  `json:"exports,omitempty"`
-	Data    string `json:"data,omitempty"`
-	Payload string `json:"payload,omitempty"`
+	Subs    int64 `json:"subs,omitempty"`
+	Conn    int64 `json:"conn,omitempty"`
+	Imports int64 `json:"imports,omitempty"`
+	Exports int64 `json:"exports,omitempty"`
+	Data    int64 `json:"data,omitempty"`
+	Payload int64 `json:"payload,omitempty"`
 }
 
 // IsEmpty returns true if all of the limits are 0
 func (o *OperatorLimits) IsEmpty() bool {
-	return (o.Subs == 0 && o.Conn == 0 && o.Imports == 0 && o.Exports == 0 && o.Data == "" && o.Payload == "")
+	return *o == OperatorLimits{}
 }
 
 // Validate checks that the operator limits contain valid values
 func (o *OperatorLimits) Validate(vr *ValidationResults) {
-	if o.Subs < 0 {
-		vr.AddError("the operator limit on subscriptions can't be less than 0, %d", o.Subs)
-	}
-	if o.Conn < 0 {
-		vr.AddError("the operator limit on connections can't be less than 0, %d", o.Conn)
-	}
-	if o.Imports < 0 {
-		vr.AddError("the operator limit o imports can't be less than 0, %d", o.Imports)
-	}
-	if o.Exports < 0 {
-		vr.AddError("the operator limit on exports can't be less than 0, %d", o.Exports)
-	}
-
-	if o.Data != "" {
-		size, err := ParseDataSize(o.Data)
-
-		if err != nil || size < 0 {
-			vr.AddError("the operator limit on data must be a valid size, %q", o.Data)
-		}
-	}
-
-	if o.Payload != "" {
-		size, err := ParseDataSize(o.Payload)
-
-		if err != nil || size < 0 {
-			vr.AddError("the operator limit on payload must be a valid size, %q", o.Payload)
-		}
-	}
+	// negative values mean unlimited, so all numbers are valid
 }
 
 // Account holds account specific claims data

@@ -227,8 +227,8 @@ func TestLimitValidationInAccount(t *testing.T) {
 	account.OperatorLimits.Conn = 10
 	account.OperatorLimits.Imports = 10
 	account.OperatorLimits.Exports = 10
-	account.OperatorLimits.Data = "1024"
-	account.OperatorLimits.Payload = "1024"
+	account.OperatorLimits.Data = 1024
+	account.OperatorLimits.Payload = 1024
 	account.OperatorLimits.Subs = 10
 	account.Identities = []Identity{
 		{
@@ -245,75 +245,18 @@ func TestLimitValidationInAccount(t *testing.T) {
 	}
 
 	account.OperatorLimits.Conn = -1
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Conn = 10
 	account.OperatorLimits.Imports = -1
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Imports = 10
 	account.OperatorLimits.Exports = -1
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Exports = 10
 	account.OperatorLimits.Subs = -1
+	account.OperatorLimits.Data = -1
+	account.OperatorLimits.Payload = -1
 	vr = CreateValidationResults()
 	account.Validate(vr)
 
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
+	if len(vr.Issues) != 0 {
+		t.Fatal("valid account should have no validation issues")
 	}
 
-	account.OperatorLimits.Subs = 199
-	account.OperatorLimits.Data = "foo"
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Data = "-3G"
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Data = "1G"
-	account.OperatorLimits.Payload = "foo"
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Payload = "-3G"
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad limit is error")
-	}
-
-	account.OperatorLimits.Payload = "1G"
 	op := createOperatorNKey(t)
 	opk := publicKey(op, t)
 	account.Issuer = opk
@@ -340,12 +283,7 @@ func TestLimitValidationInAccount(t *testing.T) {
 			Proof: "yougotit",
 		},
 	}
-	account.OperatorLimits.Subs = 0
-	account.OperatorLimits.Conn = 0
-	account.OperatorLimits.Imports = 0
-	account.OperatorLimits.Exports = 0
-	account.OperatorLimits.Data = ""
-	account.OperatorLimits.Payload = ""
+	account.OperatorLimits = OperatorLimits{}
 	account.Issuer = apk
 	vr = CreateValidationResults()
 	account.Validate(vr)
