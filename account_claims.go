@@ -32,27 +32,27 @@ func (o *OperatorLimits) Validate(vr *ValidationResults) {
 
 // Account holds account specific claims data
 type Account struct {
-	Imports    Imports    `json:"imports,omitempty"`
-	Exports    Exports    `json:"exports,omitempty"`
-	Identities []Identity `json:"identity,omitempty"`
-	OperatorLimits
+	Imports    Imports        `json:"imports,omitempty"`
+	Exports    Exports        `json:"exports,omitempty"`
+	Identities []Identity     `json:"identity,omitempty"`
+	Limits     OperatorLimits `json:"limits,omitempty"`
 }
 
 // Validate checks if the account is valid, based on the wrapper
 func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	a.Imports.Validate(acct.Subject, vr)
 	a.Exports.Validate(vr)
-	a.OperatorLimits.Validate(vr)
+	a.Limits.Validate(vr)
 
 	for _, i := range a.Identities {
 		i.Validate(vr)
 	}
 
-	if !a.OperatorLimits.IsEmpty() && a.OperatorLimits.Imports >= 0 && int64(len(a.Imports)) > a.OperatorLimits.Imports {
+	if !a.Limits.IsEmpty() && a.Limits.Imports >= 0 && int64(len(a.Imports)) > a.Limits.Imports {
 		vr.AddError("the account contains more imports than allowed by the operator limits")
 	}
 
-	if !a.OperatorLimits.IsEmpty() && a.OperatorLimits.Exports >= 0 && int64(len(a.Exports)) > a.OperatorLimits.Exports {
+	if !a.Limits.IsEmpty() && a.Limits.Exports >= 0 && int64(len(a.Exports)) > a.Limits.Exports {
 		vr.AddError("the account contains more exports than allowed by the operator limits")
 	}
 }
@@ -88,7 +88,7 @@ func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
 		if len(a.Identities) > 0 {
 			return "", errors.New("self-signed account JWTs can't contain identity proofs")
 		}
-		if !a.OperatorLimits.IsEmpty() {
+		if !a.Limits.IsEmpty() {
 			return "", errors.New("self-signed account JWTs can't contain operator limits")
 		}
 	}
@@ -124,7 +124,7 @@ func (a *AccountClaims) Validate(vr *ValidationResults) {
 		if len(a.Identities) > 0 {
 			vr.AddError("self-signed account JWTs can't contain identity proofs")
 		}
-		if !a.OperatorLimits.IsEmpty() {
+		if !a.Limits.IsEmpty() {
 			vr.AddError("self-signed account JWTs can't contain operator limits")
 		}
 	}

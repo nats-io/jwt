@@ -69,7 +69,7 @@ func TestAccountCantSignOperatorLimits(t *testing.T) {
 
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
-	account.OperatorLimits.Conn = 1
+	account.Limits.Conn = 1
 
 	_, err := account.Encode(akp)
 	if err == nil {
@@ -103,7 +103,7 @@ func TestOperatorCanSignClaims(t *testing.T) {
 
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
-	account.OperatorLimits.Conn = 1
+	account.Limits.Conn = 1
 	account.Identities = []Identity{
 		{
 			ID:    "stephen",
@@ -224,12 +224,12 @@ func TestLimitValidationInAccount(t *testing.T) {
 
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
-	account.OperatorLimits.Conn = 10
-	account.OperatorLimits.Imports = 10
-	account.OperatorLimits.Exports = 10
-	account.OperatorLimits.Data = 1024
-	account.OperatorLimits.Payload = 1024
-	account.OperatorLimits.Subs = 10
+	account.Limits.Conn = 10
+	account.Limits.Imports = 10
+	account.Limits.Exports = 10
+	account.Limits.Data = 1024
+	account.Limits.Payload = 1024
+	account.Limits.Subs = 10
 	account.Identities = []Identity{
 		{
 			ID:    "stephen",
@@ -244,12 +244,12 @@ func TestLimitValidationInAccount(t *testing.T) {
 		t.Fatal("valid account should have no validation issues")
 	}
 
-	account.OperatorLimits.Conn = -1
-	account.OperatorLimits.Imports = -1
-	account.OperatorLimits.Exports = -1
-	account.OperatorLimits.Subs = -1
-	account.OperatorLimits.Data = -1
-	account.OperatorLimits.Payload = -1
+	account.Limits.Conn = -1
+	account.Limits.Imports = -1
+	account.Limits.Exports = -1
+	account.Limits.Subs = -1
+	account.Limits.Data = -1
+	account.Limits.Payload = -1
 	vr = CreateValidationResults()
 	account.Validate(vr)
 
@@ -283,7 +283,7 @@ func TestLimitValidationInAccount(t *testing.T) {
 			Proof: "yougotit",
 		},
 	}
-	account.OperatorLimits = OperatorLimits{}
+	account.Limits = OperatorLimits{}
 	account.Issuer = apk
 	vr = CreateValidationResults()
 	account.Validate(vr)
