@@ -196,3 +196,23 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("bad limit should be invalid")
 	}
 }
+
+func TestCleanSubject(t *testing.T) {
+	input := [][]string{
+		{"foo", "foo"},
+		{"*", "_"},
+		{">", "_"},
+		{"foo.*", "foo"},
+		{"foo.bar.>", "foo.bar"},
+		{"foo.*.bar", "foo"},
+		{"bam.boom.blat.*", "bam.boom.blat"},
+		{"*.blam", "_"},
+	}
+
+	for _, pair := range input {
+		clean := cleanSubject(pair[0])
+		if pair[1] != clean {
+			t.Errorf("Expected %s but got %s", pair[1], clean)
+		}
+	}
+}
