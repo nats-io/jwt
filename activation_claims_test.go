@@ -124,8 +124,12 @@ func TestNilActivationClaim(t *testing.T) {
 func TestActivationValidation(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
 
 	activation := NewActivationClaims(apk)
+	activation.Issuer = apk
+	activation.Subject = apk2
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
@@ -147,6 +151,45 @@ func TestActivationValidation(t *testing.T) {
 	if !vr.IsEmpty() || vr.IsBlocking(true) {
 		t.Error("valid activation should pass validation")
 	}
+
+	activation.Exports.Add(&Export{
+		Type: StreamType,
+		NamedSubject: NamedSubject{
+			Name:    "times",
+			Subject: "times.*",
+		},
+	})
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.Exports.Add(&Export{
+		Type: StreamType,
+		NamedSubject: NamedSubject{
+			Name:    "other",
+			Subject: "other.*",
+		},
+	})
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("activation can only have 1 export")
+	}
+
+	activation.Exports = Exports{}
+	activation.Exports.Add(&Export{
+		Type: StreamType,
+		NamedSubject: NamedSubject{
+			Name:    "other",
+			Subject: "other.*",
+		},
+	})
 
 	activation.Limits.Max = -1
 	vr = CreateValidationResults()
@@ -194,6 +237,55 @@ func TestActivationValidation(t *testing.T) {
 
 	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
 		t.Error("bad limit should be invalid")
+	}
+}
+
+func TestActivationHashIDLimits(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+
+	activation := NewActivationClaims(apk)
+	activation.Issuer = apk
+	activation.Subject = apk2
+
+	hash, err := activation.HashID()
+	if err == nil {
+		t.Fatal("activation without subject should fail to hash")
+	}
+
+	activation.Exports.Add(&Export{
+		Type: StreamType,
+		NamedSubject: NamedSubject{
+			Name:    "times",
+			Subject: "times.*",
+		},
+	})
+
+	hash, err = activation.HashID()
+	if err != nil {
+		t.Fatalf("activation with subject should hash %v", err)
+	}
+
+	activation2 := NewActivationClaims(apk)
+	activation2.Issuer = apk
+	activation2.Subject = apk2
+	activation2.Exports.Add(&Export{
+		Type: StreamType,
+		NamedSubject: NamedSubject{
+			Name:    "times",
+			Subject: "times.*.bar",
+		},
+	})
+
+	hash2, err := activation2.HashID()
+	if err != nil {
+		t.Fatalf("activation with subject should hash %v", err)
+	}
+
+	if hash != hash2 {
+		t.Fatal("subjects should be stripped to create hash")
 	}
 }
 

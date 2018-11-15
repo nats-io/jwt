@@ -20,6 +20,10 @@ type Activation struct {
 func (a *Activation) Validate(vr *ValidationResults) {
 	a.Exports.Validate(vr)
 	a.Limits.Validate(vr)
+
+	if len(a.Exports) > 1 {
+		vr.AddError("activation tokens can only contain a single export")
+	}
 }
 
 // ActivationClaims holds the data specific to an activation JWT
