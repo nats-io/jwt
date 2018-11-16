@@ -7,12 +7,12 @@ import (
 
 // OperatorLimits are used to limit access by an account
 type OperatorLimits struct {
-	Subs    int64 `json:"subs,omitempty"`
-	Conn    int64 `json:"conn,omitempty"`
-	Imports int64 `json:"imports,omitempty"`
-	Exports int64 `json:"exports,omitempty"`
-	Data    int64 `json:"data,omitempty"`
-	Payload int64 `json:"payload,omitempty"`
+	Subs    int64 `json:"subs,omitempty"`    // Max number of subscriptions
+	Conn    int64 `json:"conn,omitempty"`    // Max number of active connections
+	Imports int64 `json:"imports,omitempty"` // Max number of imports
+	Exports int64 `json:"exports,omitempty"` // Max number of exports
+	Data    int64 `json:"data,omitempty"`    // Max number of bytes
+	Payload int64 `json:"payload,omitempty"` // Max message payload
 }
 
 // IsEmpty returns true if all of the limits are 0
