@@ -72,7 +72,7 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 		for k, v := range m {
 			var vi ValidationIssue
 			vi.Blocking = true
-			vi.Description = fmt.Sprintf("export %q has a subject already exported by %q", k, v)
+			vi.Description = fmt.Sprintf("export subject %q already exports %q", k, v)
 			vr.Add(&vi)
 		}
 	}
