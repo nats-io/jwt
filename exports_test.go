@@ -1,6 +1,8 @@
 package jwt
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestSimpleExportValidation(t *testing.T) {
 	e := &Export{
@@ -104,5 +106,30 @@ func TestExportsValidation(t *testing.T) {
 
 	if exports.HasExportContainingSubject("bar.*") {
 		t.Errorf("Export list does not has the subject, and should say so")
+	}
+}
+
+func TestOverlappingExports(t *testing.T) {
+	i := &Export{
+		NamedSubject: NamedSubject{
+			Subject: "bar.foo",
+		},
+		Type: StreamType,
+	}
+	i2 := &Export{
+		NamedSubject: NamedSubject{
+			Subject: "bar.*",
+		},
+		Type: StreamType,
+	}
+
+	exports := &Exports{}
+	exports.Add(i, i2)
+
+	vr := CreateValidationResults()
+	exports.Validate(vr)
+
+	if len(vr.Issues) != 1 {
+		t.Errorf("export has overlapping subjects")
 	}
 }

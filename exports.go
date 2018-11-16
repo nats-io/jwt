@@ -47,7 +47,6 @@ func (e *Exports) Add(i ...*Export) {
 // Validate calls validate on all of the exports
 func (e *Exports) Validate(vr *ValidationResults) error {
 	var subjects []NamedSubject
-
 	for _, v := range *e {
 		subjects = append(subjects, v.NamedSubject)
 		v.Validate(vr)
@@ -55,14 +54,16 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 	// collect all the subjects, and validate that no subject is a subset
 	m := make(map[string]string)
 	for i, ns := range subjects {
-		a := append(subjects[:i], subjects[i+1:]...)
-		for _, s := range a {
-			if ns.Subject.IsContainedIn(s.Subject) {
-				m[s.Name] = ns.Name
+		for j, s := range subjects {
+			if i == j {
+				continue
 			}
-
-			if s.Subject.IsContainedIn(ns.Subject) {
-				m[ns.Name] = s.Name
+			if ns.Subject.IsContainedIn(s.Subject) {
+				str := string(s.Subject)
+				_, ok := m[str]
+				if !ok {
+					m[str] = string(ns.Subject)
+				}
 			}
 		}
 	}
