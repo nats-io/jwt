@@ -1,11 +1,6 @@
 package jwt
 
 import (
-	"fmt"
-	"regexp"
-	"strconv"
-	"strings"
-
 	"github.com/nats-io/nkeys"
 	"github.com/pkg/errors"
 )
@@ -138,42 +133,4 @@ func (a *AccountClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the accounts claims data
 func (a *AccountClaims) Claims() *ClaimsData {
 	return &a.ClaimsData
-}
-
-// ParseDataSize takes a string size and returns an int64 number of bytes
-func ParseDataSize(s string) (int64, error) {
-	if s == "" {
-		return 0, nil
-	}
-	s = strings.ToUpper(s)
-	re := regexp.MustCompile(`(^\d+$)`)
-	m := re.FindStringSubmatch(s)
-	if m != nil {
-		v, err := strconv.ParseInt(m[0], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return v, nil
-	}
-	re = regexp.MustCompile(`(^\d+)([B|K|M|G])`)
-	m = re.FindStringSubmatch(s)
-	if m != nil {
-		v, err := strconv.ParseInt(m[1], 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		if m[2] == "B" {
-			return v, nil
-		}
-		if m[2] == "K" {
-			return v * 1000, nil
-		}
-		if m[2] == "M" {
-			return v * 1000 * 1000, nil
-		}
-		if m[2] == "G" {
-			return v * 1000 * 1000 * 1000, nil
-		}
-	}
-	return 0, fmt.Errorf("couldn't parse data size: %v", s)
 }
