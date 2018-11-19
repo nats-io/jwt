@@ -9,21 +9,21 @@ import (
 // Import describes a mapping from another account into this one
 type Import struct {
 	NamedSubject
-	Account  string  `json:"account,omitempty"`
-	Token    string  `json:"token_jwt,omitempty"`
-	TokenURL string  `json:"token_url,omitempty"`
-	To       Subject `json:"to,omitempty"`
-	Type     string  `json:"type,omitempty"`
+	Account  string     `json:"account,omitempty"`
+	Token    string     `json:"token_jwt,omitempty"`
+	TokenURL string     `json:"token_url,omitempty"`
+	To       Subject    `json:"to,omitempty"`
+	Type     ExportType `json:"type,omitempty"`
 }
 
 // IsService returns true if the import is of type service
 func (i *Import) IsService() bool {
-	return i.Type == ServiceType
+	return i.Type == Service
 }
 
 // IsStream returns true if the import is of type stream
 func (i *Import) IsStream() bool {
-	return i.Type == StreamType
+	return i.Type == Stream
 }
 
 // Validate checks if an import is valid for the wrapping account

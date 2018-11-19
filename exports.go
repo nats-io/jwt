@@ -7,18 +7,18 @@ import (
 // Export represents a single export
 type Export struct {
 	NamedSubject
-	Type string `json:"type,omitempty"`
+	Type ExportType
 	Limits
 }
 
 // IsService returns true if an export is for a service
 func (e *Export) IsService() bool {
-	return e.Type == ServiceType
+	return e.Type == Service
 }
 
 // IsStream returns true if an export is for a stream
 func (e *Export) IsStream() bool {
-	return e.Type == StreamType
+	return e.Type == Stream
 }
 
 // Validate appends validation issues to the passed in results list
