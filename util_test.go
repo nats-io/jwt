@@ -13,7 +13,7 @@ import (
 func Trace(message string) string {
 	lines := make([]string, 0, 32)
 	err := errors.New(message)
-	msg := fmt.Sprintf("%s", err.Error())
+	msg := err.Error()
 	lines = append(lines, msg)
 
 	for i := 2; true; i++ {

@@ -9,8 +9,7 @@ type Export struct {
 	Name     string     `json:"name,omitempty"`
 	Subject  Subject    `json:"subject,omitempty"`
 	Type     ExportType `json:"type,omitempty"`
-	TokenReq bool
-	Limits
+	TokenReq bool       `json:"token_req,omitempty"`
 }
 
 // IsService returns true if an export is for a service

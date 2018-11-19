@@ -118,7 +118,6 @@ func TestStringList(t *testing.T) {
 func TestSubjectValid(t *testing.T) {
 	var s Subject
 
-	s = ""
 	vr := CreateValidationResults()
 	s.Validate(vr)
 	if !vr.IsBlocking(false) {
@@ -155,9 +154,7 @@ func TestSubjectValid(t *testing.T) {
 }
 
 func TestSubjectHasWildCards(t *testing.T) {
-	var s Subject
-
-	s = "one"
+	s := Subject("one")
 	AssertEquals(false, s.HasWildCards(), t)
 
 	s = "one.two.three"

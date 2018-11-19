@@ -102,27 +102,22 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (s
 			case nkeys.PrefixByteAccount:
 				if nkeys.IsValidPublicAccountKey(issuerBytes) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteOperator:
 				if nkeys.IsValidPublicOperatorKey(issuerBytes) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteServer:
 				if nkeys.IsValidPublicServerKey(issuerBytes) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteCluster:
 				if nkeys.IsValidPublicClusterKey(issuerBytes) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteUser:
 				if nkeys.IsValidPublicUserKey(issuerBytes) {
 					ok = true
-					break
 				}
 			}
 		}
@@ -262,27 +257,22 @@ func Decode(token string, target Claims) error {
 			case nkeys.PrefixByteAccount:
 				if nkeys.IsValidPublicAccountKey(issuer) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteOperator:
 				if nkeys.IsValidPublicOperatorKey(issuer) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteServer:
 				if nkeys.IsValidPublicServerKey(issuer) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteCluster:
 				if nkeys.IsValidPublicClusterKey(issuer) {
 					ok = true
-					break
 				}
 			case nkeys.PrefixByteUser:
 				if nkeys.IsValidPublicUserKey(issuer) {
 					ok = true
-					break
 				}
 			}
 		}

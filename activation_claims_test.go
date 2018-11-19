@@ -232,14 +232,14 @@ func TestActivationHashIDLimits(t *testing.T) {
 	activation.Issuer = apk
 	activation.Subject = apk2
 
-	hash, err := activation.HashID()
+	_, err := activation.HashID()
 	if err == nil {
 		t.Fatal("activation without subject should fail to hash")
 	}
 
 	activation.Exports.Add(&Export{Type: Stream, Name: "times", Subject: "times.*"})
 
-	hash, err = activation.HashID()
+	hash, err := activation.HashID()
 	if err != nil {
 		t.Fatalf("activation with subject should hash %v", err)
 	}
