@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +19,7 @@ func TestImportValidation(t *testing.T) {
 		},
 		Account: akp2,
 		To:      Subject("bar"),
-		Type:    StreamType,
+		Type:    Stream,
 	}
 
 	vr := CreateValidationResults()
@@ -32,7 +33,7 @@ func TestImportValidation(t *testing.T) {
 		t.Errorf("imports without token or url should not be blocking")
 	}
 
-	i.Type = ServiceType
+	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
@@ -53,7 +54,7 @@ func TestImportValidation(t *testing.T) {
 			NamedSubject: NamedSubject{
 				Subject: "test",
 			},
-			Type: StreamType,
+			Type: Stream,
 		})
 	actJWT := encode(activation, ak2, t)
 
@@ -75,7 +76,7 @@ func TestInvalidImportType(t *testing.T) {
 		},
 		Account: akp,
 		To:      Subject("bar"),
-		Type:    "foo",
+		Type:    Unknown,
 	}
 
 	vr := CreateValidationResults()
@@ -100,7 +101,7 @@ func TestInvalidImportToken(t *testing.T) {
 		Account: akp,
 		Token:   "bad token",
 		To:      Subject("bar"),
-		Type:    "stream",
+		Type:    Stream,
 	}
 
 	vr := CreateValidationResults()
@@ -125,7 +126,7 @@ func TestInvalidImportURL(t *testing.T) {
 		Account:  akp,
 		TokenURL: "bad token url",
 		To:       Subject("bar"),
-		Type:     "stream",
+		Type:     Stream,
 	}
 
 	vr := CreateValidationResults()
@@ -151,7 +152,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 		},
 		Account: akp2,
 		To:      Subject("bar"),
-		Type:    StreamType,
+		Type:    Stream,
 	}
 
 	vr := CreateValidationResults()
@@ -165,7 +166,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 		t.Errorf("imports without token or url should not be blocking")
 	}
 
-	i.Type = ServiceType
+	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
@@ -186,7 +187,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 			NamedSubject: NamedSubject{
 				Subject: "test",
 			},
-			Type: StreamType,
+			Type: Stream,
 		})
 	actJWT := encode(activation, ak2, t)
 
@@ -223,7 +224,7 @@ func TestMissingAccountInImport(t *testing.T) {
 			Subject: "foo",
 		},
 		To:   Subject("bar"),
-		Type: StreamType,
+		Type: Stream,
 	}
 
 	vr := CreateValidationResults()
@@ -247,7 +248,7 @@ func TestServiceImportWithWildcard(t *testing.T) {
 		},
 		Account: akp,
 		To:      Subject("bar"),
-		Type:    ServiceType,
+		Type:    Service,
 	}
 
 	vr := CreateValidationResults()
@@ -271,7 +272,7 @@ func TestImportsValidation(t *testing.T) {
 		},
 		Account: akp,
 		To:      Subject("bar"),
-		Type:    StreamType,
+		Type:    Stream,
 	}
 	i2 := &Import{
 		NamedSubject: NamedSubject{
@@ -279,7 +280,7 @@ func TestImportsValidation(t *testing.T) {
 		},
 		Account: akp,
 		To:      Subject("bar"),
-		Type:    ServiceType,
+		Type:    Service,
 	}
 
 	imports := &Imports{}
@@ -308,7 +309,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 		},
 		Account: akp2,
 		To:      Subject("bar"),
-		Type:    StreamType,
+		Type:    Stream,
 	}
 
 	activation := NewActivationClaims(akp)
@@ -320,7 +321,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 			NamedSubject: NamedSubject{
 				Subject: "test",
 			},
-			Type: StreamType,
+			Type: Stream,
 		})
 	actJWT := encode(activation, ak2, t)
 
@@ -334,6 +335,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	i.Validate(akp, vr)
 
 	if !vr.IsEmpty() {
+		fmt.Printf("vr is %+v\n", vr)
 		t.Errorf("imports with token url should be valid")
 	}
 
@@ -383,7 +385,7 @@ func TestImportSubjectValidation(t *testing.T) {
 		},
 		Account: akp2,
 		To:      Subject("bar"),
-		Type:    StreamType,
+		Type:    Stream,
 	}
 
 	activation := NewActivationClaims(akp)
@@ -395,7 +397,7 @@ func TestImportSubjectValidation(t *testing.T) {
 			NamedSubject: NamedSubject{
 				Subject: "one.*",
 			},
-			Type: StreamType,
+			Type: Stream,
 		})
 
 	actJWT := encode(activation, ak2, t)

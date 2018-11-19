@@ -23,7 +23,7 @@ func TestNewAccountClaims(t *testing.T) {
 			NamedSubject: NamedSubject{
 				Subject: "test",
 			},
-			Type: StreamType,
+			Type: Stream,
 		})
 	actJWT := encode(activation, akp2, t)
 
@@ -39,7 +39,7 @@ func TestNewAccountClaims(t *testing.T) {
 			Account: apk2,
 			Token:   actJWT,
 			To:      "my",
-			Type:    StreamType,
+			Type:    Stream,
 		})
 
 	vr := CreateValidationResults()

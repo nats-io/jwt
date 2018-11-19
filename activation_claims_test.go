@@ -153,7 +153,7 @@ func TestActivationValidation(t *testing.T) {
 	}
 
 	activation.Exports.Add(&Export{
-		Type: StreamType,
+		Type: Stream,
 		NamedSubject: NamedSubject{
 			Name:    "times",
 			Subject: "times.*",
@@ -168,7 +168,7 @@ func TestActivationValidation(t *testing.T) {
 	}
 
 	activation.Exports.Add(&Export{
-		Type: StreamType,
+		Type: Stream,
 		NamedSubject: NamedSubject{
 			Name:    "other",
 			Subject: "other.*",
@@ -184,7 +184,7 @@ func TestActivationValidation(t *testing.T) {
 
 	activation.Exports = Exports{}
 	activation.Exports.Add(&Export{
-		Type: StreamType,
+		Type: Stream,
 		NamedSubject: NamedSubject{
 			Name:    "other",
 			Subject: "other.*",
@@ -256,7 +256,7 @@ func TestActivationHashIDLimits(t *testing.T) {
 	}
 
 	activation.Exports.Add(&Export{
-		Type: StreamType,
+		Type: Stream,
 		NamedSubject: NamedSubject{
 			Name:    "times",
 			Subject: "times.*",
@@ -272,7 +272,7 @@ func TestActivationHashIDLimits(t *testing.T) {
 	activation2.Issuer = apk
 	activation2.Subject = apk2
 	activation2.Exports.Add(&Export{
-		Type: StreamType,
+		Type: Stream,
 		NamedSubject: NamedSubject{
 			Name:    "times",
 			Subject: "times.*.bar",

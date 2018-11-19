@@ -1,16 +1,62 @@
 package jwt
 
 import (
+	"encoding/json"
+	"fmt"
 	"net"
 	"strings"
 	"time"
 )
 
-// ServiceType defines the type field value for a service "service"
-const ServiceType = "service"
+// Type defines the type of import/export.
+type ExportType int
 
-// StreamType defines the type field value for a stream "stream"
-const StreamType = "stream"
+const (
+	Unknown ExportType = iota
+	// Stream defines the type field value for a stream "stream"
+	Stream
+	// Service defines the type field value for a service "service"
+	Service
+)
+
+func (t ExportType) String() string {
+	switch t {
+	case Stream:
+		return "stream"
+	case Service:
+		return "service"
+	}
+	return "unknown"
+}
+
+// MarshalJSON marshals the enum as a quoted json string
+func (t *ExportType) MarshalJSON() ([]byte, error) {
+	switch *t {
+	case Stream:
+		return []byte("\"stream\""), nil
+	case Service:
+		return []byte("\"service\""), nil
+	}
+	return nil, fmt.Errorf("unknown export type")
+}
+
+// UnmarshalJSON unmashals a quoted json string to the enum value
+func (t *ExportType) UnmarshalJSON(b []byte) error {
+	var j string
+	err := json.Unmarshal(b, &j)
+	if err != nil {
+		return err
+	}
+	switch j {
+	case "stream":
+		*t = Stream
+		return nil
+	case "service":
+		*t = Service
+		return nil
+	}
+	return fmt.Errorf("unknown export type")
+}
 
 // Subject is a string that represents a NATS subject
 type Subject string
