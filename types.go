@@ -67,7 +67,7 @@ func (s Subject) Validate(vr *ValidationResults) {
 	if v == "" {
 		vr.AddError("subject cannot be empty")
 	}
-	if strings.Index(v, " ") != -1 {
+	if strings.Contains(v, " ") {
 		vr.AddError("subject %q cannot have spaces", v)
 	}
 }

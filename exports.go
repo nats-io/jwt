@@ -10,7 +10,6 @@ type Export struct {
 	Subject  Subject    `json:"subject,omitempty"`
 	Type     ExportType `json:"type,omitempty"`
 	TokenReq bool
-	Limits
 }
 
 // IsService returns true if an export is for a service
