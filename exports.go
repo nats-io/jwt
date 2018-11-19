@@ -6,8 +6,10 @@ import (
 
 // Export represents a single export
 type Export struct {
-	NamedSubject
-	Type ExportType
+	Name     string     `json:"name,omitempty"`
+	Subject  Subject    `json:"subject,omitempty"`
+	Type     ExportType `json:"type,omitempty"`
+	TokenReq bool
 	Limits
 }
 
@@ -28,12 +30,12 @@ func (e *Export) Validate(vr *ValidationResults) {
 	}
 
 	if e.IsService() {
-		if e.NamedSubject.Subject.HasWildCards() {
-			vr.AddWarning("services cannot have wildcard subject: %q", e.NamedSubject.Subject)
+		if e.Subject.HasWildCards() {
+			vr.AddWarning("services cannot have wildcard subject: %q", e.Subject)
 		}
 	}
 
-	e.NamedSubject.Validate(vr)
+	e.Subject.Validate(vr)
 }
 
 // Exports is an array of exports
@@ -46,9 +48,9 @@ func (e *Exports) Add(i ...*Export) {
 
 // Validate calls validate on all of the exports
 func (e *Exports) Validate(vr *ValidationResults) error {
-	var subjects []NamedSubject
+	var subjects []Subject
 	for _, v := range *e {
-		subjects = append(subjects, v.NamedSubject)
+		subjects = append(subjects, v.Subject)
 		v.Validate(vr)
 	}
 	// collect all the subjects, and validate that no subject is a subset
@@ -58,11 +60,11 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 			if i == j {
 				continue
 			}
-			if ns.Subject.IsContainedIn(s.Subject) {
-				str := string(s.Subject)
+			if ns.IsContainedIn(s) {
+				str := string(s)
 				_, ok := m[str]
 				if !ok {
-					m[str] = string(ns.Subject)
+					m[str] = string(ns)
 				}
 			}
 		}

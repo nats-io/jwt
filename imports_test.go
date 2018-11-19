@@ -13,14 +13,7 @@ func TestImportValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "test",
-		},
-		Account: akp2,
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -49,13 +42,7 @@ func TestImportValidation(t *testing.T) {
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 	activation.Exports = Exports{}
-	activation.Exports.Add(
-		&Export{
-			NamedSubject: NamedSubject{
-				Subject: "test",
-			},
-			Type: Stream,
-		})
+	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -70,14 +57,7 @@ func TestImportValidation(t *testing.T) {
 func TestInvalidImportType(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Account: akp,
-		To:      Subject("bar"),
-		Type:    Unknown,
-	}
+	i := &Import{Subject: "foo", Account: akp, To: "bar", Type: Unknown}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -94,15 +74,7 @@ func TestInvalidImportType(t *testing.T) {
 func TestInvalidImportToken(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Account: akp,
-		Token:   "bad token",
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
+	i := &Import{Subject: "foo", Account: akp, Token: "bad token", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -119,15 +91,7 @@ func TestInvalidImportToken(t *testing.T) {
 func TestInvalidImportURL(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Account:  akp,
-		TokenURL: "bad token url",
-		To:       Subject("bar"),
-		Type:     Stream,
-	}
+	i := &Import{Subject: "foo", Account: akp, TokenURL: "bad token url", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -146,14 +110,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "test",
-		},
-		Account: akp2,
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -182,13 +139,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 	activation.Exports = Exports{}
-	activation.Exports.Add(
-		&Export{
-			NamedSubject: NamedSubject{
-				Subject: "test",
-			},
-			Type: Stream,
-		})
+	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -219,13 +170,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	}
 }
 func TestMissingAccountInImport(t *testing.T) {
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		To:   Subject("bar"),
-		Type: Stream,
-	}
+	i := &Import{Subject: "foo", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -242,14 +187,7 @@ func TestMissingAccountInImport(t *testing.T) {
 func TestServiceImportWithWildcard(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo.*",
-		},
-		Account: akp,
-		To:      Subject("bar"),
-		Type:    Service,
-	}
+	i := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -266,22 +204,8 @@ func TestServiceImportWithWildcard(t *testing.T) {
 func TestImportsValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Account: akp,
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
-	i2 := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "foo.*",
-		},
-		Account: akp,
-		To:      Subject("bar"),
-		Type:    Service,
-	}
+	i := &Import{Subject: "foo", Account: akp, To: "bar", Type: Stream}
+	i2 := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
 
 	imports := &Imports{}
 	imports.Add(i, i2)
@@ -303,26 +227,14 @@ func TestTokenURLImportValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "test",
-		},
-		Account: akp2,
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
 
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 	activation.Exports = Exports{}
-	activation.Exports.Add(
-		&Export{
-			NamedSubject: NamedSubject{
-				Subject: "test",
-			},
-			Type: Stream,
-		})
+	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
+
 	actJWT := encode(activation, ak2, t)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -379,26 +291,13 @@ func TestImportSubjectValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{
-		NamedSubject: NamedSubject{
-			Subject: "one.two",
-		},
-		Account: akp2,
-		To:      Subject("bar"),
-		Type:    Stream,
-	}
+	i := &Import{Subject: "one.two", Account: akp2, To: "bar", Type: Stream}
 
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 	activation.Exports = Exports{}
-	activation.Exports.Add(
-		&Export{
-			NamedSubject: NamedSubject{
-				Subject: "one.*",
-			},
-			Type: Stream,
-		})
+	activation.Exports.Add(&Export{Subject: "one.*", Type: Stream})
 
 	actJWT := encode(activation, ak2, t)
 	i.Token = actJWT
@@ -416,7 +315,7 @@ func TestImportSubjectValidation(t *testing.T) {
 	i.Validate(akp, vr)
 
 	if vr.IsEmpty() {
-		t.Errorf("imports with non-contains subject should be valid")
+		t.Errorf("imports with non-contains subject should be not valid")
 	}
 
 	activation.Exports[0].Subject = ">"
