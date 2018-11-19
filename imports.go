@@ -8,7 +8,8 @@ import (
 
 // Import describes a mapping from another account into this one
 type Import struct {
-	NamedSubject
+	Name     string     `json:"name,omitempty"`
+	Subject  Subject    `json:"subject,omitempty"`
 	Account  string     `json:"account,omitempty"`
 	Token    string     `json:"token_jwt,omitempty"`
 	TokenURL string     `json:"token_url,omitempty"`
@@ -36,10 +37,10 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 		vr.AddWarning("account to import from is not specified")
 	}
 
-	i.NamedSubject.Validate(vr)
+	i.Subject.Validate(vr)
 
 	if i.IsService() {
-		if i.NamedSubject.Subject.HasWildCards() {
+		if i.Subject.HasWildCards() {
 			vr.AddWarning("services cannot have wildcard subject: %q", i.Subject)
 		}
 	}

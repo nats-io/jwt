@@ -18,29 +18,13 @@ func TestNewAccountClaims(t *testing.T) {
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 	activation.Exports = Exports{}
-	activation.Exports.Add(
-		&Export{
-			NamedSubject: NamedSubject{
-				Subject: "test",
-			},
-			Type: Stream,
-		})
+	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
 	actJWT := encode(activation, akp2, t)
 
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).UTC().Unix()
 	account.Imports = Imports{}
-	account.Imports.Add(
-		&Import{
-			NamedSubject: NamedSubject{
-				Subject: "test",
-				Name:    "test import",
-			},
-			Account: apk2,
-			Token:   actJWT,
-			To:      "my",
-			Type:    Stream,
-		})
+	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
 
 	vr := CreateValidationResults()
 	account.Validate(vr)

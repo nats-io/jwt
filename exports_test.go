@@ -5,12 +5,7 @@ import (
 )
 
 func TestSimpleExportValidation(t *testing.T) {
-	e := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Type: Stream,
-	}
+	e := &Export{Subject: "foo", Type: Stream}
 
 	vr := CreateValidationResults()
 	e.Validate(vr)
@@ -29,12 +24,7 @@ func TestSimpleExportValidation(t *testing.T) {
 }
 
 func TestInvalidExportType(t *testing.T) {
-	i := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Type: Unknown,
-	}
+	i := &Export{Subject: "foo", Type: Unknown}
 
 	vr := CreateValidationResults()
 	i.Validate(vr)
@@ -49,12 +39,7 @@ func TestInvalidExportType(t *testing.T) {
 }
 
 func TestServiceExportWithWildcard(t *testing.T) {
-	i := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "foo.*",
-		},
-		Type: Service,
-	}
+	i := &Export{Subject: "foo.*", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate(vr)
@@ -69,18 +54,8 @@ func TestServiceExportWithWildcard(t *testing.T) {
 }
 
 func TestExportsValidation(t *testing.T) {
-	i := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "foo",
-		},
-		Type: Stream,
-	}
-	i2 := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "foo.*",
-		},
-		Type: Service,
-	}
+	i := &Export{Subject: "foo", Type: Stream}
+	i2 := &Export{Subject: "foo.*", Type: Service}
 
 	exports := &Exports{}
 	exports.Add(i, i2)
@@ -110,18 +85,8 @@ func TestExportsValidation(t *testing.T) {
 }
 
 func TestOverlappingExports(t *testing.T) {
-	i := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "bar.foo",
-		},
-		Type: Stream,
-	}
-	i2 := &Export{
-		NamedSubject: NamedSubject{
-			Subject: "bar.*",
-		},
-		Type: Stream,
-	}
+	i := &Export{Subject: "bar.foo", Type: Stream}
+	i2 := &Export{Subject: "bar.*", Type: Stream}
 
 	exports := &Exports{}
 	exports.Add(i, i2)

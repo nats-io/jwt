@@ -152,13 +152,7 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Exports.Add(&Export{
-		Type: Stream,
-		NamedSubject: NamedSubject{
-			Name:    "times",
-			Subject: "times.*",
-		},
-	})
+	activation.Exports.Add(&Export{Type: Stream, Name: "times", Subject: "times.*"})
 
 	vr = CreateValidationResults()
 	activation.Validate(vr)
@@ -167,13 +161,7 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Exports.Add(&Export{
-		Type: Stream,
-		NamedSubject: NamedSubject{
-			Name:    "other",
-			Subject: "other.*",
-		},
-	})
+	activation.Exports.Add(&Export{Type: Stream, Name: "other", Subject: "other.*"})
 
 	vr = CreateValidationResults()
 	activation.Validate(vr)
@@ -183,13 +171,7 @@ func TestActivationValidation(t *testing.T) {
 	}
 
 	activation.Exports = Exports{}
-	activation.Exports.Add(&Export{
-		Type: Stream,
-		NamedSubject: NamedSubject{
-			Name:    "other",
-			Subject: "other.*",
-		},
-	})
+	activation.Exports.Add(&Export{Type: Stream, Name: "other", Subject: "other.*"})
 
 	activation.Limits.Max = -1
 	vr = CreateValidationResults()
@@ -255,13 +237,7 @@ func TestActivationHashIDLimits(t *testing.T) {
 		t.Fatal("activation without subject should fail to hash")
 	}
 
-	activation.Exports.Add(&Export{
-		Type: Stream,
-		NamedSubject: NamedSubject{
-			Name:    "times",
-			Subject: "times.*",
-		},
-	})
+	activation.Exports.Add(&Export{Type: Stream, Name: "times", Subject: "times.*"})
 
 	hash, err = activation.HashID()
 	if err != nil {
@@ -271,13 +247,7 @@ func TestActivationHashIDLimits(t *testing.T) {
 	activation2 := NewActivationClaims(apk)
 	activation2.Issuer = apk
 	activation2.Subject = apk2
-	activation2.Exports.Add(&Export{
-		Type: Stream,
-		NamedSubject: NamedSubject{
-			Name:    "times",
-			Subject: "times.*.bar",
-		},
-	})
+	activation2.Exports.Add(&Export{Type: Stream, Name: "times", Subject: "times.*.bar"})
 
 	hash2, err := activation2.HashID()
 	if err != nil {
