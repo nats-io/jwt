@@ -4,17 +4,17 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Import describes a mapping from another account into this one
 type Import struct {
-	Name     string     `json:"name,omitempty"`
-	Subject  Subject    `json:"subject,omitempty"`
-	Account  string     `json:"account,omitempty"`
-	Token    string     `json:"token_jwt,omitempty"`
-	TokenURL string     `json:"token_url,omitempty"`
-	To       Subject    `json:"to,omitempty"`
-	Type     ExportType `json:"type,omitempty"`
+	Name    string     `json:"name,omitempty"`
+	Subject Subject    `json:"subject,omitempty"`
+	Account string     `json:"account,omitempty"`
+	Token   string     `json:"token,omitempty"`
+	To      Subject    `json:"to,omitempty"`
+	Type    ExportType `json:"type,omitempty"`
 }
 
 // IsService returns true if the import is of type service
@@ -48,35 +48,31 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	var act *ActivationClaims
 
 	if i.Token != "" {
-		var err error
-		act, err = DecodeActivationClaims(i.Token)
-		if err != nil {
-			vr.AddWarning("import %s contains an invalid activation token", i.Subject)
-		}
-	}
-
-	if i.TokenURL != "" {
-		url, err := url.Parse(i.TokenURL)
-
-		if err != nil {
-			vr.AddWarning("import %s contains an invalid token URL %q", i.Subject, i.TokenURL)
-		} else {
-			resp, err := http.Get(url.String())
+		// Check to see if its an embedded JWT or a URL.
+		if url, err := url.Parse(i.Token); err == nil && url.Scheme != "" {
+			c := &http.Client{Timeout: 5 * time.Second}
+			resp, err := c.Get(url.String())
 			if err != nil {
-				vr.AddWarning("import %s contains an unreachable token URL %q", i.Subject, i.TokenURL)
+				vr.AddWarning("import %s contains an unreachable token URL %q", i.Subject, i.Token)
 			}
 
 			if resp != nil {
 				defer resp.Body.Close()
 				body, err := ioutil.ReadAll(resp.Body)
 				if err != nil {
-					vr.AddWarning("import %s contains an unreadable token URL %q", i.Subject, i.TokenURL)
+					vr.AddWarning("import %s contains an unreadable token URL %q", i.Subject, i.Token)
 				} else {
 					act, err = DecodeActivationClaims(string(body))
 					if err != nil {
-						vr.AddWarning("import %s contains a url %q with an invalid activation token", i.Subject, i.TokenURL)
+						vr.AddWarning("import %s contains a url %q with an invalid activation token", i.Subject, i.Token)
 					}
 				}
+			}
+		} else {
+			var err error
+			act, err = DecodeActivationClaims(i.Token)
+			if err != nil {
+				vr.AddWarning("import %s contains an invalid activation token", i.Subject)
 			}
 		}
 	}
