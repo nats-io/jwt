@@ -57,10 +57,6 @@ func (s *OperatorClaims) DidSign(op Claims) bool {
 		return true
 	}
 
-	if s.SigningKeys == nil {
-		return false
-	}
-
 	for _, k := range s.SigningKeys {
 		if k == issuer {
 			return true
