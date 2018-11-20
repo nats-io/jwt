@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // Import describes a mapping from another account into this one
@@ -49,7 +50,8 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	if i.Token != "" {
 		// Check to see if its an embedded JWT or a URL.
 		if url, err := url.Parse(i.Token); err == nil && url.Scheme != "" {
-			resp, err := http.Get(url.String())
+			c := &http.Client{Timeout: 5 * time.Second}
+			resp, err := c.Get(url.String())
 			if err != nil {
 				vr.AddWarning("import %s contains an unreachable token URL %q", i.Subject, i.Token)
 			}
