@@ -91,7 +91,7 @@ func TestInvalidImportToken(t *testing.T) {
 func TestInvalidImportURL(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, TokenURL: "bad token url", To: "bar", Type: Stream}
+	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad token url", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -242,7 +242,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	i.TokenURL = ts.URL
+	i.Token = ts.URL
 	vr := CreateValidationResults()
 	i.Validate(akp, vr)
 
@@ -251,7 +251,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 		t.Errorf("imports with token url should be valid")
 	}
 
-	i.TokenURL = "Bad URL"
+	i.Token = "http://Bad URL"
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
@@ -264,7 +264,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	i.TokenURL = ts.URL
+	i.Token = ts.URL
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
@@ -277,7 +277,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	i.TokenURL = ts.URL
+	i.Token = ts.URL
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
