@@ -145,3 +145,53 @@ func TestSigningKeyValidation(t *testing.T) {
 		t.Fatal("bad signing key should be invalid")
 	}
 }
+
+func TestSignedBy(t *testing.T) {
+	ckp := createOperatorNKey(t)
+	ckp2 := createOperatorNKey(t)
+
+	uc := NewOperatorClaims(publicKey(ckp, t))
+	uc2 := NewOperatorClaims(publicKey(ckp2, t))
+
+	akp := createAccountNKey(t)
+	ac := NewAccountClaims(publicKey(akp, t))
+	enc, err := ac.Encode(ckp) // sign with the operator key
+	if err != nil {
+		t.Fatal("failed to encode", err)
+	}
+	ac, err = DecodeAccountClaims(enc)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	AssertEquals(uc.DidSign(ac), true, t)
+	AssertEquals(uc2.DidSign(ac), false, t)
+
+	enc, err = ac.Encode(ckp2) // sign with the other operator key
+	if err != nil {
+		t.Fatal("failed to encode", err)
+	}
+	ac, err = DecodeAccountClaims(enc)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	AssertEquals(uc.DidSign(ac), false, t) // no signing key
+	AssertEquals(uc2.DidSign(ac), true, t) // actual key
+	uc.AddSigningKey(publicKey(ckp2, t))
+	AssertEquals(uc.DidSign(ac), true, t) // signing key
+
+	clusterKey := createClusterNKey(t)
+	clusterClaims := NewClusterClaims(publicKey(clusterKey, t))
+	enc, err = clusterClaims.Encode(ckp2) // sign with the operator key
+	if err != nil {
+		t.Fatal("failed to encode", err)
+	}
+	clusterClaims, err = DecodeClusterClaims(enc)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	AssertEquals(uc.DidSign(clusterClaims), true, t)  // signing key
+	AssertEquals(uc2.DidSign(clusterClaims), true, t) // actual key
+}

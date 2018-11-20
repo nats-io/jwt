@@ -45,6 +45,31 @@ func NewOperatorClaims(subject string) *OperatorClaims {
 	return c
 }
 
+// DidSign checks the claims against the operator's public key and its signing keys
+func (s *OperatorClaims) DidSign(op Claims) bool {
+	if op == nil {
+		return false
+	}
+
+	issuer := op.Claims().Issuer
+
+	if issuer == s.Subject {
+		return true
+	}
+
+	if s.SigningKeys == nil {
+		return false
+	}
+
+	for _, k := range s.SigningKeys {
+		if k == issuer {
+			return true
+		}
+	}
+
+	return false
+}
+
 // AddSigningKey creates the signing keys array if necessary
 // appends the new key, NO Validation is performed
 func (s *OperatorClaims) AddSigningKey(pk string) {
