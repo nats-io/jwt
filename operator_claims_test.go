@@ -112,3 +112,36 @@ func TestOperatorType(t *testing.T) {
 	}
 
 }
+
+func TestSigningKeyValidation(t *testing.T) {
+	ckp := createOperatorNKey(t)
+	ckp2 := createOperatorNKey(t)
+
+	uc := NewOperatorClaims(publicKey(ckp, t))
+	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.AddSigningKey(publicKey(ckp2, t))
+	uJwt := encode(uc, ckp, t)
+
+	uc2, err := DecodeOperatorClaims(uJwt)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	AssertEquals(len(uc2.SigningKeys), 1, t)
+	AssertEquals(uc2.SigningKeys[0] == publicKey(ckp2, t), true, t)
+
+	vr := &ValidationResults{}
+	uc.Validate(vr)
+
+	if len(vr.Issues) != 0 {
+		t.Fatal("valid operator key should have no validation issues")
+	}
+
+	uc.AddSigningKey("") // add an invalid one
+
+	vr = &ValidationResults{}
+	uc.Validate(vr)
+	if len(vr.Issues) == 0 {
+		t.Fatal("bad signing key should be invalid")
+	}
+}
