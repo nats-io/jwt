@@ -44,7 +44,7 @@ func TestNewActivationClaims(t *testing.T) {
 	AssertEquals(activation.Payload() != nil, true, t)
 }
 
-func TestInvalidActivationSubjects(t *testing.T) {
+func TestInvalidActivationTargets(t *testing.T) {
 	type kpInputs struct {
 		name string
 		kp   nkeys.KeyPair
@@ -122,6 +122,72 @@ func TestNilActivationClaim(t *testing.T) {
 	v := NewActivationClaims("")
 	if v != nil {
 		t.Fatal(fmt.Sprintf("expected nil user claim"))
+	}
+}
+
+func TestActivationImportSubjectValidation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+
+	activation := NewActivationClaims(apk)
+	activation.Issuer = apk
+	activation.Subject = apk2
+
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
+
+	vr := CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportType = Service
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportSubject = "foo.*" // wildcards are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("wildcard service activation should not pass validation")
+	}
+
+	activation.ImportType = Stream // Stream is ok with wildcards
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportSubject = "" // empty strings are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("empty activation should not pass validation")
+	}
+
+	activation.ImportSubject = "foo bar" // spaces are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("spaces in activation should not pass validation")
 	}
 }
 

@@ -35,7 +35,7 @@ func (a *Activation) Validate(vr *ValidationResults) {
 
 	if a.IsService() {
 		if a.ImportSubject.HasWildCards() {
-			vr.AddWarning("services cannot have wildcard subject: %q", a.ImportSubject)
+			vr.AddError("services cannot have wildcard subject: %q", a.ImportSubject)
 		}
 	}
 
