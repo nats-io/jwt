@@ -20,10 +20,9 @@ func TestNewActivationClaims(t *testing.T) {
 	activation.Limits.Payload = 10
 	activation.Limits.Src = "255.255.255.0"
 
-	activation.Export.Subject = "foo"
-	activation.Export.TokenReq = false
-	activation.Export.Name = "Foo"
-	activation.Export.Type = Stream
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
 
 	vr := CreateValidationResults()
 	activation.Validate(vr)
@@ -111,11 +110,11 @@ func TestInvalidActivationClaimIssuer(t *testing.T) {
 	}
 }
 
-func TestPublicIsValidSubject(t *testing.T) {
+func TestPublicIsNotValid(t *testing.T) {
 	c := NewActivationClaims("public")
 	_, err := c.Encode(createOperatorNKey(t))
-	if err != nil {
-		t.Fatal("should have encoded public activation")
+	if err == nil {
+		t.Fatal("should not have encoded public activation anymore")
 	}
 }
 
@@ -137,10 +136,9 @@ func TestActivationValidation(t *testing.T) {
 	activation.Subject = apk2
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 
-	activation.Export.Subject = "foo"
-	activation.Export.TokenReq = false
-	activation.Export.Name = "Foo"
-	activation.Export.Type = Stream
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
 
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
@@ -163,7 +161,9 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "times", Subject: "times.*"}
+	activation.ImportSubject = "times.*"
+	activation.ImportType = Stream
+	activation.Name = "times"
 
 	vr = CreateValidationResults()
 	activation.Validate(vr)
@@ -172,7 +172,9 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "other", Subject: "other.*"}
+	activation.ImportSubject = "other.*"
+	activation.ImportType = Stream
+	activation.Name = "other"
 
 	activation.Limits.Max = -1
 	vr = CreateValidationResults()
@@ -238,7 +240,9 @@ func TestActivationHashIDLimits(t *testing.T) {
 		t.Fatal("activation without subject should fail to hash")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "times", Subject: "times.*"}
+	activation.ImportSubject = "times.*"
+	activation.ImportType = Stream
+	activation.Name = "times"
 
 	hash, err := activation.HashID()
 	if err != nil {
@@ -248,7 +252,9 @@ func TestActivationHashIDLimits(t *testing.T) {
 	activation2 := NewActivationClaims(apk)
 	activation2.Issuer = apk
 	activation2.Subject = apk2
-	activation2.Export = Export{Type: Stream, Name: "times", Subject: "times.*.bar"}
+	activation2.ImportSubject = "times.*.bar"
+	activation2.ImportType = Stream
+	activation2.Name = "times"
 
 	hash2, err := activation2.HashID()
 	if err != nil {

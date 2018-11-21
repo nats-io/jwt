@@ -17,7 +17,8 @@ func TestNewAccountClaims(t *testing.T) {
 	activation := NewActivationClaims(apk)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Export = Export{Subject: "test", Type: Stream}
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
 	actJWT := encode(activation, akp2, t)
 
 	account := NewAccountClaims(apk)

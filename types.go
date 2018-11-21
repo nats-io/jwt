@@ -8,10 +8,11 @@ import (
 	"time"
 )
 
-// Type defines the type of import/export.
+// ExportType defines the type of import/export.
 type ExportType int
 
 const (
+	// Unknown is used if we don't know the type
 	Unknown ExportType = iota
 	// Stream defines the type field value for a stream "stream"
 	Stream
