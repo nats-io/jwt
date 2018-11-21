@@ -12,13 +12,34 @@ import (
 
 // Activation defines the custom parts of an activation claim
 type Activation struct {
-	Export Export `json:"export,omitempty"`
+	ImportSubject Subject    `json:"subject,omitempty"`
+	ImportType    ExportType `json:"type,omitempty"`
 	Limits
+}
+
+// IsService returns true if an Activation is for a service
+func (a *Activation) IsService() bool {
+	return a.ImportType == Service
+}
+
+// IsStream returns true if an Activation is for a stream
+func (a *Activation) IsStream() bool {
+	return a.ImportType == Stream
 }
 
 // Validate checks the exports and limits in an activation JWT
 func (a *Activation) Validate(vr *ValidationResults) {
-	a.Export.Validate(vr)
+	if !a.IsService() && !a.IsStream() {
+		vr.AddError("invalid export type: %q", a.ImportType)
+	}
+
+	if a.IsService() {
+		if a.ImportSubject.HasWildCards() {
+			vr.AddError("services cannot have wildcard subject: %q", a.ImportSubject)
+		}
+	}
+
+	a.ImportSubject.Validate(vr)
 	a.Limits.Validate(vr)
 }
 
@@ -28,7 +49,7 @@ type ActivationClaims struct {
 	Activation `json:"nats,omitempty"`
 }
 
-// NewActivationClaims creates a new activation claim with the provided subject
+// NewActivationClaims creates a new activation claim with the provided sub
 func NewActivationClaims(subject string) *ActivationClaims {
 	if subject == "" {
 		return nil
@@ -40,8 +61,8 @@ func NewActivationClaims(subject string) *ActivationClaims {
 
 // Encode turns an activation claim into a JWT strimg
 func (a *ActivationClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if a.Subject != "public" && !nkeys.IsValidPublicAccountKey(([]byte(a.Subject))) {
-		return "", errors.New("expected subject 'public' or an account")
+	if !nkeys.IsValidPublicAccountKey([]byte(a.ClaimsData.Subject)) {
+		return "", errors.New("expected subject to be an account")
 	}
 	a.ClaimsData.Type = ActivationClaim
 	return a.ClaimsData.encode(pair, a)
@@ -88,11 +109,11 @@ func (a *ActivationClaims) String() string {
 // the one special case is that if the export start with "*" or is ">" the <subject> "_"
 func (a *ActivationClaims) HashID() (string, error) {
 
-	if a.Issuer == "" || a.Subject == "" || a.Export.Subject == "" {
+	if a.Issuer == "" || a.Subject == "" || a.ImportSubject == "" {
 		return "", fmt.Errorf("not enough data in the activaion claims to create a hash")
 	}
 
-	subject := cleanSubject(string(a.Export.Subject))
+	subject := cleanSubject(string(a.ImportSubject))
 	base := fmt.Sprintf("%s.%s.%s", a.Issuer, a.Subject, subject)
 	h := sha256.New()
 	h.Write([]byte(base))

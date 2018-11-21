@@ -41,7 +41,9 @@ func TestImportValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Export = Export{Subject: "test", Type: Stream}
+
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -137,7 +139,9 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Export = Export{Subject: "test", Type: Stream}
+
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -230,7 +234,8 @@ func TestTokenURLImportValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Export = Export{Subject: "test", Type: Stream}
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
 
 	actJWT := encode(activation, ak2, t)
 
@@ -289,7 +294,8 @@ func TestImportSubjectValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Export = Export{Subject: "one.*", Type: Stream}
+	activation.ImportSubject = "one.*"
+	activation.ImportType = Stream
 
 	ak2 := createAccountNKey(t)
 	akp2 := publicKey(ak2, t)
@@ -305,7 +311,8 @@ func TestImportSubjectValidation(t *testing.T) {
 		t.Errorf("imports with valid contains subject should be valid")
 	}
 
-	activation.Export.Subject = "two"
+	activation.ImportSubject = "two"
+	activation.ImportType = Stream
 	actJWT = encode(activation, ak2, t)
 	i.Token = actJWT
 	vr = CreateValidationResults()
@@ -315,7 +322,8 @@ func TestImportSubjectValidation(t *testing.T) {
 		t.Errorf("imports with non-contains subject should be not valid")
 	}
 
-	activation.Export.Subject = ">"
+	activation.ImportSubject = ">"
+	activation.ImportType = Stream
 	actJWT = encode(activation, ak2, t)
 	i.Token = actJWT
 	vr = CreateValidationResults()

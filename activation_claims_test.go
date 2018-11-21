@@ -20,10 +20,9 @@ func TestNewActivationClaims(t *testing.T) {
 	activation.Limits.Payload = 10
 	activation.Limits.Src = "255.255.255.0"
 
-	activation.Export.Subject = "foo"
-	activation.Export.TokenReq = false
-	activation.Export.Name = "Foo"
-	activation.Export.Type = Stream
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
 
 	vr := CreateValidationResults()
 	activation.Validate(vr)
@@ -45,7 +44,7 @@ func TestNewActivationClaims(t *testing.T) {
 	AssertEquals(activation.Payload() != nil, true, t)
 }
 
-func TestInvalidActivationSubjects(t *testing.T) {
+func TestInvalidActivationTargets(t *testing.T) {
 	type kpInputs struct {
 		name string
 		kp   nkeys.KeyPair
@@ -111,11 +110,11 @@ func TestInvalidActivationClaimIssuer(t *testing.T) {
 	}
 }
 
-func TestPublicIsValidSubject(t *testing.T) {
+func TestPublicIsNotValid(t *testing.T) {
 	c := NewActivationClaims("public")
 	_, err := c.Encode(createOperatorNKey(t))
-	if err != nil {
-		t.Fatal("should have encoded public activation")
+	if err == nil {
+		t.Fatal("should not have encoded public activation anymore")
 	}
 }
 
@@ -123,6 +122,72 @@ func TestNilActivationClaim(t *testing.T) {
 	v := NewActivationClaims("")
 	if v != nil {
 		t.Fatal(fmt.Sprintf("expected nil user claim"))
+	}
+}
+
+func TestActivationImportSubjectValidation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+
+	activation := NewActivationClaims(apk)
+	activation.Issuer = apk
+	activation.Subject = apk2
+
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
+
+	vr := CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportType = Service
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportSubject = "foo.*" // wildcards are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("wildcard service activation should not pass validation")
+	}
+
+	activation.ImportType = Stream // Stream is ok with wildcards
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Error("valid activation should pass validation")
+	}
+
+	activation.ImportSubject = "" // empty strings are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("empty activation should not pass validation")
+	}
+
+	activation.ImportSubject = "foo bar" // spaces are bad
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Error("spaces in activation should not pass validation")
 	}
 }
 
@@ -137,10 +202,9 @@ func TestActivationValidation(t *testing.T) {
 	activation.Subject = apk2
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 
-	activation.Export.Subject = "foo"
-	activation.Export.TokenReq = false
-	activation.Export.Name = "Foo"
-	activation.Export.Type = Stream
+	activation.ImportSubject = "foo"
+	activation.Name = "Foo"
+	activation.ImportType = Stream
 
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
@@ -163,7 +227,9 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "times", Subject: "times.*"}
+	activation.ImportSubject = "times.*"
+	activation.ImportType = Stream
+	activation.Name = "times"
 
 	vr = CreateValidationResults()
 	activation.Validate(vr)
@@ -172,7 +238,9 @@ func TestActivationValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "other", Subject: "other.*"}
+	activation.ImportSubject = "other.*"
+	activation.ImportType = Stream
+	activation.Name = "other"
 
 	activation.Limits.Max = -1
 	vr = CreateValidationResults()
@@ -238,7 +306,9 @@ func TestActivationHashIDLimits(t *testing.T) {
 		t.Fatal("activation without subject should fail to hash")
 	}
 
-	activation.Export = Export{Type: Stream, Name: "times", Subject: "times.*"}
+	activation.ImportSubject = "times.*"
+	activation.ImportType = Stream
+	activation.Name = "times"
 
 	hash, err := activation.HashID()
 	if err != nil {
@@ -248,7 +318,9 @@ func TestActivationHashIDLimits(t *testing.T) {
 	activation2 := NewActivationClaims(apk)
 	activation2.Issuer = apk
 	activation2.Subject = apk2
-	activation2.Export = Export{Type: Stream, Name: "times", Subject: "times.*.bar"}
+	activation2.ImportSubject = "times.*.bar"
+	activation2.ImportType = Stream
+	activation2.Name = "times"
 
 	hash2, err := activation2.HashID()
 	if err != nil {
