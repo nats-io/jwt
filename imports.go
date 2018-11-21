@@ -72,22 +72,18 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 			var err error
 			act, err = DecodeActivationClaims(i.Token)
 			if err != nil {
-				vr.AddWarning("import %s contains an invalid activation token", i.Subject)
+				vr.AddWarning("import %q contains an invalid activation token", i.Subject)
 			}
 		}
 	}
 
 	if act != nil {
 		if act.Issuer != i.Account {
-			vr.AddWarning("activation token doesn't match account for import %s", i.Subject)
+			vr.AddWarning("activation token doesn't match account for import %q", i.Subject)
 		}
 
 		if act.Subject != actPubKey {
-			vr.AddWarning("activation token doesn't match account it is being included in, %s", i.Subject)
-		}
-
-		if !act.Exports.HasExportContainingSubject(i.Subject) {
-			vr.AddWarning("activation token include the subject trying to be imported, %s", i.Subject)
+			vr.AddWarning("activation token doesn't match account it is being included in, %q", i.Subject)
 		}
 	} else {
 		vr.AddWarning("no activation provided for import %s", i.Subject)
