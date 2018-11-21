@@ -12,18 +12,14 @@ import (
 
 // Activation defines the custom parts of an activation claim
 type Activation struct {
-	Exports Exports `json:"exports,omitempty"`
+	Export Export `json:"export,omitempty"`
 	Limits
 }
 
 // Validate checks the exports and limits in an activation JWT
 func (a *Activation) Validate(vr *ValidationResults) {
-	a.Exports.Validate(vr)
+	a.Export.Validate(vr)
 	a.Limits.Validate(vr)
-
-	if len(a.Exports) > 1 {
-		vr.AddError("activation tokens can only contain a single export")
-	}
 }
 
 // ActivationClaims holds the data specific to an activation JWT
@@ -92,11 +88,11 @@ func (a *ActivationClaims) String() string {
 // the one special case is that if the export start with "*" or is ">" the <subject> "_"
 func (a *ActivationClaims) HashID() (string, error) {
 
-	if a.Issuer == "" || a.Subject == "" || len(a.Exports) == 0 || a.Exports[0].Subject == "" {
+	if a.Issuer == "" || a.Subject == "" || a.Export.Subject == "" {
 		return "", fmt.Errorf("not enough data in the activaion claims to create a hash")
 	}
 
-	subject := cleanSubject(string(a.Exports[0].Subject))
+	subject := cleanSubject(string(a.Export.Subject))
 	base := fmt.Sprintf("%s.%s.%s", a.Issuer, a.Subject, subject)
 	h := sha256.New()
 	h.Write([]byte(base))

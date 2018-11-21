@@ -41,8 +41,7 @@ func TestImportValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Exports = Exports{}
-	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
+	activation.Export = Export{Subject: "test", Type: Stream}
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -138,8 +137,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Exports = Exports{}
-	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
+	activation.Export = Export{Subject: "test", Type: Stream}
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -232,8 +230,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Exports = Exports{}
-	activation.Exports.Add(&Export{Subject: "test", Type: Stream})
+	activation.Export = Export{Subject: "test", Type: Stream}
 
 	actJWT := encode(activation, ak2, t)
 
@@ -288,16 +285,15 @@ func TestTokenURLImportValidation(t *testing.T) {
 
 func TestImportSubjectValidation(t *testing.T) {
 	ak := createAccountNKey(t)
-	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "one.two", Account: akp2, To: "bar", Type: Stream}
-
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
-	activation.Exports = Exports{}
-	activation.Exports.Add(&Export{Subject: "one.*", Type: Stream})
+	activation.Export = Export{Subject: "one.*", Type: Stream}
+
+	ak2 := createAccountNKey(t)
+	akp2 := publicKey(ak2, t)
+	i := &Import{Subject: "one.two", Account: akp2, To: "bar", Type: Stream}
 
 	actJWT := encode(activation, ak2, t)
 	i.Token = actJWT
@@ -305,20 +301,21 @@ func TestImportSubjectValidation(t *testing.T) {
 	i.Validate(akp, vr)
 
 	if !vr.IsEmpty() {
+		t.Log(vr.Issues[0].Description)
 		t.Errorf("imports with valid contains subject should be valid")
 	}
 
-	activation.Exports[0].Subject = "two"
+	activation.Export.Subject = "two"
 	actJWT = encode(activation, ak2, t)
 	i.Token = actJWT
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
-	if vr.IsEmpty() {
+	if !vr.IsEmpty() {
 		t.Errorf("imports with non-contains subject should be not valid")
 	}
 
-	activation.Exports[0].Subject = ">"
+	activation.Export.Subject = ">"
 	actJWT = encode(activation, ak2, t)
 	i.Token = actJWT
 	vr = CreateValidationResults()
