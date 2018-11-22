@@ -45,7 +45,7 @@ func TestServiceExportWithWildcard(t *testing.T) {
 	i.Validate(vr)
 
 	if len(vr.Issues) != 1 {
-		t.Errorf("export with service wildcard shoudl have one failure")
+		t.Errorf("export with service wildcard should have one failure")
 	}
 
 	if vr.IsBlocking(true) {

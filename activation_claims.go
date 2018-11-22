@@ -61,7 +61,7 @@ func NewActivationClaims(subject string) *ActivationClaims {
 
 // Encode turns an activation claim into a JWT strimg
 func (a *ActivationClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicAccountKey([]byte(a.ClaimsData.Subject)) {
+	if !nkeys.IsValidPublicAccountKey(a.ClaimsData.Subject) {
 		return "", errors.New("expected subject to be an account")
 	}
 	a.ClaimsData.Type = ActivationClaim

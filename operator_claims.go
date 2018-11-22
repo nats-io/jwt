@@ -23,7 +23,7 @@ func (o *Operator) Validate(vr *ValidationResults) {
 	}
 
 	for _, k := range o.SigningKeys {
-		if !nkeys.IsValidPublicOperatorKey([]byte(k)) {
+		if !nkeys.IsValidPublicOperatorKey(k) {
 			vr.AddError("%s is not an operator public key", k)
 		}
 	}
@@ -80,7 +80,7 @@ func (s *OperatorClaims) AddSigningKey(pk string) {
 
 // Encode the claims into a JWT string
 func (s *OperatorClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicOperatorKey(([]byte(s.Subject))) {
+	if !nkeys.IsValidPublicOperatorKey(s.Subject) {
 		return "", errors.New("expected subject to be an operator public key")
 	}
 	s.ClaimsData.Type = OperatorClaim

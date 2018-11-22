@@ -70,7 +70,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 
 // Encode converts account claims into a JWT string
 func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicAccountKey([]byte(a.Subject)) {
+	if !nkeys.IsValidPublicAccountKey(a.Subject) {
 		return "", errors.New("expected subject to be account public key")
 	}
 
@@ -115,7 +115,7 @@ func (a *AccountClaims) Validate(vr *ValidationResults) {
 	a.ClaimsData.Validate(vr)
 	a.Account.Validate(a, vr)
 
-	if nkeys.IsValidPublicAccountKey([]byte(a.ClaimsData.Issuer)) {
+	if nkeys.IsValidPublicAccountKey(a.ClaimsData.Issuer) {
 		if len(a.Identities) > 0 {
 			vr.AddError("self-signed account JWTs can't contain identity proofs")
 		}
