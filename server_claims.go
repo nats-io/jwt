@@ -37,7 +37,7 @@ func NewServerClaims(subject string) *ServerClaims {
 
 // Encode tries to turn the server claims into a JWT string
 func (s *ServerClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicServerKey([]byte(s.Subject)) {
+	if !nkeys.IsValidPublicServerKey(s.Subject) {
 		return "", errors.New("expected subject to be a server public key")
 	}
 	s.ClaimsData.Type = ServerClaim

@@ -37,7 +37,7 @@ func NewClusterClaims(subject string) *ClusterClaims {
 
 // Encode tries to turn the cluster claims into a JWT string
 func (c *ClusterClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicClusterKey([]byte(c.Subject)) {
+	if !nkeys.IsValidPublicClusterKey(c.Subject) {
 		return "", errors.New("expected subject to be a cluster public key")
 	}
 	c.ClaimsData.Type = ClusterClaim

@@ -191,7 +191,7 @@ func parseClaims(s string, target Claims) error {
 // claim is trusted.
 func (c *ClaimsData) Verify(payload string, sig []byte) bool {
 	// decode the public key
-	kp, err := nkeys.FromPublicKey([]byte(c.Issuer))
+	kp, err := nkeys.FromPublicKey(c.Issuer)
 	if err != nil {
 		return false
 	}
@@ -251,7 +251,7 @@ func Decode(token string, target Claims) error {
 	prefixes := target.ExpectedPrefixes()
 	if prefixes != nil {
 		ok := false
-		issuer := []byte(target.Claims().Issuer)
+		issuer := target.Claims().Issuer
 		for _, p := range prefixes {
 			switch p {
 			case nkeys.PrefixByteAccount:

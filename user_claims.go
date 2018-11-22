@@ -36,7 +36,7 @@ func NewUserClaims(subject string) *UserClaims {
 
 // Encode tries to turn the user claims into a JWT string
 func (u *UserClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	if !nkeys.IsValidPublicUserKey([]byte(u.Subject)) {
+	if !nkeys.IsValidPublicUserKey(u.Subject) {
 		return "", errors.New("expected subject to be user public key")
 	}
 	u.ClaimsData.Type = UserClaim
