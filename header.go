@@ -7,13 +7,18 @@ import (
 	"strings"
 )
 
-// TokenTypeJwt is the JWT token type supported JWT tokens
-// encoded and decoded by this library
-const TokenTypeJwt = "jwt"
+const (
+	// Version
+	Version = "0.0.1"
 
-// AlgorithmNkey is the algorithm supported by JWT tokens
-// encoded and decoded by this library
-const AlgorithmNkey = "ed25519"
+	// TokenTypeJwt is the JWT token type supported JWT tokens
+	// encoded and decoded by this library
+	TokenTypeJwt = "jwt"
+
+	// AlgorithmNkey is the algorithm supported by JWT tokens
+	// encoded and decoded by this library
+	AlgorithmNkey = "ed25519"
+)
 
 // Header is a JWT Jose Header
 type Header struct {

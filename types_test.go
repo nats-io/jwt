@@ -1,9 +1,18 @@
 package jwt
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 )
+
+func TestVersion(t *testing.T) {
+	// Semantic versioning
+	verRe := regexp.MustCompile(`\d+.\d+.\d+(-\S+)?`)
+	if !verRe.MatchString(Version) {
+		t.Fatalf("Version not compatible with semantic versioning: %q", Version)
+	}
+}
 
 func TestTimeRangeValidation(t *testing.T) {
 	tr := TimeRange{
