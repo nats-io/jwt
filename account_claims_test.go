@@ -47,7 +47,7 @@ func TestNewAccountClaims(t *testing.T) {
 	AssertEquals(account2.Payload() != nil, true, t)
 }
 
-func TestAccountCantSignOperatorLimits(t *testing.T) {
+func TestAccountCanSignOperatorLimits(t *testing.T) { // don't block encoding!!!
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
 
@@ -56,12 +56,12 @@ func TestAccountCantSignOperatorLimits(t *testing.T) {
 	account.Limits.Conn = 1
 
 	_, err := account.Encode(akp)
-	if err == nil {
+	if err != nil {
 		t.Fatal("account should not be able to encode operator limits", err)
 	}
 }
 
-func TestAccountCantSignIdentities(t *testing.T) {
+func TestAccountCanSignIdentities(t *testing.T) { // don't block encoding!!!
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
 
@@ -75,7 +75,7 @@ func TestAccountCantSignIdentities(t *testing.T) {
 	}
 
 	_, err := account.Encode(akp)
-	if err == nil {
+	if err != nil {
 		t.Fatal("account should not be able to encode identities", err)
 	}
 }
@@ -257,8 +257,8 @@ func TestLimitValidationInAccount(t *testing.T) {
 	vr = CreateValidationResults()
 	account.Validate(vr)
 
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad issuer should be blocking")
+	if vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Fatal("bad issuer for limits should have non-blocking validation results")
 	}
 
 	account.Identities = []Identity{
@@ -272,8 +272,8 @@ func TestLimitValidationInAccount(t *testing.T) {
 	vr = CreateValidationResults()
 	account.Validate(vr)
 
-	if len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Fatal("bad issuer should be blocking")
+	if vr.IsEmpty() || vr.IsBlocking(true) {
+		t.Fatal("bad issuer for identities should have non-blocking validation results")
 	}
 
 	account.Identities = nil
