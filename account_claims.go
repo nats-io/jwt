@@ -75,20 +75,6 @@ func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
 		return "", errors.New("expected subject to be account public key")
 	}
 
-	pubKey, err := pair.PublicKey()
-	if err != nil {
-		return "", err
-	}
-
-	if nkeys.IsValidPublicAccountKey(pubKey) {
-		if len(a.Identities) > 0 {
-			return "", errors.New("self-signed account JWTs can't contain identity proofs")
-		}
-		if !a.Limits.IsEmpty() {
-			return "", errors.New("self-signed account JWTs can't contain operator limits")
-		}
-	}
-
 	a.ClaimsData.Type = AccountClaim
 	return a.ClaimsData.encode(pair, a)
 }
@@ -118,10 +104,10 @@ func (a *AccountClaims) Validate(vr *ValidationResults) {
 
 	if nkeys.IsValidPublicAccountKey(a.ClaimsData.Issuer) {
 		if len(a.Identities) > 0 {
-			vr.AddError("self-signed account JWTs can't contain identity proofs")
+			vr.AddWarning("self-signed account JWTs shouldn't contain identity proofs")
 		}
 		if !a.Limits.IsEmpty() {
-			vr.AddError("self-signed account JWTs can't contain operator limits")
+			vr.AddWarning("self-signed account JWTs shouldn't contain operator limits")
 		}
 	}
 }
