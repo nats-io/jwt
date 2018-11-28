@@ -214,6 +214,7 @@ func TestLimitValidationInAccount(t *testing.T) {
 	account.Limits.Data = 1024
 	account.Limits.Payload = 1024
 	account.Limits.Subs = 10
+	account.Limits.WildcardExports = true
 	account.Identities = []Identity{
 		{
 			ID:    "stephen",
