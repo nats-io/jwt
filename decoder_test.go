@@ -299,7 +299,7 @@ func TestBadClaimsEncoding(t *testing.T) {
 }
 
 func TestBadHeaderJSON(t *testing.T) {
-	payload := base64.RawStdEncoding.EncodeToString([]byte("{foo: bar}"))
+	payload := base64.RawURLEncoding.EncodeToString([]byte("{foo: bar}"))
 	_, err := parseHeaders(payload)
 	if err == nil {
 		t.Fatal("should have failed bad json")
@@ -307,7 +307,7 @@ func TestBadHeaderJSON(t *testing.T) {
 }
 
 func TestBadClaimsJSON(t *testing.T) {
-	payload := base64.RawStdEncoding.EncodeToString([]byte("{foo: bar}"))
+	payload := base64.RawURLEncoding.EncodeToString([]byte("{foo: bar}"))
 	c := GenericClaims{}
 	err := parseClaims(payload, &c)
 	if err == nil {
