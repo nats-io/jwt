@@ -286,3 +286,43 @@ func TestLimitValidationInAccount(t *testing.T) {
 		t.Fatal("account can encode without limits and identity")
 	}
 }
+
+func TestWildcardExportLimit(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Limits.Conn = 10
+	account.Limits.Imports = 10
+	account.Limits.Exports = 10
+	account.Limits.WildcardExports = true
+	account.Exports = Exports{
+		&Export{Subject: "foo", Type: Stream},
+		&Export{Subject: "bar.*", Type: Stream},
+	}
+
+	vr := CreateValidationResults()
+	account.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Fatal("valid account should have no validation issues")
+	}
+
+	account.Limits.WildcardExports = false
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Fatal("invalid account should have validation issues")
+	}
+
+	account.Limits.WildcardExports = true
+	account.Limits.Exports = 1
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if vr.IsEmpty() || !vr.IsBlocking(true) {
+		t.Fatal("invalid account should have validation issues")
+	}
+}
