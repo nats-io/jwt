@@ -49,8 +49,18 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 		vr.AddError("the account contains more imports than allowed by the operator limits")
 	}
 
-	if !a.Limits.IsEmpty() && a.Limits.Exports >= 0 && int64(len(a.Exports)) > a.Limits.Exports {
-		vr.AddError("the account contains more exports than allowed by the operator limits")
+	if !a.Limits.IsEmpty() && len(a.Exports) > 0 {
+		if a.Limits.Exports >= 0 && int64(len(a.Exports)) > a.Limits.Exports {
+			vr.AddError("the account contains more exports than allowed by the operator limits")
+		}
+
+		if !a.Limits.WildcardExports {
+			for _, ex := range a.Exports {
+				if ex.Subject.HasWildCards() {
+					vr.AddError("the account contains an export, %s, with wildcards that are not allowed by the operator limts", ex.Subject)
+				}
+			}
+		}
 	}
 }
 
