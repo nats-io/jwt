@@ -177,11 +177,7 @@ func parseClaims(s string, target Claims) error {
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(h, &target); err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal(h, &target)
 }
 
 // Verify verifies that the encoded payload was signed by the
