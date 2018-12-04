@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -28,7 +27,7 @@ type Header struct {
 
 // Parses a header JWT token
 func parseHeaders(s string) (*Header, error) {
-	h, err := base64.RawStdEncoding.DecodeString(s)
+	h, err := decodeString(s)
 	if err != nil {
 		return nil, err
 	}
