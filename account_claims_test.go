@@ -22,7 +22,12 @@ func TestNewAccountClaims(t *testing.T) {
 	actJWT := encode(activation, akp2, t)
 
 	account := NewAccountClaims(apk)
+	if !account.Limits.IsUnlimited() {
+		t.Fatalf("Expected unlimited operator limits")
+	}
+
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).UTC().Unix()
+
 	account.Imports = Imports{}
 	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
 
