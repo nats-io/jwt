@@ -80,7 +80,7 @@ func TestExportsValidation(t *testing.T) {
 	}
 
 	if exports.HasExportContainingSubject("bar.*") {
-		t.Errorf("Export list does not has the subject, and should say so")
+		t.Errorf("Export list does not have the subject, and should say so")
 	}
 }
 
@@ -96,5 +96,50 @@ func TestOverlappingExports(t *testing.T) {
 
 	if len(vr.Issues) != 1 {
 		t.Errorf("export has overlapping subjects")
+	}
+}
+
+func TestDifferentExportTypes_OverlapOK(t *testing.T) {
+	i := &Export{Subject: "bar.foo", Type: Service}
+	i2 := &Export{Subject: "bar.*", Type: Stream}
+
+	exports := &Exports{}
+	exports.Add(i, i2)
+
+	vr := CreateValidationResults()
+	exports.Validate(vr)
+
+	if len(vr.Issues) != 0 {
+		t.Errorf("should allow overlaps on different export kind")
+	}
+}
+
+func TestDifferentExportTypes_SameSubjectOK(t *testing.T) {
+	i := &Export{Subject: "bar", Type: Service}
+	i2 := &Export{Subject: "bar", Type: Stream}
+
+	exports := &Exports{}
+	exports.Add(i, i2)
+
+	vr := CreateValidationResults()
+	exports.Validate(vr)
+
+	if len(vr.Issues) != 0 {
+		t.Errorf("should allow overlaps on different export kind")
+	}
+}
+
+func TestSameExportType_SameSubject(t *testing.T) {
+	i := &Export{Subject: "bar", Type: Service}
+	i2 := &Export{Subject: "bar", Type: Service}
+
+	exports := &Exports{}
+	exports.Add(i, i2)
+
+	vr := CreateValidationResults()
+	exports.Validate(vr)
+
+	if len(vr.Issues) != 1 {
+		t.Errorf("should not allow same subject on same export kind")
 	}
 }
