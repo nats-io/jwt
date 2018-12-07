@@ -70,18 +70,6 @@ func TestExportsValidation(t *testing.T) {
 	if vr.IsBlocking(true) {
 		t.Errorf("export with wildcard should not be blocking")
 	}
-
-	if !exports.HasExportContainingSubject("foo") {
-		t.Errorf("Export list has the subject, and should say so")
-	}
-
-	if !exports.HasExportContainingSubject("foo.*") {
-		t.Errorf("Export list has the subject, and should say so")
-	}
-
-	if exports.HasExportContainingSubject("bar.*") {
-		t.Errorf("Export list does not has the subject, and should say so")
-	}
 }
 
 func TestOverlappingExports(t *testing.T) {
@@ -94,7 +82,7 @@ func TestOverlappingExports(t *testing.T) {
 	vr := CreateValidationResults()
 	exports.Validate(vr)
 
-	if len(vr.Issues) != 1 {
-		t.Errorf("export has overlapping subjects")
+	if len(vr.Issues) != 0 {
+		t.Error("expected no validation errors")
 	}
 }

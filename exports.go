@@ -1,9 +1,5 @@
 package jwt
 
-import (
-	"fmt"
-)
-
 // Export represents a single export
 type Export struct {
 	Name     string     `json:"name,omitempty"`
@@ -52,41 +48,5 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 		subjects = append(subjects, v.Subject)
 		v.Validate(vr)
 	}
-	// collect all the subjects, and validate that no subject is a subset
-	m := make(map[string]string)
-	for i, ns := range subjects {
-		for j, s := range subjects {
-			if i == j {
-				continue
-			}
-			if ns.IsContainedIn(s) {
-				str := string(s)
-				_, ok := m[str]
-				if !ok {
-					m[str] = string(ns)
-				}
-			}
-		}
-	}
-
-	if len(m) != 0 {
-		for k, v := range m {
-			var vi ValidationIssue
-			vi.Blocking = true
-			vi.Description = fmt.Sprintf("export subject %q already exports %q", k, v)
-			vr.Add(&vi)
-		}
-	}
-
 	return nil
-}
-
-// HasExportContainingSubject checks if the export list has an export with the provided subject
-func (e *Exports) HasExportContainingSubject(subject Subject) bool {
-	for _, s := range *e {
-		if subject.IsContainedIn(s.Subject) {
-			return true
-		}
-	}
-	return false
 }
