@@ -38,52 +38,6 @@ func TestInvalidExportType(t *testing.T) {
 	}
 }
 
-func TestServiceExportWithWildcard(t *testing.T) {
-	i := &Export{Subject: "foo.*", Type: Service}
-
-	vr := CreateValidationResults()
-	i.Validate(vr)
-
-	if len(vr.Issues) != 1 {
-		t.Errorf("export with service wildcard should have one failure")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("export with wildcard should not be blocking")
-	}
-}
-
-func TestExportsValidation(t *testing.T) {
-	i := &Export{Subject: "foo", Type: Stream}
-	i2 := &Export{Subject: "foo.*", Type: Service}
-
-	exports := &Exports{}
-	exports.Add(i, i2)
-
-	vr := CreateValidationResults()
-	exports.Validate(vr)
-
-	if len(vr.Issues) != 1 {
-		t.Errorf("export with wildcard should warn")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("export with wildcard should not be blocking")
-	}
-
-	if !exports.HasExportContainingSubject("foo") {
-		t.Errorf("Export list has the subject, and should say so")
-	}
-
-	if !exports.HasExportContainingSubject("foo.*") {
-		t.Errorf("Export list has the subject, and should say so")
-	}
-
-	if exports.HasExportContainingSubject("bar.*") {
-		t.Errorf("Export list does not have the subject, and should say so")
-	}
-}
-
 func TestOverlappingExports(t *testing.T) {
 	i := &Export{Subject: "bar.foo", Type: Stream}
 	i2 := &Export{Subject: "bar.*", Type: Stream}
