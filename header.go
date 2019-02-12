@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	// Version
+	// Version is semantic version.
 	Version = "0.0.5"
 
 	// TokenTypeJwt is the JWT token type supported JWT tokens
