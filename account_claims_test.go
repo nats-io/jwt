@@ -73,7 +73,8 @@ func TestAccountCanSignOperatorLimits(t *testing.T) { // don't block encoding!!!
 
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
-	account.Limits.Conn = 1
+	account.Limits.Conn = 10
+	account.Limits.LeafNodeConn = 2
 
 	_, err := account.Encode(akp)
 	if err != nil {
@@ -108,6 +109,8 @@ func TestOperatorCanSignClaims(t *testing.T) {
 	account := NewAccountClaims(apk)
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
 	account.Limits.Conn = 1
+	account.Limits.LeafNodeConn = 4
+
 	account.Identities = []Identity{
 		{
 			ID:    "stephen",
@@ -124,6 +127,13 @@ func TestOperatorCanSignClaims(t *testing.T) {
 
 	AssertEquals(account.String(), account2.String(), t)
 	AssertEquals(account2.IsSelfSigned(), false, t)
+
+	if account2.Limits.Conn != 1 {
+		t.Fatalf("Expected Limits.Conn == 1, got %d", account2.Limits.Conn)
+	}
+	if account2.Limits.LeafNodeConn != 4 {
+		t.Fatalf("Expected Limits.Conn == 4, got %d", account2.Limits.LeafNodeConn)
+	}
 }
 
 func TestInvalidAccountClaimIssuer(t *testing.T) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2019 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,7 @@ const NoLimit = -1
 type OperatorLimits struct {
 	Subs            int64 `json:"subs,omitempty"`      // Max number of subscriptions
 	Conn            int64 `json:"conn,omitempty"`      // Max number of active connections
+	LeafNodeConn    int64 `json:"leaf,omitempty"`      // Max number of active leaf node connections
 	Imports         int64 `json:"imports,omitempty"`   // Max number of imports
 	Exports         int64 `json:"exports,omitempty"`   // Max number of exports
 	Data            int64 `json:"data,omitempty"`      // Max number of bytes
@@ -42,7 +43,7 @@ func (o *OperatorLimits) IsEmpty() bool {
 
 // IsUnlimited returns true if all limits are
 func (o *OperatorLimits) IsUnlimited() bool {
-	return *o == OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
+	return *o == OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
 }
 
 // Validate checks that the operator limits contain valid values
@@ -107,7 +108,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 	c := &AccountClaims{}
 	// Set to unlimited to start. We do it this way so we get compiler
 	// errors if we add to the OperatorLimits.
-	c.Limits = OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
+	c.Limits = OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
 	c.Subject = subject
 	return c
 }
