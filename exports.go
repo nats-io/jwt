@@ -81,7 +81,7 @@ func isContainedIn(kind ExportType, subjects []Subject, vr *ValidationResults) {
 }
 
 // Validate calls validate on all of the exports
-func (e *Exports) Validate(vr *ValidationResults) error {
+func (e *Exports) Validate(vr *ValidationResults) {
 	var serviceSubjects []Subject
 	var streamSubjects []Subject
 
@@ -96,8 +96,6 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 
 	isContainedIn(Service, serviceSubjects, vr)
 	isContainedIn(Stream, streamSubjects, vr)
-
-	return nil
 }
 
 // HasExportContainingSubject checks if the export list has an export with the provided subject

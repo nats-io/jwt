@@ -53,6 +53,7 @@ type Claims interface {
 	Claims() *ClaimsData
 	Encode(kp nkeys.KeyPair) (string, error)
 	ExpectedPrefixes() []nkeys.PrefixByte
+	Migrated() bool
 	Payload() interface{}
 	String() string
 	Validate(vr *ValidationResults)

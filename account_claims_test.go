@@ -44,7 +44,7 @@ func TestNewAccountClaims(t *testing.T) {
 	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).UTC().Unix()
 
 	account.Imports = Imports{}
-	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
+	account.Imports.Add(&Import{RemoteSubject: "test", Name: "test import", Account: apk2, Token: actJWT, LocalSubject: "my", Type: Stream})
 
 	vr := CreateValidationResults()
 	account.Validate(vr)
@@ -194,9 +194,6 @@ func TestInvalidAccountSubjects(t *testing.T) {
 		var err error
 
 		c := NewAccountClaims(pk)
-		if i.ok && err != nil {
-			t.Fatalf("error encoding activation: %v", err)
-		}
 		_, err = c.Encode(i.kp)
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))

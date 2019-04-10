@@ -63,6 +63,12 @@ func (gc *GenericClaims) Validate(vr *ValidationResults) {
 	gc.ClaimsData.Validate(vr)
 }
 
+// Migrated returns true if the cluster claim was migrated during a read
+// GenericClaims will always return false
+func (gc *GenericClaims) Migrated() bool {
+	return false
+}
+
 func (gc *GenericClaims) String() string {
 	return gc.ClaimsData.String(gc)
 }

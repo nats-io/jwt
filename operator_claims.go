@@ -135,3 +135,8 @@ func (s *OperatorClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 func (s *OperatorClaims) Claims() *ClaimsData {
 	return &s.ClaimsData
 }
+
+// Migrated returns true if the cluster claim was migrated during a read
+func (s *OperatorClaims) Migrated() bool {
+	return false
+}

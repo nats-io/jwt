@@ -28,7 +28,7 @@ func TestImportValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -73,7 +73,7 @@ func TestImportValidation(t *testing.T) {
 func TestInvalidImportType(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, To: "bar", Type: Unknown}
+	i := &Import{RemoteSubject: "foo", Account: akp, LocalSubject: "bar", Type: Unknown}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -90,7 +90,7 @@ func TestInvalidImportType(t *testing.T) {
 func TestInvalidImportToken(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, Token: "bad token", To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "foo", Account: akp, Token: "bad token", LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -107,7 +107,7 @@ func TestInvalidImportToken(t *testing.T) {
 func TestInvalidImportURL(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad token url", To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "foo", Account: akp, Token: "foo://bad token url", LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -126,7 +126,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -187,7 +187,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	}
 }
 func TestMissingAccountInImport(t *testing.T) {
-	i := &Import{Subject: "foo", To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "foo", LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -204,13 +204,13 @@ func TestMissingAccountInImport(t *testing.T) {
 func TestServiceImportWithWildcard(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
+	i := &Import{RemoteSubject: "foo.*", Account: akp, LocalSubject: "bar", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
-		t.Errorf("imports without token or url should warn the caller, as should wildcard service")
+	if len(vr.Issues) != 1 {
+		t.Errorf("imports without token should warn the caller")
 	}
 
 	if vr.IsBlocking(true) {
@@ -221,8 +221,8 @@ func TestServiceImportWithWildcard(t *testing.T) {
 func TestImportsValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, To: "bar", Type: Stream}
-	i2 := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
+	i := &Import{RemoteSubject: "foo", Account: akp, LocalSubject: "bar", Type: Stream}
+	i2 := &Import{RemoteSubject: "foo.*", Account: akp, LocalSubject: "bar", Type: Service}
 
 	imports := &Imports{}
 	imports.Add(i, i2)
@@ -230,8 +230,8 @@ func TestImportsValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	imports.Validate("", vr)
 
-	if len(vr.Issues) != 3 {
-		t.Errorf("imports without token or url should warn the caller x2, wildcard service as well")
+	if len(vr.Issues) != 2 {
+		t.Errorf("imports without token or url should warn the caller x2")
 	}
 
 	if vr.IsBlocking(true) {
@@ -244,7 +244,7 @@ func TestTokenURLImportValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	activation := NewActivationClaims(akp)
 	activation.Max = 1024 * 1024
@@ -255,7 +255,10 @@ func TestTokenURLImportValidation(t *testing.T) {
 	actJWT := encode(activation, ak2, t)
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(actJWT))
+		_, err := w.Write([]byte(actJWT))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer ts.Close()
 
@@ -277,7 +280,10 @@ func TestTokenURLImportValidation(t *testing.T) {
 	}
 
 	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("bad jwt"))
+		_, err := w.Write([]byte("bad jwt"))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer ts.Close()
 
@@ -314,7 +320,7 @@ func TestImportSubjectValidation(t *testing.T) {
 
 	ak2 := createAccountNKey(t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "one.two", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{RemoteSubject: "one.two", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	actJWT := encode(activation, ak2, t)
 	i.Token = actJWT
@@ -346,5 +352,78 @@ func TestImportSubjectValidation(t *testing.T) {
 
 	if !vr.IsEmpty() {
 		t.Errorf("imports with valid contains subject should be valid")
+	}
+}
+
+func TestImport_Migration(t *testing.T) {
+	ak := createAccountNKey(t)
+	apk := publicKey(ak, t)
+	ac := NewAccountClaims(apk)
+
+	a2k := createAccountNKey(t)
+	a2pk := publicKey(a2k, t)
+	// Do not update Subject or To
+	i := &Import{Subject: "foo", Account: a2pk, To: "bar", Type: Service}
+	ac.Imports.Add(i)
+	// Do not update Subject or To
+	i2 := &Import{Subject: "x", Account: a2pk, To: "y", Type: Stream}
+	ac.Imports.Add(i2)
+
+	token, err := ac.Encode(ak)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ac2, err := DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if ac2.Migrated() == false {
+		t.Fatal("account claim should have migrated")
+	}
+
+	for _, i := range ac2.Imports {
+		if i.RemoteSubject == "" {
+			t.Fatal("import 'remote_subject' should be set when old token was loaded")
+		}
+		if i.Subject != "" {
+			t.Fatalf("import 'subject' shouldn't be set when old token was loaded: %s", i.Subject)
+		}
+		if i.LocalSubject == "" {
+			t.Fatal("import 'local_subject' should be set when old token was loaded")
+		}
+		if i.To != "" {
+			t.Fatalf("import 'to' shouldn't be set when old token was loaded: %s", i.To)
+		}
+	}
+
+	if ac2.Imports[0].RemoteSubject != "foo" && ac2.Imports[0].LocalSubject != "bar" {
+		t.Fatal("import remapped subjects don't match expected")
+	}
+	if ac2.Imports[1].RemoteSubject != "x" && ac2.Imports[1].LocalSubject != "y" {
+		t.Fatal("import remapped subjects don't match expected")
+	}
+}
+
+func TestImport_Mix(t *testing.T) {
+	ak := createAccountNKey(t)
+	apk := publicKey(ak, t)
+	ac := NewAccountClaims(apk)
+
+	a2k := createAccountNKey(t)
+	a2pk := publicKey(a2k, t)
+	// Do not update Subject or To
+	i := &Import{Subject: "foo", Account: a2pk, To: "bar", RemoteSubject: "foo", LocalSubject: "bar", Type: Service}
+	ac.Imports.Add(i)
+
+	token, err := ac.Encode(ak)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = DecodeAccountClaims(token)
+	if err == nil {
+		t.Fatal("should have failed decoding")
 	}
 }

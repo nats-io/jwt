@@ -117,6 +117,11 @@ func (a *ActivationClaims) String() string {
 	return a.ClaimsData.String(a)
 }
 
+// Migrated returns true if the activation claim was migrated during a read
+func (a *ActivationClaims) Migrated() bool {
+	return false
+}
+
 // HashID returns a hash of the claims that can be used to identify it.
 // The hash is calculated by creating a string with
 // issuerPubKey.subjectPubKey.<subject> and constructing the sha-256 hash and base32 encoding that.

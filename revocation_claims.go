@@ -103,3 +103,8 @@ func (rc *RevocationClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 func (rc *RevocationClaims) Claims() *ClaimsData {
 	return &rc.ClaimsData
 }
+
+// Migrated returns true if the revocation claim was migrated during a read
+func (rc *RevocationClaims) Migrated() bool {
+	return false
+}

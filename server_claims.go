@@ -92,3 +92,8 @@ func (s *ServerClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 func (s *ServerClaims) Claims() *ClaimsData {
 	return &s.ClaimsData
 }
+
+// Migrated returns true if the server claim was migrated during a read
+func (s *ServerClaims) Migrated() bool {
+	return false
+}

@@ -88,6 +88,11 @@ func (u *UserClaims) Payload() interface{} {
 	return &u.User
 }
 
+// Migrated returns true if the user claim was migrated during a read
+func (u *UserClaims) Migrated() bool {
+	return false
+}
+
 func (u *UserClaims) String() string {
 	return u.ClaimsData.String(u)
 }

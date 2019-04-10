@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/nats-io/nkeys"
 )
@@ -129,6 +130,20 @@ func DecodeAccountClaims(token string) (*AccountClaims, error) {
 	if err := Decode(token, &v); err != nil {
 		return nil, err
 	}
+	// After decoding validation is complete, migrate imports
+	for _, i := range v.Imports {
+		if i.Subject != "" || i.To != "" {
+			if i.RemoteSubject != "" || i.LocalSubject != "" {
+				return nil, fmt.Errorf("import [%s] uses subject/to and remote/local - only remote/local or subject/to allowed for reading", i.Name)
+			}
+			i.RemoteSubject = i.Subject
+			i.Subject = ""
+			i.LocalSubject = i.To
+			i.To = ""
+			i.migrated = true
+		}
+	}
+
 	return &v, nil
 }
 
@@ -164,4 +179,14 @@ func (a *AccountClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the accounts claims data
 func (a *AccountClaims) Claims() *ClaimsData {
 	return &a.ClaimsData
+}
+
+// Migrated returns true if the account claim was migrated during a read
+func (a *AccountClaims) Migrated() bool {
+	for _, i := range a.Imports {
+		if i.migrated {
+			return true
+		}
+	}
+	return false
 }
