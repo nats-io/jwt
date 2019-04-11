@@ -347,6 +347,64 @@ func TestActivationHashIDLimits(t *testing.T) {
 	}
 }
 
+func TestActivationClaimAccountIDValidation(t *testing.T) {
+	issuerAccountKP := createAccountNKey(t)
+	issuerAccountPK := publicKey(issuerAccountKP, t)
+
+	issuerKP := createAccountNKey(t)
+	issuerPK := publicKey(issuerKP, t)
+
+	account := NewAccountClaims(issuerAccountPK)
+	account.AddSigningKey(issuerPK)
+	token, err := account.Encode(issuerAccountKP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account, err = DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	importerKP := createAccountNKey(t)
+	importerPK := publicKey(importerKP, t)
+
+	ac := NewActivationClaims(importerPK)
+	ac.IssuerAccount = issuerAccountPK
+	ac.Name = "foo.bar"
+	ac.Activation.ImportSubject = Subject("foo.bar")
+	ac.Activation.ImportType = Stream
+
+	var vr ValidationResults
+	ac.Validate(&vr)
+	if len(vr.Issues) != 0 {
+		t.Fatalf("expected no validation errors: %v", vr.Issues[0].Error())
+	}
+	token, err = ac.Encode(issuerKP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ac, err = DecodeActivationClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ac.Issuer != issuerPK {
+		t.Fatal("expected activation subject to be different")
+	}
+	if ac.IssuerAccount != issuerAccountPK {
+		t.Fatal("expected activation account id to be different")
+	}
+
+	ac.IssuerAccount = publicKey(createUserNKey(t), t)
+	ac.Validate(&vr)
+	if len(vr.Issues) != 1 {
+		t.Fatal("expected validation error")
+	}
+
+	if !account.DidSign(ac) {
+		t.Fatal("expected account to have signed activation")
+	}
+}
+
 func TestCleanSubject(t *testing.T) {
 	input := [][]string{
 		{"foo", "foo"},
