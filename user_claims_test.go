@@ -284,7 +284,6 @@ func TestUserAccountID(t *testing.T) {
 		t.Fatal(err)
 	}
 
-
 	uc, err = DecodeUserClaims(userToken)
 	if err != nil {
 		t.Fatal(err)

@@ -348,16 +348,27 @@ func TestActivationHashIDLimits(t *testing.T) {
 }
 
 func TestActivationClaimAccountIDValidation(t *testing.T) {
-	akp := createAccountNKey(t)
-	apk := publicKey(akp, t)
-
 	issuerAccountKP := createAccountNKey(t)
 	issuerAccountPK := publicKey(issuerAccountKP, t)
 
 	issuerKP := createAccountNKey(t)
 	issuerPK := publicKey(issuerKP, t)
 
-	ac := NewActivationClaims(apk)
+	account := NewAccountClaims(issuerAccountPK)
+	account.AddSigningKey(issuerPK)
+	token, err := account.Encode(issuerAccountKP)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account, err = DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	importerKP := createAccountNKey(t)
+	importerPK := publicKey(importerKP, t)
+
+	ac := NewActivationClaims(importerPK)
 	ac.IssuerAccount = issuerAccountPK
 	ac.Name = "foo.bar"
 	ac.Activation.ImportSubject = Subject("foo.bar")
@@ -368,7 +379,7 @@ func TestActivationClaimAccountIDValidation(t *testing.T) {
 	if len(vr.Issues) != 0 {
 		t.Fatalf("expected no validation errors: %v", vr.Issues[0].Error())
 	}
-	token, err := ac.Encode(issuerKP)
+	token, err = ac.Encode(issuerKP)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -387,6 +398,10 @@ func TestActivationClaimAccountIDValidation(t *testing.T) {
 	ac.Validate(&vr)
 	if len(vr.Issues) != 1 {
 		t.Fatal("expected validation error")
+	}
+
+	if !account.DidSign(ac) {
+		t.Fatal("expected account to have signed activation")
 	}
 }
 
