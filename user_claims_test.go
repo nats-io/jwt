@@ -260,3 +260,58 @@ func TestUserValidation(t *testing.T) {
 		t.Error("bad permission should be invalid")
 	}
 }
+
+func TestUserAccountID(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	a2kp := createAccountNKey(t)
+	ac := NewAccountClaims(apk)
+	ac.AddSigningKey(publicKey(a2kp, t))
+
+	token, err := ac.Encode(akp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ac, err = DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	uc := NewUserClaims(publicKey(createUserNKey(t), t))
+	uc.IssuerAccount = apk
+	userToken, err := uc.Encode(a2kp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+
+	uc, err = DecodeUserClaims(userToken)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if uc.IssuerAccount != apk {
+		t.Fatalf("expected AccountID to be set to %s - got %s", apk, uc.IssuerAccount)
+	}
+
+	signed := ac.DidSign(uc)
+	if !signed {
+		t.Fatal("expected user signed by account")
+	}
+}
+
+func TestUserAccountIDValidation(t *testing.T) {
+	uc := NewUserClaims(publicKey(createUserNKey(t), t))
+	uc.IssuerAccount = publicKey(createAccountNKey(t), t)
+	var vr ValidationResults
+	uc.Validate(&vr)
+	if len(vr.Issues) != 0 {
+		t.Fatal("expected no issues")
+	}
+
+	uc.IssuerAccount = publicKey(createUserNKey(t), t)
+	uc.Validate(&vr)
+	if len(vr.Issues) != 1 {
+		t.Fatal("expected validation issues")
+	}
+}
