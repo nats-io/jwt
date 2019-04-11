@@ -33,10 +33,6 @@ func (o *Operator) Validate(vr *ValidationResults) {
 		i.Validate(vr)
 	}
 
-	if o.SigningKeys == nil {
-		return
-	}
-
 	for _, k := range o.SigningKeys {
 		if !nkeys.IsValidPublicOperatorKey(k) {
 			vr.AddError("%s is not an operator public key", k)
@@ -84,12 +80,6 @@ func (s *OperatorClaims) DidSign(op Claims) bool {
 // AddSigningKey creates the signing keys array if necessary
 // appends the new key, NO Validation is performed
 func (s *OperatorClaims) AddSigningKey(pk string) {
-
-	if s.SigningKeys == nil {
-		s.SigningKeys = []string{pk}
-		return
-	}
-
 	s.SigningKeys = append(s.SigningKeys, pk)
 }
 
