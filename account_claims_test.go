@@ -356,3 +356,103 @@ func TestWildcardExportLimit(t *testing.T) {
 		t.Fatal("invalid account should have validation issues")
 	}
 }
+
+func TestAccountSigningKeyValidation(t *testing.T) {
+	okp := createOperatorNKey(t)
+
+	akp1 := createAccountNKey(t)
+	apk1 := publicKey(akp1, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+
+	ac := NewAccountClaims(apk1)
+	ac.AddSigningKey(apk2)
+
+	var vr ValidationResults
+	ac.Validate(&vr)
+	if len(vr.Issues) != 0 {
+		t.Fatal("expected no validation issues")
+	}
+
+	// try encoding/decoding
+	token, err := ac.Encode(okp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ac2, err := DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ac2.SigningKeys) != 1 {
+		t.Fatal("expected claim to have a signing key")
+	}
+	if ac.SigningKeys[0] != apk2 {
+		t.Fatalf("expected signing key to be %s - got %s", apk2, ac.SigningKeys[0])
+	}
+
+	bkp := createUserNKey(t)
+	ac.AddSigningKey(publicKey(bkp, t))
+	ac.Validate(&vr)
+	if len(vr.Issues) != 1 {
+		t.Fatal("expected 1 validation issue")
+	}
+}
+
+func TestAccountSignedBy(t *testing.T) {
+	okp := createOperatorNKey(t)
+
+	akp1 := createAccountNKey(t)
+	apk1 := publicKey(akp1, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+
+	ac := NewAccountClaims(apk1)
+	ac.AddSigningKey(apk2)
+
+	token, err := ac.Encode(okp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ac2, err := DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ac2.SigningKeys) != 1 {
+		t.Fatal("expected claim to have a signing key")
+	}
+	if ac.SigningKeys[0] != apk2 {
+		t.Fatalf("expected signing key to be %s - got %s", apk2, ac.SigningKeys[0])
+	}
+
+	ukp := createUserNKey(t)
+	upk := publicKey(ukp, t)
+
+	// claim signed by alternate key
+	uc := NewUserClaims(upk)
+	utoken, err := uc.Encode(akp2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	uc2, err := DecodeUserClaims(utoken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ac2.DidSign(uc2) {
+		t.Fatal("failed to verify user claim")
+	}
+
+	// claim signed by the account pk
+	uc3 := NewUserClaims(upk)
+	utoken2, err := uc3.Encode(akp1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	uc4, err := DecodeUserClaims(utoken2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ac2.DidSign(uc4) {
+		t.Fatal("failed to verify user claim")
+	}
+}
