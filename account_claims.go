@@ -57,7 +57,7 @@ type Account struct {
 	Exports     Exports        `json:"exports,omitempty"`
 	Identities  []Identity     `json:"identity,omitempty"`
 	Limits      OperatorLimits `json:"limits,omitempty"`
-	SigningKeys []string       `json:"signing_keys,omitempty"`
+	SigningKeys StringList     `json:"signing_keys,omitempty"`
 }
 
 // Validate checks if the account is valid, based on the wrapper
@@ -99,10 +99,6 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 			vr.AddError("%s is not an account public key", k)
 		}
 	}
-}
-
-func (a *Account) AddSigningKey(pk string) {
-	a.SigningKeys = append(a.SigningKeys, pk)
 }
 
 // AccountClaims defines the body of an account JWT
@@ -184,11 +180,7 @@ func (a *AccountClaims) DidSign(op Claims) bool {
 		if issuer == a.Subject {
 			return true
 		}
-		for _, k := range a.SigningKeys {
-			if k == issuer {
-				return true
-			}
-		}
+		return a.SigningKeys.Contains(issuer)
 	}
 	return false
 }

@@ -355,7 +355,7 @@ func TestActivationClaimAccountIDValidation(t *testing.T) {
 	issuerPK := publicKey(issuerKP, t)
 
 	account := NewAccountClaims(issuerAccountPK)
-	account.AddSigningKey(issuerPK)
+	account.SigningKeys.Add(issuerPK)
 	token, err := account.Encode(issuerAccountKP)
 	if err != nil {
 		t.Fatal(err)
