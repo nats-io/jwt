@@ -266,7 +266,7 @@ func TestUserAccountID(t *testing.T) {
 	apk := publicKey(akp, t)
 	a2kp := createAccountNKey(t)
 	ac := NewAccountClaims(apk)
-	ac.AddSigningKey(publicKey(a2kp, t))
+	ac.SigningKeys.Add(publicKey(a2kp, t))
 
 	token, err := ac.Encode(akp)
 	if err != nil {

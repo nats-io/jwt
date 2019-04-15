@@ -156,8 +156,8 @@ func TestSigningKeyValidation(t *testing.T) {
 
 	vr = &ValidationResults{}
 	uc.Validate(vr)
-	if len(vr.Issues) == 0 {
-		t.Fatal("bad signing key should be invalid")
+	if len(vr.Issues) != 0 {
+		t.Fatal("should not be able to add empty values")
 	}
 }
 

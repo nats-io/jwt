@@ -366,7 +366,7 @@ func TestAccountSigningKeyValidation(t *testing.T) {
 	apk2 := publicKey(akp2, t)
 
 	ac := NewAccountClaims(apk1)
-	ac.AddSigningKey(apk2)
+	ac.SigningKeys.Add(apk2)
 
 	var vr ValidationResults
 	ac.Validate(&vr)
@@ -391,7 +391,7 @@ func TestAccountSigningKeyValidation(t *testing.T) {
 	}
 
 	bkp := createUserNKey(t)
-	ac.AddSigningKey(publicKey(bkp, t))
+	ac.SigningKeys.Add(publicKey(bkp, t))
 	ac.Validate(&vr)
 	if len(vr.Issues) != 1 {
 		t.Fatal("expected 1 validation issue")
@@ -407,7 +407,7 @@ func TestAccountSignedBy(t *testing.T) {
 	apk2 := publicKey(akp2, t)
 
 	ac := NewAccountClaims(apk1)
-	ac.AddSigningKey(apk2)
+	ac.SigningKeys.Add(apk2)
 
 	token, err := ac.Encode(okp)
 	if err != nil {
@@ -454,5 +454,31 @@ func TestAccountSignedBy(t *testing.T) {
 	}
 	if !ac2.DidSign(uc4) {
 		t.Fatal("failed to verify user claim")
+	}
+}
+
+func TestAddRemoveSigningKey(t *testing.T) {
+	akp1 := createAccountNKey(t)
+	apk1 := publicKey(akp1, t)
+	akp2 := createAccountNKey(t)
+	apk2 := publicKey(akp2, t)
+	akp3 := createAccountNKey(t)
+	apk3 := publicKey(akp3, t)
+
+	ac := NewAccountClaims(apk1)
+	ac.SigningKeys.Add(apk2, apk3)
+
+	if len(ac.SigningKeys) != 2 {
+		t.Fatal("expected 2 signing keys")
+	}
+
+	ac.SigningKeys.Remove(publicKey(createAccountNKey(t), t))
+	if len(ac.SigningKeys) != 2 {
+		t.Fatal("expected 2 signing keys")
+	}
+
+	ac.SigningKeys.Remove(apk2)
+	if len(ac.SigningKeys) != 1 {
+		t.Fatal("expected single signing keys")
 	}
 }
