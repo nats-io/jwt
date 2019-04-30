@@ -189,6 +189,7 @@ func (l *Limits) Validate(vr *ValidationResults) {
 		elements := strings.Split(l.Src, ",")
 
 		for _, cidr := range elements {
+			cidr = strings.TrimSpace(cidr)
 			_, ipNet, err := net.ParseCIDR(cidr)
 			if err != nil || ipNet == nil {
 				vr.AddError("invalid cidr %q in user src limits", cidr)

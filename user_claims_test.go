@@ -343,6 +343,14 @@ func TestSourceNetworkValidation(t *testing.T) {
 		t.Error("limits should be valid")
 	}
 
+	uc.Limits.Src = "192.0.2.0/24 ,\t2001:db8:a0b:12f0::1/32 , 192.168.1.1/1"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("limits should be valid")
+	}
+
 	uc.Limits.Src = "foo"
 	vr = CreateValidationResults()
 	uc.Validate(vr)
