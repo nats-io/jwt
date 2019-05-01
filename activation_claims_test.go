@@ -33,7 +33,7 @@ func TestNewActivationClaims(t *testing.T) {
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
-	activation.Limits.Src = "255.255.255.0"
+	activation.Limits.Src = "192.0.2.0/24"
 
 	activation.ImportSubject = "foo"
 	activation.Name = "Foo"
@@ -223,7 +223,7 @@ func TestActivationValidation(t *testing.T) {
 
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
-	activation.Limits.Src = "1.1.1.1"
+	activation.Limits.Src = "192.0.2.0/24"
 	activation.Limits.Times = []TimeRange{
 		{
 			Start: "01:15:00",
@@ -296,7 +296,7 @@ func TestActivationValidation(t *testing.T) {
 		Start: "hello",
 		End:   "03:15:00",
 	}
-	activation.Limits.Src = "1.1.1.1"
+	activation.Limits.Src = "192.0.2.0/24"
 	activation.Limits.Times = append(activation.Limits.Times, tr)
 	vr = CreateValidationResults()
 	activation.Validate(vr)

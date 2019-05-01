@@ -158,7 +158,7 @@ func TestUserValidation(t *testing.T) {
 	uc.Permissions.Sub.Deny.Add("b")
 	uc.Limits.Max = 10
 	uc.Limits.Payload = 10
-	uc.Limits.Src = "1.1.1.1"
+	uc.Limits.Src = "192.0.2.0/24"
 	uc.Limits.Times = []TimeRange{
 		{
 			Start: "01:15:00",
@@ -215,7 +215,7 @@ func TestUserValidation(t *testing.T) {
 		Start: "hello",
 		End:   "03:15:00",
 	}
-	uc.Limits.Src = "1.1.1.1"
+	uc.Limits.Src = "192.0.2.0/24"
 	uc.Limits.Times = append(uc.Limits.Times, tr)
 	vr = CreateValidationResults()
 	uc.Validate(vr)
@@ -312,5 +312,66 @@ func TestUserAccountIDValidation(t *testing.T) {
 	uc.Validate(&vr)
 	if len(vr.Issues) != 1 {
 		t.Fatal("expected validation issues")
+	}
+}
+
+func TestSourceNetworkValidation(t *testing.T) {
+	ukp := createUserNKey(t)
+	uc := NewUserClaims(publicKey(ukp, t))
+
+	uc.Limits.Src = "192.0.2.0/24"
+	vr := CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("limits should be valid")
+	}
+
+	uc.Limits.Src = "192.0.2.1/1"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("limits should be valid")
+	}
+
+	uc.Limits.Src = "192.0.2.0/24,2001:db8:a0b:12f0::1/32"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("limits should be valid")
+	}
+
+	uc.Limits.Src = "192.0.2.0/24 ,\t2001:db8:a0b:12f0::1/32 , 192.168.1.1/1"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("limits should be valid")
+	}
+
+	uc.Limits.Src = "foo"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 {
+		t.Error("limits should be invalid")
+	}
+
+	uc.Limits.Src = "192.0.2.0/24,foo"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 1 {
+		t.Error("limits should be invalid")
+	}
+
+	uc.Limits.Src = "bloo,foo"
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if vr.IsEmpty() || len(vr.Issues) != 2 {
+		t.Error("limits should be invalid")
 	}
 }
