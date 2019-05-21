@@ -210,3 +210,51 @@ func TestSignedBy(t *testing.T) {
 	AssertEquals(uc.DidSign(clusterClaims), true, t)  // signing key
 	AssertEquals(uc2.DidSign(clusterClaims), true, t) // actual key
 }
+
+func testAccountWithAccountServerURL(t *testing.T, u string) error {
+	kp := createOperatorNKey(t)
+	pk := publicKey(kp, t)
+	oc := NewOperatorClaims(pk)
+	oc.AccountServerURL = u
+
+	s, err := oc.Encode(kp)
+	if err != nil {
+		return err
+	}
+	oc, err = DecodeOperatorClaims(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	AssertEquals(oc.AccountServerURL, u, t)
+	vr := ValidationResults{}
+	oc.Validate(&vr)
+	if !vr.IsEmpty() {
+		errs := vr.Errors()
+		return errs[0]
+	}
+	return nil
+}
+
+func Test_AccountServerURL(t *testing.T) {
+	var asuTests = []struct {
+		u          string
+		shouldFail bool
+	}{
+		{"", false},
+		{"HTTP://foo.bar.com", false},
+		{"http://foo.bar.com/foo/bar", false},
+		{"http://user:pass@foo.bar.com/foo/bar", false},
+		{"https://foo.bar.com", false},
+		{"nats://foo.bar.com", false},
+		{"/hello", true},
+	}
+
+	for i, tt := range asuTests {
+		err := testAccountWithAccountServerURL(t, tt.u)
+		if err != nil && tt.shouldFail == false {
+			t.Fatalf("expected not to fail: %v", err)
+		} else if err == nil && tt.shouldFail {
+			t.Fatalf("test %d expected to fail but didn't", i)
+		}
+	}
+}
