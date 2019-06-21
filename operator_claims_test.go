@@ -254,7 +254,101 @@ func Test_AccountServerURL(t *testing.T) {
 		if err != nil && tt.shouldFail == false {
 			t.Fatalf("expected not to fail: %v", err)
 		} else if err == nil && tt.shouldFail {
-			t.Fatalf("test %d expected to fail but didn't", i)
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].u)
 		}
 	}
+}
+
+func testOperatorWithOperatorServiceURL(t *testing.T, u string) error {
+	kp := createOperatorNKey(t)
+	pk := publicKey(kp, t)
+	oc := NewOperatorClaims(pk)
+	oc.OperatorServiceURL.Add(u)
+
+	s, err := oc.Encode(kp)
+	if err != nil {
+		return err
+	}
+	oc, err = DecodeOperatorClaims(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if u != "" {
+		AssertEquals(oc.OperatorServiceURL[0], u, t)
+	}
+	vr := ValidationResults{}
+	oc.Validate(&vr)
+	if !vr.IsEmpty() {
+		errs := vr.Errors()
+		return errs[0]
+	}
+	return nil
+}
+
+func Test_OperatorServiceURL(t *testing.T) {
+	var asuTests = []struct {
+		u          string
+		shouldFail bool
+	}{
+		{"", false},
+		{"HTTP://foo.bar.com", true},
+		{"http://foo.bar.com/foo/bar", true},
+		{"nats://user:pass@foo.bar.com", true},
+		{"NATS://user:pass@foo.bar.com", true},
+		{"NATS://user@foo.bar.com", true},
+		{"nats://foo.bar.com/path", true},
+		{"tls://foo.bar.com/path", true},
+		{"/hello", true},
+		{"NATS://foo.bar.com", false},
+		{"TLS://foo.bar.com", false},
+		{"nats://foo.bar.com", false},
+		{"tls://foo.bar.com", false},
+	}
+
+	for i, tt := range asuTests {
+		err := testOperatorWithOperatorServiceURL(t, tt.u)
+		if err != nil && tt.shouldFail == false {
+			t.Fatalf("expected not to fail: %v", err)
+		} else if err == nil && tt.shouldFail {
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].u)
+		}
+	}
+
+	// now test all of them in a single jwt
+	kp := createOperatorNKey(t)
+	pk := publicKey(kp, t)
+	oc := NewOperatorClaims(pk)
+
+	encoded := 0
+	shouldFail := 0
+	for _, v := range asuTests {
+		oc.OperatorServiceURL.Add(v.u)
+		// list won't encode empty strings
+		if v.u != "" {
+			encoded++
+		}
+		if v.shouldFail {
+			shouldFail++
+		}
+	}
+
+	s, err := oc.Encode(kp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oc, err = DecodeOperatorClaims(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	AssertEquals(len(oc.OperatorServiceURL), encoded, t)
+
+	vr := ValidationResults{}
+	oc.Validate(&vr)
+	if vr.IsEmpty() {
+		t.Fatal("should have had errors")
+	}
+
+	errs := vr.Errors()
+	AssertEquals(len(errs), shouldFail, t)
 }
