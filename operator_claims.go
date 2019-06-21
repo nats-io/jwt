@@ -26,10 +26,10 @@ import (
 
 // Operator specific claims
 type Operator struct {
-	Identities         []Identity `json:"identity,omitempty"`
-	SigningKeys        StringList `json:"signing_keys,omitempty"`
-	AccountServerURL   string     `json:"account_server_url,omitempty"`
-	OperatorServiceURL StringList `json:"operator_service_url,omitempty"`
+	Identities          []Identity `json:"identity,omitempty"`
+	SigningKeys         StringList `json:"signing_keys,omitempty"`
+	AccountServerURL    string     `json:"account_server_url,omitempty"`
+	OperatorServiceURLs StringList `json:"operator_service_urls,omitempty"`
 }
 
 // Validate checks the validity of the operators contents
@@ -99,7 +99,7 @@ func ValidateOperatorServiceURL(v string) error {
 
 func (o *Operator) validateOperatorServiceURLs() []error {
 	var errors []error
-	for _, v := range o.OperatorServiceURL {
+	for _, v := range o.OperatorServiceURLs {
 		if v != "" {
 			if err := ValidateOperatorServiceURL(v); err != nil {
 				errors = append(errors, err)

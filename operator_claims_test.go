@@ -263,7 +263,7 @@ func testOperatorWithOperatorServiceURL(t *testing.T, u string) error {
 	kp := createOperatorNKey(t)
 	pk := publicKey(kp, t)
 	oc := NewOperatorClaims(pk)
-	oc.OperatorServiceURL.Add(u)
+	oc.OperatorServiceURLs.Add(u)
 
 	s, err := oc.Encode(kp)
 	if err != nil {
@@ -274,7 +274,7 @@ func testOperatorWithOperatorServiceURL(t *testing.T, u string) error {
 		t.Fatal(err)
 	}
 	if u != "" {
-		AssertEquals(oc.OperatorServiceURL[0], u, t)
+		AssertEquals(oc.OperatorServiceURLs[0], u, t)
 	}
 	vr := ValidationResults{}
 	oc.Validate(&vr)
@@ -322,7 +322,7 @@ func Test_OperatorServiceURL(t *testing.T) {
 	encoded := 0
 	shouldFail := 0
 	for _, v := range asuTests {
-		oc.OperatorServiceURL.Add(v.u)
+		oc.OperatorServiceURLs.Add(v.u)
 		// list won't encode empty strings
 		if v.u != "" {
 			encoded++
@@ -341,7 +341,7 @@ func Test_OperatorServiceURL(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	AssertEquals(len(oc.OperatorServiceURL), encoded, t)
+	AssertEquals(len(oc.OperatorServiceURLs), encoded, t)
 
 	vr := ValidationResults{}
 	oc.Validate(&vr)
