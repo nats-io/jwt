@@ -96,6 +96,14 @@ func publicKey(kp nkeys.KeyPair, t *testing.T) string {
 	return string(pk)
 }
 
+func seedKey(kp nkeys.KeyPair, t *testing.T) []byte {
+	sk, err := kp.Seed()
+	if err != nil {
+		t.Fatal("error reading seed", err)
+	}
+	return sk
+}
+
 func encode(c Claims, kp nkeys.KeyPair, t *testing.T) string {
 	s, err := c.Encode(kp)
 	if err != nil {
