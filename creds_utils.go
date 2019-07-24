@@ -50,8 +50,7 @@ func DecorateSeed(seed []byte) ([]byte, error) {
 	}
 	header := `************************* IMPORTANT *************************
 NKEY Seed printed below can be used to sign and prove identity.
-NKEYs are sensitive and should be
-treated as secrets.
+NKEYs are sensitive and should be treated as secrets.
 -----BEGIN %s NKEY SEED-----
 `
 	_, err := fmt.Fprintf(w, header, kind)
