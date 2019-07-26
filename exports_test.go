@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"testing"
+	"time"
 )
 
 func TestSimpleExportValidation(t *testing.T) {
@@ -110,5 +111,59 @@ func TestSameExportType_SameSubject(t *testing.T) {
 
 	if len(vr.Issues) != 1 {
 		t.Errorf("should not allow same subject on same export kind")
+	}
+}
+
+func TestExportRevocation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+	e := &Export{Subject: "foo", Type: Stream}
+
+	account.Exports.Add(e)
+
+	pubKey := "bar"
+	now := time.Now()
+
+	// test that clear is safe before we add any
+	e.ClearRevocation(pubKey)
+
+	if e.IsRevokedAt(pubKey, now) {
+		t.Errorf("no revocation was added so is revoked should be false")
+	}
+
+	e.RevokeAt(pubKey, now.Add(time.Second*100))
+
+	if !e.IsRevokedAt(pubKey, now) {
+		t.Errorf("revocation should hold when timestamp is in the future")
+	}
+
+	if e.IsRevokedAt(pubKey, now.Add(time.Second*150)) {
+		t.Errorf("revocation should time out")
+	}
+
+	e.RevokeAt(pubKey, now.Add(time.Second*50)) // shouldn't change the revocation, you can't move it in
+
+	if !e.IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+		t.Errorf("revocation should hold, 100 > 50")
+	}
+
+	encoded, _ := account.Encode(akp)
+	decoded, _ := DecodeAccountClaims(encoded)
+
+	if !decoded.Exports[0].IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+		t.Errorf("revocation should last across encoding")
+	}
+
+	e.ClearRevocation(pubKey)
+
+	if e.IsRevokedAt(pubKey, now) {
+		t.Errorf("revocations should be cleared")
+	}
+
+	e.RevokeAt(pubKey, now.Add(time.Second*1000))
+
+	if !e.IsRevoked(pubKey) {
+		t.Errorf("revocation be true we revoked in the future")
 	}
 }
