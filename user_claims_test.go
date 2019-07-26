@@ -156,6 +156,10 @@ func TestUserValidation(t *testing.T) {
 	uc.Permissions.Pub.Deny.Add("b")
 	uc.Permissions.Sub.Allow.Add("a")
 	uc.Permissions.Sub.Deny.Add("b")
+	uc.Permissions.Resp = &ResponsePermission{
+		MaxMsgs: 10,
+		Expires: 50 * time.Minute,
+	}
 	uc.Limits.Max = 10
 	uc.Limits.Payload = 10
 	uc.Limits.Src = "192.0.2.0/24"
