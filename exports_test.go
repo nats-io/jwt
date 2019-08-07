@@ -30,12 +30,76 @@ func TestSimpleExportValidation(t *testing.T) {
 		t.Errorf("simple export should validate cleanly")
 	}
 
-	e.Type = Stream
+	e.Type = Service
 	vr = CreateValidationResults()
 	e.Validate(vr)
 
 	if !vr.IsEmpty() {
 		t.Errorf("simple export should validate cleanly")
+	}
+}
+
+func TestResponseTypeValidation(t *testing.T) {
+	e := &Export{Subject: "foo", Type: Stream, ResponseType: ResponseTypeSingleton}
+
+	vr := CreateValidationResults()
+	e.Validate(vr)
+
+	if vr.IsEmpty() {
+		t.Errorf("response type on stream should have an validation issue")
+	}
+	if e.IsSingleResponse() {
+		t.Errorf("response type should always fail for stream")
+	}
+
+	e.Type = Service
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Errorf("response type on service should validate cleanly")
+	}
+	if !e.IsSingleResponse() || e.IsChunkedResponse() || e.IsStreamResponse() {
+		t.Errorf("response type should be single")
+	}
+
+	e.ResponseType = ResponseTypeChunked
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Errorf("response type on service should validate cleanly")
+	}
+	if e.IsSingleResponse() || !e.IsChunkedResponse() || e.IsStreamResponse() {
+		t.Errorf("response type should be chunk")
+	}
+
+	e.ResponseType = ResponseTypeStream
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Errorf("response type on service should validate cleanly")
+	}
+	if e.IsSingleResponse() || e.IsChunkedResponse() || !e.IsStreamResponse() {
+		t.Errorf("response type should be stream")
+	}
+
+	e.ResponseType = ""
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Errorf("response type on service should validate cleanly")
+	}
+	if !e.IsSingleResponse() || e.IsChunkedResponse() || e.IsStreamResponse() {
+		t.Errorf("response type should be single")
+	}
+
+	e.ResponseType = "bad"
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if vr.IsEmpty() {
+		t.Errorf("response type should match available options")
+	}
+	if e.IsSingleResponse() || e.IsChunkedResponse() || e.IsStreamResponse() {
+		t.Errorf("response type should be bad")
 	}
 }
 
