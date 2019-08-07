@@ -20,6 +20,9 @@ import (
 	"time"
 )
 
+// ResponseType is used to store an export response type
+type ResponseType string
+
 const (
 	// ResponseTypeSingleton is used for a service that sends a single response only
 	ResponseTypeSingleton = "Singleton"
@@ -38,7 +41,7 @@ type Export struct {
 	Type         ExportType     `json:"type,omitempty"`
 	TokenReq     bool           `json:"token_req,omitempty"`
 	Revocations  RevocationList `json:"revocations,omitempty"`
-	ResponseType string         `json:"response_type,omitempty"`
+	ResponseType ResponseType   `json:"response_type,omitempty"`
 }
 
 // IsService returns true if an export is for a service
