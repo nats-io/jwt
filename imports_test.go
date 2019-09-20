@@ -348,3 +348,32 @@ func TestImportSubjectValidation(t *testing.T) {
 		t.Errorf("imports with valid contains subject should be valid")
 	}
 }
+
+func TestImportServiceDoubleToSubjectsValidation(t *testing.T) {
+	akp := createAccountNKey(t)
+	akp2 := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	apk2 := publicKey(akp2, t)
+
+	account := NewAccountClaims(apk)
+
+	i := &Import{Subject: "one.two", Account: apk2, To: "foo.bar", Type: Service}
+	account.Imports.Add(i)
+
+	vr := CreateValidationResults()
+	account.Validate(vr)
+
+	if vr.IsBlocking(true) {
+		t.Fatalf("Expected no blocking validation errors")
+	}
+
+	i2 := &Import{Subject: "two.three", Account: apk2, To: "foo.bar", Type: Service}
+	account.Imports.Add(i2)
+
+	vr = CreateValidationResults()
+	account.Validate(vr)
+
+	if !vr.IsBlocking(true) {
+		t.Fatalf("Expected multiple import 'to' subjects to produce an error")
+	}
+}
