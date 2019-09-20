@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"sort"
 	"testing"
 	"time"
 )
@@ -271,5 +272,19 @@ func TestExportTrackLatency(t *testing.T) {
 	e.Validate(vr)
 	if vr.IsEmpty() {
 		t.Errorf("Results subject needs to be valid publish subject")
+	}
+}
+
+func TestExport_Sorting(t *testing.T) {
+	var exports Exports
+	exports.Add(&Export{Subject: "x", Type: Service})
+	exports.Add(&Export{Subject: "z", Type: Service})
+	exports.Add(&Export{Subject: "y", Type: Service})
+	if exports[0].Subject != "x" {
+		t.Fatal("added export not in expected order")
+	}
+	sort.Sort(exports)
+	if exports[0].Subject != "x" && exports[1].Subject != "y" && exports[2].Subject != "z" {
+		t.Fatal("exports not sorted")
 	}
 }

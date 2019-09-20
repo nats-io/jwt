@@ -136,3 +136,15 @@ func (i *Imports) Validate(acctPubKey string, vr *ValidationResults) {
 func (i *Imports) Add(a ...*Import) {
 	*i = append(*i, a...)
 }
+
+func (i Imports) Len() int {
+	return len(i)
+}
+
+func (i Imports) Swap(j, k int) {
+	i[j], i[k] = i[k], i[j]
+}
+
+func (i Imports) Less(j, k int) bool {
+	return i[j].Subject < i[k].Subject
+}
