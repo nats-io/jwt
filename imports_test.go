@@ -348,3 +348,29 @@ func TestImportSubjectValidation(t *testing.T) {
 		t.Errorf("imports with valid contains subject should be valid")
 	}
 }
+
+func Test_ServiceSubjectsUnique(t *testing.T) {
+	apk := publicKey(createAccountNKey(t), t)
+	bpk := publicKey(createAccountNKey(t), t)
+	cpk := publicKey(createAccountNKey(t), t)
+
+	var srvImports Imports
+	srvImports.Add(&Import{Subject: "a", Account: bpk, To: "q", Type: Service})
+	srvImports.Add(&Import{Subject: "a", Account: cpk, To: "qq", Type: Service})
+
+	vr := CreateValidationResults()
+	srvImports.Validate(apk, vr)
+	if !vr.IsBlocking(true) {
+		t.Error("expected validation to fail with duplicate service subject")
+	}
+
+	var streamImports Imports
+	streamImports.Add(&Import{Subject: "a", Account: bpk, To: "q", Type: Stream})
+	streamImports.Add(&Import{Subject: "a", Account: cpk, To: "qq", Type: Stream})
+
+	vr = CreateValidationResults()
+	streamImports.Validate(apk, vr)
+	if vr.IsBlocking(true) {
+		t.Errorf("didn't expect validation problems: %v", vr.Issues[0])
+	}
+}

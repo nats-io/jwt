@@ -120,8 +120,18 @@ type Imports []*Import
 
 // Validate checks if an import is valid for the wrapping account
 func (i *Imports) Validate(acctPubKey string, vr *ValidationResults) {
+	m := make(map[Subject]string)
 	for _, v := range *i {
 		v.Validate(acctPubKey, vr)
+		// if it as service, insure that the subject the client is making the request is unique
+		if v.IsService() {
+			c := m[v.Subject]
+			if c != "" {
+				vr.AddError("account already imports a service at %s from account %s", v.Subject, c)
+			} else {
+				m[v.Subject] = v.Account
+			}
+		}
 	}
 }
 
