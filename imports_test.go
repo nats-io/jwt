@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"testing"
 	"time"
 )
@@ -375,5 +376,20 @@ func TestImportServiceDoubleToSubjectsValidation(t *testing.T) {
 
 	if !vr.IsBlocking(true) {
 		t.Fatalf("Expected multiple import 'to' subjects to produce an error")
+	}
+}
+
+func TestImport_Sorting(t *testing.T) {
+	var imports Imports
+	pk := publicKey(createAccountNKey(t), t)
+	imports.Add(&Import{Subject: "x", Type: Service, Account: pk})
+	imports.Add(&Import{Subject: "z", Type: Service, Account: pk})
+	imports.Add(&Import{Subject: "y", Type: Service, Account: pk})
+	if imports[0].Subject != "x" {
+		t.Fatal("added import not in expected order")
+	}
+	sort.Sort(imports)
+	if imports[0].Subject != "x" && imports[1].Subject != "y" && imports[2].Subject != "z" {
+		t.Fatal("imports not sorted")
 	}
 }
