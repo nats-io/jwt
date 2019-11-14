@@ -34,7 +34,7 @@ func Test_DecorateJwt(t *testing.T) {
 	if !strings.Contains(s, "eyJ0") {
 		t.Fatal("doesn't contain public key")
 	}
-	if !strings.Contains(s, "-END NATS USER JWT-") {
+	if !strings.Contains(s, "-END NATS USER JWT------\n\n") {
 		t.Fatal("doesn't contain expected footer")
 	}
 }
@@ -75,13 +75,13 @@ func validateSeed(t *testing.T, decorated []byte, nk nkeys.KeyPair) {
 	kind = strings.ToUpper(kind)
 
 	s := string(decorated)
-	if !strings.Contains(s, fmt.Sprintf("-BEGIN %s NKEY SEED-", kind)) {
+	if !strings.Contains(s, fmt.Sprintf("\n\n-----BEGIN %s NKEY SEED-", kind)) {
 		t.Fatal("doesn't contain expected seed header")
 	}
 	if !strings.Contains(s, string(seed)) {
 		t.Fatal("doesn't contain the seed")
 	}
-	if !strings.Contains(s, fmt.Sprintf("-END %s NKEY SEED-", kind)) {
+	if !strings.Contains(s, fmt.Sprintf("-END %s NKEY SEED------\n\n", kind)) {
 		t.Fatal("doesn't contain expected seed footer")
 	}
 }
