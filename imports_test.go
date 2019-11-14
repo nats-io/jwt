@@ -214,8 +214,23 @@ func TestServiceImportWithWildcard(t *testing.T) {
 		t.Errorf("imports without token or url should warn the caller, as should wildcard service")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsBlocking(true) {
+		t.Errorf("expected service import with a wildcard subject to be a blocking error")
+	}
+}
+
+func TestStreamImportWithWildcardPrefix(t *testing.T) {
+	i := &Import{Subject: "foo", To: "bar.>", Type: Stream}
+
+	vr := CreateValidationResults()
+	i.Validate("", vr)
+
+	if len(vr.Issues) != 3 {
+		t.Errorf("should have registered 3 issues with this import, got %d", len(vr.Issues))
+	}
+
+	if !vr.IsBlocking(true) {
+		t.Fatalf("expected stream import prefix with a wildcard to produce a blocking error")
 	}
 }
 
@@ -235,8 +250,8 @@ func TestImportsValidation(t *testing.T) {
 		t.Errorf("imports without token or url should warn the caller x2, wildcard service as well")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsBlocking(true) {
+		t.Errorf("expected service import with a wildcard subject to be a blocking error")
 	}
 }
 
