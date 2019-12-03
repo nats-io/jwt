@@ -136,7 +136,7 @@ func TestPublicIsNotValid(t *testing.T) {
 func TestNilActivationClaim(t *testing.T) {
 	v := NewActivationClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil user claim"))
+		t.Fatal("expected nil activation claim")
 	}
 }
 

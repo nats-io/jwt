@@ -113,7 +113,7 @@ func TestServerSubjects(t *testing.T) {
 func TestNewNilServerClaims(t *testing.T) {
 	v := NewServerClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil user claim"))
+		t.Fatal("expected nil server claim")
 	}
 }
 

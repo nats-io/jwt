@@ -229,7 +229,7 @@ func TestExportRevocation(t *testing.T) {
 	e.RevokeAt(pubKey, now.Add(time.Second*1000))
 
 	if !e.IsRevoked(pubKey) {
-		t.Errorf("revocation be true we revoked in the future")
+		t.Error("revocation be true we revoked in the future")
 	}
 }
 
@@ -247,15 +247,23 @@ func TestExportTrackLatency(t *testing.T) {
 	vr = CreateValidationResults()
 	e.Validate(vr)
 	if vr.IsEmpty() {
-		t.Errorf("adding latency tracking to a stream should have an validation issue")
+		t.Error("adding latency tracking to a stream should have an validation issue")
 	}
 
 	e = &Export{Subject: "foo", Type: Service}
 	e.Latency = &ServiceLatency{Sampling: 0, Results: "results"}
 	vr = CreateValidationResults()
 	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal(vr.Issues[0])
+	}
+
+	e = &Export{Subject: "foo", Type: Service}
+	e.Latency = &ServiceLatency{Sampling: -1, Results: "results"}
+	vr = CreateValidationResults()
+	e.Validate(vr)
 	if vr.IsEmpty() {
-		t.Errorf("Sampling <1 should have a validation issue")
+		t.Error("Sampling < 0 should have a validation issue")
 	}
 
 	e = &Export{Subject: "foo", Type: Service}
@@ -263,7 +271,7 @@ func TestExportTrackLatency(t *testing.T) {
 	vr = CreateValidationResults()
 	e.Validate(vr)
 	if vr.IsEmpty() {
-		t.Errorf("Sampling >100 should have a validation issue")
+		t.Error("Sampling >100 should have a validation issue")
 	}
 
 	e = &Export{Subject: "foo", Type: Service}
@@ -271,7 +279,7 @@ func TestExportTrackLatency(t *testing.T) {
 	vr = CreateValidationResults()
 	e.Validate(vr)
 	if vr.IsEmpty() {
-		t.Errorf("Results subject needs to be valid publish subject")
+		t.Error("Results subject needs to be valid publish subject")
 	}
 }
 

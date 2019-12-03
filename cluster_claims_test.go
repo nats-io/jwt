@@ -113,7 +113,7 @@ func TestClusterSubjects(t *testing.T) {
 func TestNewNilClusterClaims(t *testing.T) {
 	v := NewClusterClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil user claim"))
+		t.Fatal("expected nil cluster claim")
 	}
 }
 

@@ -60,8 +60,8 @@ type ServiceLatency struct {
 }
 
 func (sl *ServiceLatency) Validate(vr *ValidationResults) {
-	if sl.Sampling < 1 || sl.Sampling > 100 {
-		vr.AddError("sampling percentage needs to be between 1-100")
+	if sl.Sampling < 0 || sl.Sampling > 100 {
+		vr.AddError("sampling percentage needs to be between 0-100")
 	}
 	sl.Results.Validate(vr)
 	if sl.Results.HasWildCards() {
