@@ -8,6 +8,7 @@ Nkeys use [Ed25519](https://ed25519.cr.yp.to/) to provide authentication of JWT 
 [![Build Status](https://travis-ci.org/nats-io/jwt.svg?branch=master)](http://travis-ci.org/nats-io/jwt)
 [![GoDoc](http://godoc.org/github.com/nats-io/jwt?status.png)](http://godoc.org/github.com/nats-io/jwt)
 [![Coverage Status](https://coveralls.io/repos/github/nats-io/jwt/badge.svg?branch=master&t=NmEFup)](https://coveralls.io/github/nats-io/jwt?branch=master)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnats-io%2Fjwt.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnats-io%2Fjwt?ref=badge_shield)
 
 ```go
 // Need a private key to sign the claim, nkeys makes it easy to create
@@ -52,3 +53,6 @@ if c.Issuer != pk {
     t.Fatalf("the public key is not trusted")
 }
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fnats-io%2Fjwt.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fnats-io%2Fjwt?ref=badge_large)
