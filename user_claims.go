@@ -40,6 +40,8 @@ type UserClaims struct {
 	// IssuerAccount stores the public key for the account the issuer represents.
 	// When set, the claim was issued by a signing key.
 	IssuerAccount string `json:"issuer_account,omitempty"`
+	// When BearerToken is true server will ignore any nonce-signing verification
+	BearerToken bool `json:"bearer_token,omitempty"`
 }
 
 // NewUserClaims creates a user JWT with the specific subject/public key
@@ -96,4 +98,9 @@ func (u *UserClaims) Payload() interface{} {
 
 func (u *UserClaims) String() string {
 	return u.ClaimsData.String(u)
+}
+
+// IsBearerToken returns true if nonce-signing requirements should be skipped
+func (u *UserClaims) IsBearerToken() bool {
+	return u.BearerToken
 }
