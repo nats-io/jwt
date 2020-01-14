@@ -228,7 +228,7 @@ func TestAccountImports(t *testing.T) {
 func TestNewNilAccountClaim(t *testing.T) {
 	v := NewAccountClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil account claim"))
+		t.Fatal("expected nil account claim")
 	}
 }
 

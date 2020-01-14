@@ -110,7 +110,7 @@ func TestInvalidOperatorClaimIssuer(t *testing.T) {
 func TestNewNilOperatorClaims(t *testing.T) {
 	v := NewOperatorClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil user claim"))
+		t.Fatal("expected nil user claim")
 	}
 }
 

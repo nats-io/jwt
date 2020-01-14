@@ -113,7 +113,7 @@ func TestUserSubjects(t *testing.T) {
 func TestNewNilUserClaim(t *testing.T) {
 	v := NewUserClaims("")
 	if v != nil {
-		t.Fatal(fmt.Sprintf("expected nil user claim"))
+		t.Fatal("expected nil user claim")
 	}
 }
 
