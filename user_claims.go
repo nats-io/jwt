@@ -25,12 +25,14 @@ import (
 type User struct {
 	Permissions
 	Limits
+	BearerToken bool `json:"bearer_token,omitempty"`
 }
 
 // Validate checks the permissions and limits in a User jwt
 func (u *User) Validate(vr *ValidationResults) {
 	u.Permissions.Validate(vr)
 	u.Limits.Validate(vr)
+	// When BearerToken is true server will ignore any nonce-signing verification
 }
 
 // UserClaims defines a user JWT
@@ -40,8 +42,6 @@ type UserClaims struct {
 	// IssuerAccount stores the public key for the account the issuer represents.
 	// When set, the claim was issued by a signing key.
 	IssuerAccount string `json:"issuer_account,omitempty"`
-	// When BearerToken is true server will ignore any nonce-signing verification
-	BearerToken bool `json:"bearer_token,omitempty"`
 }
 
 // NewUserClaims creates a user JWT with the specific subject/public key
