@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,16 +59,20 @@ type Claims interface {
 
 // ClaimsData is the base struct for all claims
 type ClaimsData struct {
-	Audience  string    `json:"aud,omitempty"`
-	Expires   int64     `json:"exp,omitempty"`
-	ID        string    `json:"jti,omitempty"`
-	IssuedAt  int64     `json:"iat,omitempty"`
-	Issuer    string    `json:"iss,omitempty"`
-	Name      string    `json:"name,omitempty"`
-	NotBefore int64     `json:"nbf,omitempty"`
-	Subject   string    `json:"sub,omitempty"`
-	Tags      TagList   `json:"tags,omitempty"`
-	Type      ClaimType `json:"type,omitempty"`
+	Audience  string `json:"aud,omitempty"`
+	Expires   int64  `json:"exp,omitempty"`
+	ID        string `json:"jti,omitempty"`
+	IssuedAt  int64  `json:"iat,omitempty"`
+	Issuer    string `json:"iss,omitempty"`
+	Name      string `json:"name,omitempty"`
+	NotBefore int64  `json:"nbf,omitempty"`
+	Subject   string `json:"sub,omitempty"`
+}
+
+// NatsStandard contains fields shared by all NATS JWTs
+type NatsStandard struct {
+	Tags TagList   `json:"tags,omitempty"`
+	Type ClaimType `json:"type,omitempty"`
 }
 
 // Prefix holds the prefix byte for an NKey

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -61,6 +61,7 @@ type Account struct {
 	Limits      OperatorLimits `json:"limits,omitempty"`
 	SigningKeys StringList     `json:"signing_keys,omitempty"`
 	Revocations RevocationList `json:"revocations,omitempty"`
+	NatsStandard
 }
 
 // Validate checks if the account is valid, based on the wrapper
@@ -130,7 +131,7 @@ func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	}
 	sort.Sort(a.Exports)
 	sort.Sort(a.Imports)
-	a.ClaimsData.Type = AccountClaim
+	a.Type = AccountClaim
 	return a.ClaimsData.Encode(pair, a)
 }
 

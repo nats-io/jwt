@@ -134,7 +134,7 @@ func TestSigningKeyValidation(t *testing.T) {
 
 	uc := NewOperatorClaims(publicKey(ckp, t))
 	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	uJwt := encode(uc, ckp, t)
 
 	uc2, err := DecodeOperatorClaims(uJwt)
@@ -152,7 +152,7 @@ func TestSigningKeyValidation(t *testing.T) {
 		t.Fatal("valid operator key should have no validation issues")
 	}
 
-	uc.AddSigningKey("") // add an invalid one
+	uc.SigningKeys.Add("") // add an invalid one
 
 	vr = &ValidationResults{}
 	uc.Validate(vr)
@@ -193,7 +193,7 @@ func TestSignedBy(t *testing.T) {
 
 	AssertEquals(uc.DidSign(ac), false, t) // no signing key
 	AssertEquals(uc2.DidSign(ac), true, t) // actual key
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	AssertEquals(uc.DidSign(ac), true, t) // signing key
 
 	clusterKey := createClusterNKey(t)
@@ -351,4 +351,19 @@ func Test_OperatorServiceURL(t *testing.T) {
 
 	errs := vr.Errors()
 	AssertEquals(len(errs), shouldFail, t)
+}
+
+func Test_OperatorCompatibility(t *testing.T) {
+	token := "eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJhdWQiOiJOR1MiLCJleHAiOjE2MjkwNDEwNTEsImp0aSI6IldWRFpYQ0dMQlVOWjYyWUI1MjRWTVdDNVRBRzJGS0lTWUNDUExLWTJKT0JURkdNMzM0V0EiLCJpYXQiOjE1NjU4ODI2NTEsImlzcyI6Ik9ETEMyMk5JUVE1VTRKNlpEVFZPRktURVg0Rjc3RTdUVk0yUkhXU0c3TjI2NllPVktUUkk0RVdYIiwibmFtZSI6IlN5bmFkaWEgQ29tbXVuaWNhdGlvbnMgSW5jLiIsIm5iZiI6MTU2NTg4MjcxMSwic3ViIjoiT0RMQzIyTklRUTVVNEo2WkRUVk9GS1RFWDRGNzdFN1RWTTJSSFdTRzdOMjY2WU9WS1RSSTRFV1giLCJ0eXBlIjoib3BlcmF0b3IiLCJuYXRzIjp7InNpZ25pbmdfa2V5cyI6WyJPRFNLQVlVNUpSTVhMRlhGSlU3WTczUE5OMjJaVFhDVlRWQTI2VlZMVkgyQ05NNlFWMlZCSk1JTyIsIk9EU0tCTkRJVDNMVFpXRlNSQVdPQlhTQlo3VlpDRFFWVTZUQkpYM1RRR1lYVVdSVTQ2QU5KSlM0IiwiT0RTS0NOSTVNTFNXTlBTNEdJQ0pHMktISk9DTEhaV1BPQlROVUIyNDVBTkNPQlg3VklRNk1BWkQiXSwiYWNjb3VudF9zZXJ2ZXJfdXJsIjoiaHR0cHM6Ly9hcGkuc3luYWRpYS5pby9qd3QvdjEiLCJvcGVyYXRvcl9zZXJ2aWNlX3VybHMiOlsidGxzOi8vY29ubmVjdC5uZ3MuZ2xvYmFsIl19fQ.aMRYSQJ8NEcH0j_7iLLgrtycMA5n1aiUftBe0kO9Ed6A1Jm8cxItDOMqV2qO3EixDDukHuFIhvgMg-fmsd44Ag"
+	_, err := DecodeOperatorClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gc, err := DecodeGeneric(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gc.Type != "operator" {
+		t.Fatalf("expected %q to be 'operator'", gc.Type)
+	}
 }

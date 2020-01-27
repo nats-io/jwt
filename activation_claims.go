@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,6 +30,7 @@ type Activation struct {
 	ImportSubject Subject    `json:"subject,omitempty"`
 	ImportType    ExportType `json:"type,omitempty"`
 	Limits
+	NatsStandard
 }
 
 // IsService returns true if an Activation is for a service
@@ -82,7 +83,7 @@ func (a *ActivationClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if !nkeys.IsValidPublicAccountKey(a.ClaimsData.Subject) {
 		return "", errors.New("expected subject to be an account")
 	}
-	a.ClaimsData.Type = ActivationClaim
+	a.Type = ActivationClaim
 	return a.ClaimsData.Encode(pair, a)
 }
 

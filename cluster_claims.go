@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,6 +27,7 @@ type Cluster struct {
 	Accounts    []string `json:"accts,omitempty"`
 	AccountURL  string   `json:"accturl,omitempty"`
 	OperatorURL string   `json:"opurl,omitempty"`
+	NatsStandard
 }
 
 // Validate checks the cluster and permissions for a cluster JWT
@@ -55,7 +56,7 @@ func (c *ClusterClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if !nkeys.IsValidPublicClusterKey(c.Subject) {
 		return "", errors.New("expected subject to be a cluster public key")
 	}
-	c.ClaimsData.Type = ClusterClaim
+	c.Type = ClusterClaim
 	return c.ClaimsData.Encode(pair, c)
 }
 

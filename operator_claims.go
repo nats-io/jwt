@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -26,6 +26,7 @@ import (
 
 // Operator specific claims
 type Operator struct {
+	NatsStandard
 	// Slice of real identies (like websites) that can be used to identify the operator.
 	Identities []Identity `json:"identity,omitempty"`
 	// Slice of other operator NKeys that can be used to sign on behalf of the main
@@ -112,15 +113,15 @@ func ValidateOperatorServiceURL(v string) error {
 }
 
 func (o *Operator) validateOperatorServiceURLs() []error {
-	var errors []error
+	var errs []error
 	for _, v := range o.OperatorServiceURLs {
 		if v != "" {
 			if err := ValidateOperatorServiceURL(v); err != nil {
-				errors = append(errors, err)
+				errs = append(errs, err)
 			}
 		}
 	}
-	return errors
+	return errs
 }
 
 // OperatorClaims define the data for an operator JWT
@@ -165,7 +166,7 @@ func (oc *OperatorClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	oc.ClaimsData.Type = OperatorClaim
+	oc.Type = OperatorClaim
 	return oc.ClaimsData.Encode(pair, oc)
 }
 

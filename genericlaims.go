@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import "github.com/nats-io/nkeys"
 // GenericClaims can be used to read a JWT as a map for any non-generic fields
 type GenericClaims struct {
 	ClaimsData
+	NatsStandard
 	Data map[string]interface{} `json:"nats,omitempty"`
 }
 
@@ -40,6 +41,15 @@ func DecodeGeneric(token string) (*GenericClaims, error) {
 	if err := Decode(token, &v); err != nil {
 		return nil, err
 	}
+	ct, ok := v.Data["type"].(string)
+	if ok {
+		v.Type = ClaimType(ct)
+	}
+	tl, ok := v.Data["tags"].(TagList)
+	if ok {
+		v.Tags = tl
+	}
+
 	return &v, nil
 }
 

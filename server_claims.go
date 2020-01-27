@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,6 +25,7 @@ import (
 type Server struct {
 	Permissions
 	Cluster string `json:"cluster,omitempty"`
+	NatsStandard
 }
 
 // Validate checks the cluster and permissions for a server JWT
@@ -55,7 +56,7 @@ func (s *ServerClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if !nkeys.IsValidPublicServerKey(s.Subject) {
 		return "", errors.New("expected subject to be a server public key")
 	}
-	s.ClaimsData.Type = ServerClaim
+	s.Type = ServerClaim
 	return s.ClaimsData.Encode(pair, s)
 }
 
