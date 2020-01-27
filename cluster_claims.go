@@ -27,7 +27,7 @@ type Cluster struct {
 	Accounts    []string `json:"accts,omitempty"`
 	AccountURL  string   `json:"accturl,omitempty"`
 	OperatorURL string   `json:"opurl,omitempty"`
-	NatsStandard
+	Info
 }
 
 // Validate checks the cluster and permissions for a cluster JWT
@@ -92,4 +92,8 @@ func (c *ClusterClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the generic data
 func (c *ClusterClaims) Claims() *ClaimsData {
 	return &c.ClaimsData
+}
+
+func (c *ClusterClaims) GetInfo() *Info {
+	return &c.Cluster.Info
 }

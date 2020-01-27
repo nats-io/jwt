@@ -25,7 +25,7 @@ import (
 type Server struct {
 	Permissions
 	Cluster string `json:"cluster,omitempty"`
-	NatsStandard
+	Info
 }
 
 // Validate checks the cluster and permissions for a server JWT
@@ -92,4 +92,8 @@ func (s *ServerClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the generic data
 func (s *ServerClaims) Claims() *ClaimsData {
 	return &s.ClaimsData
+}
+
+func (s *ServerClaims) GetInfo() *Info {
+	return &s.Server.Info
 }

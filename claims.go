@@ -52,6 +52,7 @@ type Claims interface {
 	Encode(kp nkeys.KeyPair) (string, error)
 	ExpectedPrefixes() []nkeys.PrefixByte
 	Payload() interface{}
+	GetInfo() *Info
 	String() string
 	Validate(vr *ValidationResults)
 	Verify(payload string, sig []byte) bool
@@ -69,8 +70,8 @@ type ClaimsData struct {
 	Subject   string `json:"sub,omitempty"`
 }
 
-// NatsStandard contains fields shared by all NATS JWTs
-type NatsStandard struct {
+// Info contains fields shared by all NATS JWTs
+type Info struct {
 	Tags TagList   `json:"tags,omitempty"`
 	Type ClaimType `json:"type,omitempty"`
 }

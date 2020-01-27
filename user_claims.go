@@ -26,7 +26,7 @@ type User struct {
 	Permissions
 	Limits
 	BearerToken bool `json:"bearer_token,omitempty"`
-	NatsStandard
+	Info
 }
 
 // Validate checks the permissions and limits in a User jwt
@@ -104,4 +104,8 @@ func (u *UserClaims) String() string {
 // IsBearerToken returns true if nonce-signing requirements should be skipped
 func (u *UserClaims) IsBearerToken() bool {
 	return u.BearerToken
+}
+
+func (u *UserClaims) GetInfo() *Info {
+	return &u.User.Info
 }

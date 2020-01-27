@@ -30,7 +30,7 @@ type Activation struct {
 	ImportSubject Subject    `json:"subject,omitempty"`
 	ImportType    ExportType `json:"type,omitempty"`
 	Limits
-	NatsStandard
+	Info
 }
 
 // IsService returns true if an Activation is for a service
@@ -164,4 +164,8 @@ func cleanSubject(subject string) string {
 		cleaned = subject
 	}
 	return cleaned
+}
+
+func (a *ActivationClaims) GetInfo() *Info {
+	return &a.Activation.Info
 }

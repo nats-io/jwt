@@ -20,7 +20,7 @@ import "github.com/nats-io/nkeys"
 // GenericClaims can be used to read a JWT as a map for any non-generic fields
 type GenericClaims struct {
 	ClaimsData
-	NatsStandard
+	Info
 	Data map[string]interface{} `json:"nats,omitempty"`
 }
 
@@ -80,4 +80,8 @@ func (gc *GenericClaims) String() string {
 // ExpectedPrefixes returns the types allowed to encode a generic JWT, which is nil for all
 func (gc *GenericClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 	return nil
+}
+
+func (gc *GenericClaims) GetInfo() *Info {
+	return &gc.Info
 }

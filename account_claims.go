@@ -61,7 +61,7 @@ type Account struct {
 	Limits      OperatorLimits `json:"limits,omitempty"`
 	SigningKeys StringList     `json:"signing_keys,omitempty"`
 	Revocations RevocationList `json:"revocations,omitempty"`
-	NatsStandard
+	Info
 }
 
 // Validate checks if the account is valid, based on the wrapper
@@ -220,4 +220,8 @@ func (a *AccountClaims) IsRevokedAt(pubKey string, timestamp time.Time) bool {
 // IsRevoked checks if the public key is in the revoked list with time.Now()
 func (a *AccountClaims) IsRevoked(pubKey string) bool {
 	return a.Revocations.IsRevoked(pubKey, time.Now())
+}
+
+func (a *AccountClaims) GetInfo() *Info {
+	return &a.Account.Info
 }

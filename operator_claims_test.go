@@ -366,4 +366,8 @@ func Test_OperatorCompatibility(t *testing.T) {
 	if gc.Type != "operator" {
 		t.Fatalf("expected %q to be 'operator'", gc.Type)
 	}
+
+	if gc.GetInfo().Type != "operator" {
+		t.Fatalf("expected GetInfo().Type %q to be 'operator'", gc.Type)
+	}
 }

@@ -26,7 +26,7 @@ import (
 
 // Operator specific claims
 type Operator struct {
-	NatsStandard
+	Info
 	// Slice of real identies (like websites) that can be used to identify the operator.
 	Identities []Identity `json:"identity,omitempty"`
 	// Slice of other operator NKeys that can be used to sign on behalf of the main
@@ -202,4 +202,8 @@ func (oc *OperatorClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the generic claims data
 func (oc *OperatorClaims) Claims() *ClaimsData {
 	return &oc.ClaimsData
+}
+
+func (oc *OperatorClaims) GetInfo() *Info {
+	return &oc.Info
 }
