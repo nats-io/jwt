@@ -31,7 +31,7 @@ func TestNewAccountClaims(t *testing.T) {
 
 	activation := NewActivationClaims(apk)
 	activation.Max = 1024 * 1024
-	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
+	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 	activation.ImportSubject = "test"
 	activation.ImportType = Stream
 	actJWT := encode(activation, akp2, t)
@@ -41,7 +41,7 @@ func TestNewAccountClaims(t *testing.T) {
 		t.Fatalf("Expected unlimited operator limits")
 	}
 
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).UTC().Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).UTC().Unix()
 
 	account.Imports = Imports{}
 	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
@@ -72,7 +72,7 @@ func TestAccountCanSignOperatorLimits(t *testing.T) { // don't block encoding!!!
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Limits.Conn = 10
 	account.Limits.LeafNodeConn = 2
 
@@ -87,7 +87,7 @@ func TestAccountCanSignIdentities(t *testing.T) { // don't block encoding!!!
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Identities = []Identity{
 		{
 			ID:    "stephen",
@@ -107,7 +107,7 @@ func TestOperatorCanSignClaims(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Limits.Conn = 1
 	account.Limits.LeafNodeConn = 4
 
@@ -139,7 +139,7 @@ func TestOperatorCanSignClaims(t *testing.T) {
 func TestInvalidAccountClaimIssuer(t *testing.T) {
 	akp := createAccountNKey(t)
 	ac := NewAccountClaims(publicKey(akp, t))
-	ac.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	ac.Expires = time.Now().Add(time.Hour).Unix()
 	aJwt := encode(ac, akp, t)
 
 	temp, err := DecodeGeneric(aJwt)
@@ -194,9 +194,6 @@ func TestInvalidAccountSubjects(t *testing.T) {
 		var err error
 
 		c := NewAccountClaims(pk)
-		if i.ok && err != nil {
-			t.Fatalf("error encoding activation: %v", err)
-		}
 		_, err = c.Encode(i.kp)
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
@@ -213,7 +210,7 @@ func TestAccountImports(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 
 	actJwt := encode(account, akp, t)
 
@@ -237,7 +234,7 @@ func TestLimitValidationInAccount(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Limits.Conn = 10
 	account.Limits.Imports = 10
 	account.Limits.Exports = 10
@@ -322,7 +319,7 @@ func TestWildcardExportLimit(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Duration(time.Hour * 24 * 365)).Unix()
+	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Limits.Conn = 10
 	account.Limits.Imports = 10
 	account.Limits.Exports = 10

@@ -28,7 +28,7 @@ func TestNewUserClaims(t *testing.T) {
 	ukp := createUserNKey(t)
 
 	uc := NewUserClaims(publicKey(ukp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, akp, t)
 
 	uc2, err := DecodeUserClaims(uJwt)
@@ -47,7 +47,7 @@ func TestUserClaimIssuer(t *testing.T) {
 	ukp := createUserNKey(t)
 
 	uc := NewUserClaims(publicKey(ukp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, akp, t)
 
 	temp, err := DecodeGeneric(uJwt)

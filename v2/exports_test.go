@@ -280,7 +280,8 @@ func TestExport_Sorting(t *testing.T) {
 	exports.Add(&Export{Subject: "x", Type: Service})
 	exports.Add(&Export{Subject: "z", Type: Service})
 	exports.Add(&Export{Subject: "y", Type: Service})
-	if exports[0].Subject != "x" {
+
+	if exports[0] == nil || exports[0].Subject != "x" {
 		t.Fatal("added export not in expected order")
 	}
 	sort.Sort(exports)

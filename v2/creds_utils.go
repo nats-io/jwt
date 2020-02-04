@@ -12,11 +12,11 @@ import (
 
 // DecorateJWT returns a decorated JWT that describes the kind of JWT
 func DecorateJWT(jwtString string) ([]byte, error) {
-	gc, err := DecodeGeneric(jwtString)
+	gc, err := Decode(jwtString)
 	if err != nil {
 		return nil, err
 	}
-	return formatJwt(string(gc.Type), jwtString)
+	return formatJwt(string(gc.ClaimType()), jwtString)
 }
 
 func formatJwt(kind string, jwtString string) ([]byte, error) {
@@ -99,17 +99,17 @@ var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}.*[-]{3,}\r?\n)([\w\-.=]+
 
 // FormatUserConfig returns a decorated file with a decorated JWT and decorated seed
 func FormatUserConfig(jwtString string, seed []byte) ([]byte, error) {
-	gc, err := DecodeGeneric(jwtString)
+	gc, err := Decode(jwtString)
 	if err != nil {
 		return nil, err
 	}
-	if gc.Type != UserClaim {
-		return nil, fmt.Errorf("%q cannot be serialized as a user config", string(gc.Type))
+	if gc.ClaimType() != UserClaim {
+		return nil, fmt.Errorf("%q cannot be serialized as a user config", string(gc.ClaimType()))
 	}
 
 	w := bytes.NewBuffer(nil)
 
-	jd, err := formatJwt(string(gc.Type), jwtString)
+	jd, err := formatJwt(string(gc.ClaimType()), jwtString)
 	if err != nil {
 		return nil, err
 	}

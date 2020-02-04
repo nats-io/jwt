@@ -114,7 +114,7 @@ func TestInvalidActivationClaimIssuer(t *testing.T) {
 
 	for _, i := range inputs {
 		bad := encode(temp, i.kp, t)
-		_, err = DecodeAccountClaims(bad)
+		_, err = DecodeActivationClaims(bad)
 		if i.ok && err != nil {
 			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
 		}

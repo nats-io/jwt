@@ -93,7 +93,7 @@ func publicKey(kp nkeys.KeyPair, t *testing.T) string {
 	if err != nil {
 		t.Fatal("error reading public key", err)
 	}
-	return string(pk)
+	return pk
 }
 
 func seedKey(kp nkeys.KeyPair, t *testing.T) []byte {
