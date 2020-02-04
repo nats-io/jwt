@@ -290,7 +290,7 @@ func TestSample(t *testing.T) {
 		t.Fatalf("unable to read public key: %v", err)
 	}
 
-	if c.Issuer != string(pk) {
+	if c.Issuer != pk {
 		t.Fatalf("the public key is not trusted")
 	}
 }

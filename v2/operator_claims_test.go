@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/nats-io/nkeys"
 )
 
@@ -27,7 +29,7 @@ func TestNewOperatorClaims(t *testing.T) {
 	ckp := createOperatorNKey(t)
 
 	uc := NewOperatorClaims(publicKey(ckp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, ckp, t)
 
 	uc2, err := DecodeOperatorClaims(uJwt)
@@ -72,7 +74,7 @@ func TestOperatorSubjects(t *testing.T) {
 func TestInvalidOperatorClaimIssuer(t *testing.T) {
 	akp := createOperatorNKey(t)
 	ac := NewOperatorClaims(publicKey(akp, t))
-	ac.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	ac.Expires = time.Now().Add(time.Hour).Unix()
 	aJwt := encode(ac, akp, t)
 
 	temp, err := DecodeGeneric(aJwt)
@@ -133,8 +135,8 @@ func TestSigningKeyValidation(t *testing.T) {
 	ckp2 := createOperatorNKey(t)
 
 	uc := NewOperatorClaims(publicKey(ckp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.Expires = time.Now().Add(time.Hour).Unix()
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	uJwt := encode(uc, ckp, t)
 
 	uc2, err := DecodeOperatorClaims(uJwt)
@@ -152,7 +154,7 @@ func TestSigningKeyValidation(t *testing.T) {
 		t.Fatal("valid operator key should have no validation issues")
 	}
 
-	uc.AddSigningKey("") // add an invalid one
+	uc.SigningKeys.Add("") // add an invalid one
 
 	vr = &ValidationResults{}
 	uc.Validate(vr)
@@ -193,22 +195,8 @@ func TestSignedBy(t *testing.T) {
 
 	AssertEquals(uc.DidSign(ac), false, t) // no signing key
 	AssertEquals(uc2.DidSign(ac), true, t) // actual key
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	AssertEquals(uc.DidSign(ac), true, t) // signing key
-
-	clusterKey := createClusterNKey(t)
-	clusterClaims := NewClusterClaims(publicKey(clusterKey, t))
-	enc, err = clusterClaims.Encode(ckp2) // sign with the operator key
-	if err != nil {
-		t.Fatal("failed to encode", err)
-	}
-	clusterClaims, err = DecodeClusterClaims(enc)
-	if err != nil {
-		t.Fatal("failed to decode", err)
-	}
-
-	AssertEquals(uc.DidSign(clusterClaims), true, t)  // signing key
-	AssertEquals(uc2.DidSign(clusterClaims), true, t) // actual key
 }
 
 func testAccountWithAccountServerURL(t *testing.T, u string) error {
@@ -351,4 +339,24 @@ func Test_OperatorServiceURL(t *testing.T) {
 
 	errs := vr.Errors()
 	AssertEquals(len(errs), shouldFail, t)
+}
+
+func TestTags(t *testing.T) {
+	okp := createOperatorNKey(t)
+	opk := publicKey(okp, t)
+
+	oc := NewOperatorClaims(opk)
+	oc.Tags.Add("one")
+	oc.Tags.Add("one") // duplicated tags should be ignored
+	oc.Tags.Add("TWO") // should become lower case
+	oc.Tags.Add("three")
+
+	oJwt := encode(oc, okp, t)
+
+	oc2, err := DecodeOperatorClaims(oJwt)
+	require.NoError(t, err)
+	require.Len(t, oc2.GenericFields.Tags, 3)
+	require.Contains(t, oc.GenericFields.Tags, "one")
+	require.Contains(t, oc.GenericFields.Tags, "two")
+	require.Contains(t, oc.GenericFields.Tags, "three")
 }

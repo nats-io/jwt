@@ -40,6 +40,7 @@ type Operator struct {
 	// A list of NATS urls (tls://host:port) where tools can connect to the server
 	// using proper credentials.
 	OperatorServiceURLs StringList `json:"operator_service_urls,omitempty"`
+	GenericFields
 }
 
 // Validate checks the validity of the operators contents
@@ -112,15 +113,15 @@ func ValidateOperatorServiceURL(v string) error {
 }
 
 func (o *Operator) validateOperatorServiceURLs() []error {
-	var errors []error
+	var errs []error
 	for _, v := range o.OperatorServiceURLs {
 		if v != "" {
 			if err := ValidateOperatorServiceURL(v); err != nil {
-				errors = append(errors, err)
+				errs = append(errs, err)
 			}
 		}
 	}
-	return errors
+	return errs
 }
 
 // OperatorClaims define the data for an operator JWT
@@ -151,11 +152,6 @@ func (oc *OperatorClaims) DidSign(op Claims) bool {
 	return oc.SigningKeys.Contains(issuer)
 }
 
-// Deprecated: AddSigningKey, use claim.SigningKeys.Add()
-func (oc *OperatorClaims) AddSigningKey(pk string) {
-	oc.SigningKeys.Add(pk)
-}
-
 // Encode the claims into a JWT string
 func (oc *OperatorClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if !nkeys.IsValidPublicOperatorKey(oc.Subject) {
@@ -165,17 +161,25 @@ func (oc *OperatorClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	oc.ClaimsData.Type = OperatorClaim
+	oc.Type = OperatorClaim
 	return oc.ClaimsData.Encode(pair, oc)
+}
+
+func (oc *OperatorClaims) ClaimType() ClaimType {
+	return oc.Type
 }
 
 // DecodeOperatorClaims tries to create an operator claims from a JWt string
 func DecodeOperatorClaims(token string) (*OperatorClaims, error) {
-	v := OperatorClaims{}
-	if err := Decode(token, &v); err != nil {
+	claims, err := Decode(token)
+	if err != nil {
 		return nil, err
 	}
-	return &v, nil
+	oc, ok := claims.(*OperatorClaims)
+	if !ok {
+		return nil, errors.New("not operator claim")
+	}
+	return oc, nil
 }
 
 func (oc *OperatorClaims) String() string {
@@ -201,4 +205,8 @@ func (oc *OperatorClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 // Claims returns the generic claims data
 func (oc *OperatorClaims) Claims() *ClaimsData {
 	return &oc.ClaimsData
+}
+
+func (oc *OperatorClaims) updateVersion() {
+	oc.GenericFields.Version = libVersion
 }

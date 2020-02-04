@@ -1,22 +1,33 @@
+os: linux
 language: go
-sudo: false
 go:
-- 1.13.x
-- 1.12.x
-
+  - 1.13.x
+  - 1.12.x
+git:
+  depth: false
+env:
+  - V=
+  - V=v2
 install:
-- go get -t ./...
-- go get github.com/mattn/goveralls
-- go get github.com/wadey/gocovmerge
-- go get -u honnef.co/go/tools/cmd/staticcheck
-- go get -u github.com/client9/misspell/cmd/misspell
-
+  - go get -t ./...
+  - go get -u honnef.co/go/tools/cmd/staticcheck
+  - go get -u github.com/client9/misspell/cmd/misspell
+  - go get github.com/mattn/goveralls
+  - go get github.com/wadey/gocovmerge
 before_script:
-- $(exit $(go fmt ./... | wc -l))
-- go vet ./...
-- misspell -error -locale US .
-- staticcheck ./...
-
+  - cd $TRAVIS_BUILD_DIR/${V}
+  - $(exit $(go fmt ./... | wc -l))
+  - go vet ./...
+  - misspell -error -locale US .
+  - staticcheck ./...
 script:
-- go test -v -race ./...
-- if [[ "$TRAVIS_GO_VERSION" =~ 1.12 ]]; then ./scripts/cov.sh TRAVIS; fi
+  - cd $TRAVIS_BUILD_DIR/${V}
+  - go test -v -coverprofile=./coverage.out ./...
+deploy:
+  - provider: script
+    script: $HOME/gopath/bin/goveralls -coverprofile=v2/coverage.out -service travis-ci
+    on:
+      tags: true
+      condition: ${V} = v2 && $TRAVIS_GO_VERSION =~ ^1.13.
+
+
