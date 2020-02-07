@@ -238,15 +238,15 @@ func TestUserValidation(t *testing.T) {
 	}
 
 	uc.Permissions.Pub.Allow.Remove("bad subject")
-	uc.Permissions.Sub.Allow.Add("bad subject")
+	uc.Permissions.Sub.Allow.Add("ok subject")
 	vr = CreateValidationResults()
 	uc.Validate(vr)
 
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
+	if !vr.IsEmpty() {
+		t.Error("valid user permissions should be valid")
 	}
 
-	uc.Permissions.Sub.Allow.Remove("bad subject")
+	uc.Permissions.Sub.Allow.Remove("ok subject")
 	uc.Permissions.Pub.Deny.Add("bad subject")
 	vr = CreateValidationResults()
 	uc.Validate(vr)
@@ -256,12 +256,53 @@ func TestUserValidation(t *testing.T) {
 	}
 
 	uc.Permissions.Pub.Deny.Remove("bad subject")
-	uc.Permissions.Sub.Deny.Add("bad subject")
+	uc.Permissions.Sub.Deny.Add("ok subject")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("valid user permissions should be valid")
+	}
+}
+
+func TestUserQueueSubscribeValidation(t *testing.T) {
+	ukp := createUserNKey(t)
+
+	uc := NewUserClaims(publicKey(ukp, t))
+	uc.Permissions.Pub.Allow.Add("_INBOX.>")
+	uc.Permissions.Pub.Deny.Add("foo")
+	uc.Permissions.Sub.Allow.Add("foo")
+	uc.Permissions.Sub.Allow.Add("foo v2.*")
+	uc.Permissions.Sub.Deny.Add("foo v1")
+	uc.Permissions.Sub.Deny.Add("> v3")
+
+	vr := CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("valid user permissions should be valid")
+	}
+
+	// There should be nothing but whitespace after the name of the queue group.
+	uc.Permissions.Sub.Allow.Add("foo v2 v3")
 	vr = CreateValidationResults()
 	uc.Validate(vr)
 
 	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
 		t.Error("bad permission should be invalid")
+	}
+
+	uc.Permissions.Sub.Allow.Remove("foo v2 v3")
+
+	// Any number of spaces is ok since the whitespace is trimmed.
+	uc.Permissions.Sub.Allow.Add("foo   v2")
+	uc.Permissions.Sub.Allow.Add("    bar   v4    ")
+	uc.Permissions.Sub.Allow.Add("    bar   v5    ")
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("valid user permissions should be valid")
 	}
 }
 

@@ -88,6 +88,21 @@ func (s Subject) Validate(vr *ValidationResults) {
 	}
 }
 
+// SubscribeSubject is a string that represents a NATS subscription.
+type SubscribeSubject string
+
+// Validate checks that a subject string is valid.
+func (s SubscribeSubject) Validate(vr *ValidationResults) {
+	v := string(s)
+	if v == "" {
+		vr.AddError("subject cannot be empty")
+	}
+	vals := strings.Fields(strings.TrimSpace(v))
+	if len(vals) > 2 {
+		vr.AddError("invalid subscription %q", v)
+	}
+}
+
 // HasWildCards is used to check if a subject contains a > or *
 func (s Subject) HasWildCards() bool {
 	v := string(s)
@@ -220,6 +235,22 @@ func (p *Permission) Validate(vr *ValidationResults) {
 	}
 }
 
+// SubscribePermission defines allow/deny subjects used for subscriptions.
+type SubscribePermission struct {
+	Allow StringList `json:"allow,omitempty"`
+	Deny  StringList `json:"deny,omitempty"`
+}
+
+// Validate the allow, deny elements of a permission
+func (p *SubscribePermission) Validate(vr *ValidationResults) {
+	for _, subj := range p.Allow {
+		SubscribeSubject(subj).Validate(vr)
+	}
+	for _, subj := range p.Deny {
+		SubscribeSubject(subj).Validate(vr)
+	}
+}
+
 // ResponsePermission can be used to allow responses to any reply subject
 // that is received on a valid subscription.
 type ResponsePermission struct {
@@ -235,7 +266,7 @@ func (p *ResponsePermission) Validate(vr *ValidationResults) {
 // Permissions are used to restrict subject access, either on a user or for everyone on a server by default
 type Permissions struct {
 	Pub  Permission          `json:"pub,omitempty"`
-	Sub  Permission          `json:"sub,omitempty"`
+	Sub  SubscribePermission `json:"sub,omitempty"`
 	Resp *ResponsePermission `json:"resp,omitempty"`
 }
 
