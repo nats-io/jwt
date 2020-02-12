@@ -109,12 +109,19 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (s
 	if err != nil {
 		return "", err
 	}
-
-	issuerBytes, err := kp.PublicKey()
-	if err != nil {
+	
+	
+	var issuerBytes []byte
+	
+	if c.Issuer != "" {
+		c.Issuer = []byte(c.Issuer)
+	} else {
+	    issuerBytes, err := kp.PublicKey()
+	    if err != nil {
 		return "", err
-	}
-
+	    }
+	} 
+	
 	prefixes := claim.ExpectedPrefixes()
 	if prefixes != nil {
 		ok := false
@@ -147,8 +154,13 @@ func (c *ClaimsData) doEncode(header *Header, kp nkeys.KeyPair, claim Claims) (s
 		}
 	}
 
+	
 	c.Issuer = string(issuerBytes)
-	c.IssuedAt = time.Now().UTC().Unix()
+	
+	if c.IssuedAt < 1 {
+	   c.IssuedAt = time.Now().UTC().Unix()
+	} 
+	
 
 	c.ID, err = c.hash()
 	if err != nil {
