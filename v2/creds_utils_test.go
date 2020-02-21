@@ -209,3 +209,66 @@ func Test_DecorateNKeys(t *testing.T) {
 		t.Fatal("required error parsing bad nkey")
 	}
 }
+
+func Test_ParseCreds(t *testing.T) {
+	token, kp := makeJWT(t)
+	d, err := FormatUserConfig(token, seedKey(kp, t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, err := kp.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	token2, err := ParseDecoratedJWT(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != token2 {
+		t.Fatal("expected jwts to match")
+	}
+	kp2, err := ParseDecoratedUserNKey(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk2, err := kp2.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pk != pk2 {
+		t.Fatal("expected keys to match")
+	}
+}
+
+func Test_ParseCredsWithCrLfs(t *testing.T) {
+	token, kp := makeJWT(t)
+	d, err := FormatUserConfig(token, seedKey(kp, t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, err := kp.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	d = bytes.ReplaceAll(d, []byte{'\n'}, []byte{'\r', '\n'})
+
+	token2, err := ParseDecoratedJWT(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != token2 {
+		t.Fatal("expected jwts to match")
+	}
+	kp2, err := ParseDecoratedUserNKey(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk2, err := kp2.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pk != pk2 {
+		t.Fatal("expected keys to match")
+	}
+}
