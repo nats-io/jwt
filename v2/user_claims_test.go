@@ -227,42 +227,6 @@ func TestUserValidation(t *testing.T) {
 	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
 		t.Error("bad limit should be invalid")
 	}
-
-	uc.Limits.Times = []TimeRange{}
-	uc.Permissions.Pub.Allow.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Pub.Allow.Remove("bad subject")
-	uc.Permissions.Sub.Allow.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Sub.Allow.Remove("bad subject")
-	uc.Permissions.Pub.Deny.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Pub.Deny.Remove("bad subject")
-	uc.Permissions.Sub.Deny.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
 }
 
 func TestUserAccountID(t *testing.T) {
