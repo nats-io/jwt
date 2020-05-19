@@ -294,10 +294,8 @@ func TestExportAccountTokenPos(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
 	tbl := map[Subject]uint{
-		">":           5,
 		"*":           1,
 		"foo.*":       2,
-		"foo.>":       2,
 		"foo.*.bar.*": 2,
 		"foo.*.bar.>": 2,
 		"*.*.*.>":     2,
@@ -329,12 +327,16 @@ func TestExportAccountTokenPosFail(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
 	tbl := map[Subject]uint{
-		"foo.>":     1,
+		">":         5,
+		"foo.>":     2,
+		"bar.>":     1,
 		"*":         5,
 		"*.*":       5,
 		"bar":       1,
 		"foo.bar":   2,
 		"foo.*.bar": 3,
+		"*.>":       3,
+		"*.*.>":     3,
 	}
 	for k, v := range tbl {
 		t.Run(string(k), func(t *testing.T) {
