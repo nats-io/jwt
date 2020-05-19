@@ -259,6 +259,47 @@ func Test_AccountServerURL(t *testing.T) {
 	}
 }
 
+func Test_SystemAccount(t *testing.T) {
+	operatorWithSystemAcc := func(t *testing.T, u string) error {
+		kp := createOperatorNKey(t)
+		pk := publicKey(kp, t)
+		oc := NewOperatorClaims(pk)
+		oc.SystemAccount = u
+		s, err := oc.Encode(kp)
+		if err != nil {
+			return err
+		}
+		oc, err = DecodeOperatorClaims(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		AssertEquals(oc.SystemAccount, u, t)
+		vr := ValidationResults{}
+		oc.Validate(&vr)
+		if !vr.IsEmpty() {
+			return fmt.Errorf("%s", vr.Errors()[0])
+		}
+		return nil
+	}
+	var asuTests = []struct {
+		accKey     string
+		shouldFail bool
+	}{
+		{"", false},
+		{"x", true},
+		{"ADZ547B24WHPLWOK7TMLNBSA7FQFXR6UM2NZ4HHNIB7RDFVZQFOZ4GQQ", false},
+		{"ADZ547B24WHPLWOK7TMLNBSA7FQFXR6UM2NZ4HHNIB7RDFVZQFOZ4777", true},
+	}
+	for i, tt := range asuTests {
+		err := operatorWithSystemAcc(t, tt.accKey)
+		if err != nil && tt.shouldFail == false {
+			t.Fatalf("expected not to fail: %v", err)
+		} else if err == nil && tt.shouldFail {
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].accKey)
+		}
+	}
+}
+
 func testOperatorWithOperatorServiceURL(t *testing.T, u string) error {
 	kp := createOperatorNKey(t)
 	pk := publicKey(kp, t)
