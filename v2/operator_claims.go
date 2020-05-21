@@ -66,7 +66,6 @@ func (o *Operator) Validate(vr *ValidationResults) {
 			vr.AddError("%s is not an operator public key", k)
 		}
 	}
-
 	if o.SystemAccount != "" {
 		if !nkeys.IsValidPublicAccountKey(o.SystemAccount) {
 			vr.AddError("%s is not an account public key", o.SystemAccount)
