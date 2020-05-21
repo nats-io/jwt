@@ -10,6 +10,7 @@ type v1NatsOperator struct {
 	SigningKeys         StringList `json:"signing_keys,omitempty"`
 	AccountServerURL    string     `json:"account_server_url,omitempty"`
 	OperatorServiceURLs StringList `json:"operator_service_urls,omitempty"`
+	SystemAccount       string     `json:"system_account,omitempty"`
 }
 
 func loadOperator(data []byte, version int) (*OperatorClaims, error) {
@@ -53,5 +54,6 @@ func (oa v1OperatorClaims) migrateV1() (*OperatorClaims, error) {
 	a.Operator.SigningKeys = oa.v1NatsOperator.SigningKeys
 	a.Operator.AccountServerURL = oa.v1NatsOperator.AccountServerURL
 	a.Operator.OperatorServiceURLs = oa.v1NatsOperator.OperatorServiceURLs
+	a.Operator.SystemAccount = oa.v1NatsOperator.SystemAccount
 	return &a, nil
 }

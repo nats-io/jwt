@@ -66,6 +66,9 @@ func TestMigrateOperator(t *testing.T) {
 	opk, err := okp.PublicKey()
 	require.NoError(t, err)
 
+	sapk, err := okp.PublicKey()
+	require.NoError(t, err)
+
 	oc := v1jwt.NewOperatorClaims(opk)
 	oc.Name = "O"
 	oc.Audience = "Audience"
@@ -79,6 +82,7 @@ func TestMigrateOperator(t *testing.T) {
 
 	oc.OperatorServiceURLs.Add("nats://localhost:4222")
 	oc.AccountServerURL = "http://localhost:9090/jwt/v1"
+	oc.SystemAccount = sapk
 
 	sk, err := nkeys.CreateOperator()
 	require.NoError(t, err)
@@ -235,6 +239,7 @@ func equalOperators(t *testing.T, o *v1jwt.OperatorClaims, n *OperatorClaims) {
 
 	require.Equal(t, o.Identities[0].ID, n.Operator.Identities[0].ID)
 	require.Equal(t, o.Identities[0].Proof, n.Operator.Identities[0].Proof)
+	require.Equal(t, o.SystemAccount, o.Operator.SystemAccount)
 }
 
 func equalAccounts(t *testing.T, o *v1jwt.AccountClaims, n *AccountClaims) {
