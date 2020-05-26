@@ -4,8 +4,9 @@ language: go
 
 go:
 - 1.14.x
-- 1.13.x
-- 1.12.x
+# FIXME: TEMPORARY DISABLE WHILE ITERATING AND DEBUGGING
+#- 1.13.x
+#- 1.12.x
 
 install:
 - go get -t ./...
@@ -20,11 +21,11 @@ before_script:
 - misspell -error -locale US .
 - staticcheck ./...
 # Beware that this will install, then curl itself a second time and run through the steps silently:
-- "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
 
 
 script:
 - go test -v -race ./...
-- if [[ "$TRAVIS_GO_VERSION" =~ 1.12 ]]; then ./scripts/cov.sh TRAVIS; fi
-- fossa init
-- fossa analyze
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || ./scripts/cov.sh TRAVIS
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || fossa init
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || fossa analyze
