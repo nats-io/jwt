@@ -8,8 +8,8 @@
 version: 2
 cli:
   server: https://app.fossa.com
-  fetcher: custom
-  project: git@github.com/nats-io/jwt
+  fetcher: git
+  project: github.com/nats-io/jwt
 analyze:
   modules:
     - name: github.com/nats-io/jwt
