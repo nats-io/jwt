@@ -8,7 +8,7 @@
 version: 2
 cli:
   server: https://app.fossa.com
-  fetcher: git
+  fetcher: custom
   project: github.com/nats-io/jwt
 analyze:
   modules:
