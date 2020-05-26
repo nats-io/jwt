@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/nats-io/nkeys"
@@ -42,7 +43,29 @@ type Operator struct {
 	OperatorServiceURLs StringList `json:"operator_service_urls,omitempty"`
 	// Identity of the system account
 	SystemAccount string `json:"system_account,omitempty"`
+	// Min Server version
+	AssertServerVersion string `json:"assert_server_version,omitempty"`
 	GenericFields
+}
+
+func ParseServerVersion(version string) (int, int, int, error) {
+	if version == "" {
+		return 0, 0, 0, nil
+	}
+	split := strings.Split(version, ".")
+	if len(split) != 3 {
+		return 0, 0, 0, fmt.Errorf("asserted server version must be of the form <major>.<minor>.<update>")
+	} else if major, err := strconv.Atoi(split[0]); err != nil {
+		return 0, 0, 0, fmt.Errorf("asserted server version cant parse %s to int", split[0])
+	} else if minor, err := strconv.Atoi(split[1]); err != nil {
+		return 0, 0, 0, fmt.Errorf("asserted server version cant parse %s to int", split[1])
+	} else if update, err := strconv.Atoi(split[2]); err != nil {
+		return 0, 0, 0, fmt.Errorf("asserted server version cant parse %s to int", split[2])
+	} else if major < 0 || minor < 0 || update < 0 {
+		return 0, 0, 0, fmt.Errorf("asserted server version can'b contain negative values: %s", version)
+	} else {
+		return major, minor, update, nil
+	}
 }
 
 // Validate checks the validity of the operators contents
@@ -70,6 +93,9 @@ func (o *Operator) Validate(vr *ValidationResults) {
 		if !nkeys.IsValidPublicAccountKey(o.SystemAccount) {
 			vr.AddError("%s is not an account public key", o.SystemAccount)
 		}
+	}
+	if _, _, _, err := ParseServerVersion(o.AssertServerVersion); err != nil {
+		vr.AddError("assert server version error: %s", err)
 	}
 }
 

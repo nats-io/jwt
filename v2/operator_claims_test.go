@@ -288,6 +288,58 @@ func Test_SystemAccount(t *testing.T) {
 	}
 }
 
+func Test_AssertServerVersion(t *testing.T) {
+	operatorWithAssertServerVer := func(t *testing.T, v string) error {
+		kp := createOperatorNKey(t)
+		pk := publicKey(kp, t)
+		oc := NewOperatorClaims(pk)
+		oc.AssertServerVersion = v
+		s, err := oc.Encode(kp)
+		if err != nil {
+			return err
+		}
+		oc, err = DecodeOperatorClaims(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		AssertEquals(oc.AssertServerVersion, v, t)
+		vr := ValidationResults{}
+		oc.Validate(&vr)
+		if !vr.IsEmpty() {
+			return fmt.Errorf("%s", vr.Errors()[0])
+		}
+		return nil
+	}
+	var asuTests = []struct {
+		assertVer  string
+		shouldFail bool
+	}{
+		{"1.2.3", false},
+		{"10.2.3", false},
+		{"1.20.3", false},
+		{"1.2.30", false},
+		{"10.20.30", false},
+		{"0.0.0", false},
+		{"0.0", true},
+		{"0", true},
+		{"a", true},
+		{"a.b.c", true},
+		{"1..1", true},
+		{"1a.b.c", true},
+		{"-1.0.0", true},
+		{"1.-1.0", true},
+		{"1.0.-1", true},
+	}
+	for i, tt := range asuTests {
+		err := operatorWithAssertServerVer(t, tt.assertVer)
+		if err != nil && tt.shouldFail == false {
+			t.Fatalf("expected not to fail: %v", err)
+		} else if err == nil && tt.shouldFail {
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].assertVer)
+		}
+	}
+}
+
 func testOperatorWithOperatorServiceURL(t *testing.T, u string) error {
 	kp := createOperatorNKey(t)
 	pk := publicKey(kp, t)
