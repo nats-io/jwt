@@ -1,6 +1,9 @@
 language: go
-sudo: false
+# Travis Xenial doesn't support disabling sudo, that's ability is
+# a relic of previous container-based non-ByoDocker builds.
+
 go:
+- 1.14.x
 - 1.13.x
 - 1.12.x
 
@@ -16,7 +19,12 @@ before_script:
 - go vet ./...
 - misspell -error -locale US .
 - staticcheck ./...
+# Beware that this will install, then curl itself a second time and run through the steps silently:
+- "curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install.sh | sudo bash"
+
 
 script:
 - go test -v -race ./...
 - if [[ "$TRAVIS_GO_VERSION" =~ 1.12 ]]; then ./scripts/cov.sh TRAVIS; fi
+- fossa init
+- fossa analyze
