@@ -25,7 +25,9 @@ before_script:
 
 
 script:
-- go test -v -race ./...
-- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || ./scripts/cov.sh TRAVIS
 - [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || fossa init
 - [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || fossa analyze
+- go test -v -race ./...
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || ./scripts/cov.sh TRAVIS
+# This one blocks the build until fossa analysis completes
+- [[ ! "$TRAVIS_GO_VERSION" =~ 1.14 ]] || fossa test
