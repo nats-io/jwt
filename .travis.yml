@@ -2,7 +2,7 @@ os: linux
 language: go
 go:
   - 1.13.x
-  - 1.12.x
+  - 1.14.x
 git:
   depth: false
 env:
@@ -21,13 +21,12 @@ before_script:
   - misspell -error -locale US .
   - staticcheck ./...
 script:
-  - cd $TRAVIS_BUILD_DIR/${V}
   - go test -v -coverprofile=./coverage.out ./...
 deploy:
   - provider: script
     script: $HOME/gopath/bin/goveralls -coverprofile=v2/coverage.out -service travis-ci
     on:
       tags: true
-      condition: ${V} = v2 && $TRAVIS_GO_VERSION =~ ^1.13.
+      condition: ${V} = v2 && $TRAVIS_GO_VERSION =~ ^1.14.
 
 
