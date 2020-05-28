@@ -48,6 +48,30 @@ func AssertEquals(expected, v interface{}, t *testing.T) {
 	}
 }
 
+func AssertNil(v interface{}, t *testing.T) {
+	if v != nil {
+		t.FailNow()
+	}
+}
+
+func AssertNoError(err error, t *testing.T) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func AssertTrue(condition bool, t *testing.T) {
+	if !condition {
+		t.FailNow()
+	}
+}
+
+func AssertFalse(condition bool, t *testing.T) {
+	if condition {
+		t.FailNow()
+	}
+}
+
 func createAccountNKey(t *testing.T) nkeys.KeyPair {
 	kp, err := nkeys.CreateAccount()
 	if err != nil {

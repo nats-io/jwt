@@ -20,8 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/nats-io/nkeys"
 )
 
@@ -447,9 +445,17 @@ func TestTags(t *testing.T) {
 	oJwt := encode(oc, okp, t)
 
 	oc2, err := DecodeOperatorClaims(oJwt)
-	require.NoError(t, err)
-	require.Len(t, oc2.GenericFields.Tags, 3)
-	require.Contains(t, oc.GenericFields.Tags, "one")
-	require.Contains(t, oc.GenericFields.Tags, "two")
-	require.Contains(t, oc.GenericFields.Tags, "three")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(oc2.GenericFields.Tags) != 3 {
+		t.Fatal("expected 3 tags")
+	}
+	for _, v := range oc.GenericFields.Tags {
+		AssertFalse(v == "TWO", t)
+	}
+
+	AssertTrue(oc.GenericFields.Tags.Contains("one"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("two"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("three"), t)
 }

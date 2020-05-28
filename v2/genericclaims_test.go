@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,8 +18,6 @@ package jwt
 import (
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewGenericClaims(t *testing.T) {
@@ -40,15 +38,14 @@ func TestNewGenericClaims(t *testing.T) {
 		t.Fatal("failed to decode", err)
 	}
 
-	require.Equal(t, gc.String(), uc2.String())
-	require.Equal(t, gc.Name, uc2.Name)
-	require.Equal(t, gc.Audience, uc2.Audience)
-	require.Equal(t, gc.Expires, uc2.Expires)
-	require.Equal(t, gc.NotBefore, uc2.NotBefore)
-	require.Equal(t, gc.Subject, uc2.Subject)
-	require.Contains(t, gc.Data, "test")
-	require.Equal(t, gc.Data["test"], true)
+	AssertEquals(gc.String(), uc2.String(), t)
+	AssertEquals(gc.Name, uc2.Name, t)
+	AssertEquals(gc.Audience, uc2.Audience, t)
+	AssertEquals(gc.Expires, uc2.Expires, t)
+	AssertEquals(gc.NotBefore, uc2.NotBefore, t)
+	AssertEquals(gc.Subject, uc2.Subject, t)
 
+	AssertEquals(gc.Data["test"], true, t)
 	AssertEquals(gc.Claims() != nil, true, t)
 	AssertEquals(gc.Payload() != nil, true, t)
 }

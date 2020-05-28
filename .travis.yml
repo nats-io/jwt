@@ -1,4 +1,6 @@
-os: linux
+os:
+  - linux
+  - windows
 language: go
 go:
   - 1.13.x
@@ -16,17 +18,18 @@ install:
   - go get github.com/wadey/gocovmerge
 before_script:
   - cd $TRAVIS_BUILD_DIR/${V}
-  - $(exit $(go fmt ./... | wc -l))
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then EXCLUDE_VENDOR=$(go list ./... | grep -v "/vendor/") && $(exit $(go fmt $EXCLUDE_VENDOR | wc -l)) && go vet $EXCLUDE_VENDOR; fi
   - go vet ./...
   - misspell -error -locale US .
   - staticcheck ./...
 script:
   - go test -v -coverprofile=./coverage.out ./...
 deploy:
-  - provider: script
-    script: $HOME/gopath/bin/goveralls -coverprofile=v2/coverage.out -service travis-ci
-    on:
-      tags: true
-      condition: ${V} = v2 && $TRAVIS_GO_VERSION =~ ^1.14.
+- provider: script
+  script: $HOME/gopath/bin/goveralls -coverprofile=v2/coverage.out -service travis-ci
+  on:
+    tags: true
+    condition: ${V} = v2 && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1.14
+
 
 

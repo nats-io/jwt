@@ -22,7 +22,6 @@ import (
 
 	v1jwt "github.com/nats-io/jwt"
 	"github.com/nats-io/nkeys"
-	"github.com/stretchr/testify/require"
 )
 
 func createExport(sub string) *v1jwt.Export {
@@ -55,19 +54,19 @@ func createActivation(t *testing.T, e *v1jwt.Export, target string, signer nkeys
 	s := strings.Replace(string(e.Subject), "*", target, -1)
 	ac.ImportSubject = v1jwt.Subject(s)
 	tok, err := ac.Encode(signer)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	return tok
 }
 
 func TestMigrateOperator(t *testing.T) {
 	okp, err := nkeys.CreateOperator()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	opk, err := okp.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	sapk, err := okp.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	oc := v1jwt.NewOperatorClaims(opk)
 	oc.Name = "O"
@@ -85,9 +84,9 @@ func TestMigrateOperator(t *testing.T) {
 	oc.SystemAccount = sapk
 
 	sk, err := nkeys.CreateOperator()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	psk, err := sk.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	oc.Operator.SigningKeys.Add(psk)
 
 	oc.Identities = append(oc.Identities, v1jwt.Identity{
@@ -96,24 +95,24 @@ func TestMigrateOperator(t *testing.T) {
 	})
 
 	token, err := oc.Encode(okp)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	c, err := Decode(token)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	oc2, ok := c.(*OperatorClaims)
-	require.True(t, ok)
+	AssertTrue(ok, t)
 
 	equalOperators(t, oc, oc2)
 }
 
 func TestMigrateAccount(t *testing.T) {
 	okp, err := nkeys.CreateOperator()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	akp, err := nkeys.CreateAccount()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	apk, err := akp.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	ac := v1jwt.NewAccountClaims(apk)
 	ac.Name = "A"
@@ -127,7 +126,7 @@ func TestMigrateAccount(t *testing.T) {
 
 	// create an import
 	ea, err := nkeys.CreateAccount()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	hex := createExport("help")
 	ac.Imports.Add(createImport(t, hex, apk, ea))
 
@@ -152,35 +151,35 @@ func TestMigrateAccount(t *testing.T) {
 
 	// add a signing key
 	sk, err := nkeys.CreateAccount()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	psk, err := sk.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	ac.Account.SigningKeys.Add(psk)
 
 	// add a revocation
 	ukp, err := nkeys.CreateUser()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	upk, err := ukp.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	ac.Revocations = make(map[string]int64)
 	ac.Revocations.Revoke(upk, time.Now())
 
 	token, err := ac.Encode(okp)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	c, err := Decode(token)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	ac2, ok := c.(*AccountClaims)
-	require.True(t, ok)
+	AssertTrue(ok, t)
 	equalAccounts(t, ac, ac2)
 }
 
 func TestMigrateUser(t *testing.T) {
 
 	ukp, err := nkeys.CreateUser()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	upk, err := ukp.PublicKey()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	uc := v1jwt.NewUserClaims(upk)
 	uc.Name = "U"
@@ -205,117 +204,120 @@ func TestMigrateUser(t *testing.T) {
 	uc.BearerToken = true
 
 	akp, err := nkeys.CreateAccount()
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	tok, err := uc.Encode(akp)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 
 	c, err := Decode(tok)
-	require.NoError(t, err)
+	AssertNoError(err, t)
 	uc2, ok := c.(*UserClaims)
-	require.True(t, ok)
+	AssertTrue(ok, t)
 
 	equalUsers(t, uc, uc2)
 }
 
 func equalClaims(t *testing.T, o *v1jwt.ClaimsData, n *ClaimsData, gf *GenericFields) {
-	require.Equal(t, o.Subject, n.Subject)
-	require.Equal(t, o.Issuer, n.Issuer)
-	require.Equal(t, o.Name, n.Name)
-	require.Equal(t, o.Audience, n.Audience)
-	require.Equal(t, o.NotBefore, n.NotBefore)
-	require.Equal(t, o.Expires, n.Expires)
-	require.Equal(t, string(o.Type), string(gf.Type))
-	require.EqualValues(t, o.Tags, gf.Tags)
+	AssertEquals(o.Subject, n.Subject, t)
+	AssertEquals(o.Issuer, n.Issuer, t)
+	AssertEquals(o.Name, n.Name, t)
+	AssertEquals(o.Audience, n.Audience, t)
+	AssertEquals(o.NotBefore, n.NotBefore, t)
+	AssertEquals(o.Expires, n.Expires, t)
+	AssertEquals(string(o.Type), string(gf.Type), t)
+	AssertTrue(len(o.Tags) == len(gf.Tags), t)
+	for _, v := range gf.Tags {
+		AssertTrue(o.Tags.Contains(v), t)
+	}
 }
 
 func equalOperators(t *testing.T, o *v1jwt.OperatorClaims, n *OperatorClaims) {
 	equalClaims(t, &o.ClaimsData, &n.ClaimsData, &n.GenericFields)
 	for _, v := range o.OperatorServiceURLs {
-		require.Contains(t, n.Operator.OperatorServiceURLs, v)
+		AssertTrue(n.OperatorServiceURLs.Contains(v), t)
 	}
 	for _, v := range o.SigningKeys {
-		require.Contains(t, n.Operator.SigningKeys, v)
+		AssertTrue(n.Operator.SigningKeys.Contains(v), t)
 	}
 
-	require.Equal(t, o.Identities[0].ID, n.Operator.Identities[0].ID)
-	require.Equal(t, o.Identities[0].Proof, n.Operator.Identities[0].Proof)
-	require.Equal(t, o.SystemAccount, o.Operator.SystemAccount)
+	AssertEquals(o.Identities[0].ID, n.Operator.Identities[0].ID, t)
+	AssertEquals(o.Identities[0].Proof, n.Operator.Identities[0].Proof, t)
+	AssertEquals(o.SystemAccount, o.Operator.SystemAccount, t)
 }
 
 func equalAccounts(t *testing.T, o *v1jwt.AccountClaims, n *AccountClaims) {
 	equalClaims(t, &o.ClaimsData, &n.ClaimsData, &n.GenericFields)
 	equalImports(t, o.Imports[0], n.Imports[0])
 	equalExports(t, o.Exports[0], n.Exports[0])
-	require.Equal(t, o.Identities[0].ID, n.Account.Identities[0].ID)
-	require.Equal(t, o.Identities[0].Proof, n.Account.Identities[0].Proof)
+	AssertEquals(o.Identities[0].ID, n.Account.Identities[0].ID, t)
+	AssertEquals(o.Identities[0].Proof, n.Account.Identities[0].Proof, t)
 	equalLimits(t, &o.Account.Limits, &n.Account.Limits)
 	for _, v := range o.SigningKeys {
-		require.Contains(t, n.Account.SigningKeys, v)
+		AssertTrue(n.Account.SigningKeys.Contains(v), t)
 	}
 }
 
 func equalUsers(t *testing.T, o *v1jwt.UserClaims, n *UserClaims) {
 	equalClaims(t, &o.ClaimsData, &n.ClaimsData, &n.GenericFields)
 	for _, v := range o.Sub.Allow {
-		require.True(t, n.Sub.Allow.Contains(v))
+		AssertTrue(n.Sub.Allow.Contains(v), t)
 	}
 	for _, v := range o.Pub.Allow {
-		require.True(t, n.Pub.Allow.Contains(v))
+		AssertTrue(n.Pub.Allow.Contains(v), t)
 	}
 	for _, v := range o.Sub.Deny {
-		require.True(t, n.Sub.Deny.Contains(v))
+		AssertTrue(n.Sub.Deny.Contains(v), t)
 	}
 	for _, v := range o.Pub.Deny {
-		require.True(t, n.Pub.Deny.Contains(v))
+		AssertTrue(n.Pub.Deny.Contains(v), t)
 	}
 	if o.User.Resp == nil {
-		require.Nil(t, n.User.Resp)
+		AssertNil(n.User.Resp, t)
 	} else {
-		require.Equal(t, o.User.Resp.Expires, n.User.Resp.Expires)
-		require.Equal(t, o.User.Resp.MaxMsgs, n.User.Resp.MaxMsgs)
+		AssertEquals(o.User.Resp.Expires, n.User.Resp.Expires, t)
+		AssertEquals(o.User.Resp.MaxMsgs, n.User.Resp.MaxMsgs, t)
 	}
 	if o.IssuerAccount != "" {
-		require.Equal(t, o.IssuerAccount, n.User.IssuerAccount)
+		AssertEquals(o.IssuerAccount, n.User.IssuerAccount, t)
 	}
-	require.Equal(t, o.User.BearerToken, n.User.BearerToken)
+	AssertEquals(o.User.BearerToken, n.User.BearerToken, t)
 }
 
 func equalExports(t *testing.T, o *v1jwt.Export, n *Export) {
-	require.Equal(t, o.Name, n.Name)
-	require.Equal(t, string(o.Subject), string(n.Subject))
-	require.EqualValues(t, o.Type, n.Type)
-	require.Equal(t, o.TokenReq, n.TokenReq)
-	require.EqualValues(t, o.ResponseType, n.ResponseType)
+	AssertEquals(o.Name, n.Name, t)
+	AssertEquals(string(o.Subject), string(n.Subject), t)
+	AssertEquals(int(o.Type), int(n.Type), t)
+	AssertEquals(o.TokenReq, n.TokenReq, t)
+	AssertEquals(string(o.ResponseType), string(n.ResponseType), t)
 }
 
 func equalImports(t *testing.T, o *v1jwt.Import, n *Import) {
-	require.Equal(t, o.Name, n.Name)
-	require.Equal(t, string(o.Subject), string(n.Subject))
-	require.Equal(t, string(o.To), string(n.To))
-	require.EqualValues(t, o.Type, n.Type)
+	AssertEquals(o.Name, n.Name, t)
+	AssertEquals(string(o.Subject), string(n.Subject), t)
+	AssertEquals(string(o.To), string(n.To), t)
+	AssertEquals(int(o.Type), int(n.Type), t)
 
 	if o.Token != "" {
 		ot, err := v1jwt.DecodeActivationClaims(o.Token)
-		require.NoError(t, err)
+		AssertNoError(err, t)
 		nt, err := DecodeActivationClaims(n.Token)
-		require.NoError(t, err)
+		AssertNoError(err, t)
 		equalActivation(t, ot, nt)
 	}
 }
 
 func equalActivation(t *testing.T, o *v1jwt.ActivationClaims, n *ActivationClaims) {
 	equalClaims(t, &o.ClaimsData, &n.ClaimsData, &n.Activation.GenericFields)
-	require.Equal(t, string(o.ImportSubject), string(n.ImportSubject))
-	require.EqualValues(t, o.ImportType, n.ImportType)
+	AssertEquals(string(o.ImportSubject), string(n.ImportSubject), t)
+	AssertEquals(int(o.ImportType), int(n.ImportType), t)
 }
 
 func equalLimits(t *testing.T, o *v1jwt.OperatorLimits, n *OperatorLimits) {
-	require.Equal(t, o.Subs, n.Subs)
-	require.Equal(t, o.Conn, n.Conn)
-	require.Equal(t, o.LeafNodeConn, n.LeafNodeConn)
-	require.Equal(t, o.Imports, n.Imports)
-	require.Equal(t, o.Exports, n.Exports)
-	require.Equal(t, o.Data, n.Data)
-	require.Equal(t, o.Payload, n.Payload)
-	require.Equal(t, o.WildcardExports, n.WildcardExports)
+	AssertEquals(o.Subs, n.Subs, t)
+	AssertEquals(o.Conn, n.Conn, t)
+	AssertEquals(o.LeafNodeConn, n.LeafNodeConn, t)
+	AssertEquals(o.Imports, n.Imports, t)
+	AssertEquals(o.Exports, n.Exports, t)
+	AssertEquals(o.Data, n.Data, t)
+	AssertEquals(o.Payload, n.Payload, t)
+	AssertEquals(o.WildcardExports, n.WildcardExports, t)
 }
