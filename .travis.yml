@@ -26,14 +26,8 @@ script:
   - mkdir cov
   - go test -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
   - gocovmerge ./cov/*.out > coverage.out
-  - pwd
-  - ls -lg coverage.out
 
 deploy:
-- provider: script
-  cleanup: false
-  script: ls -lg coverage.out
-
 - provider: script
   cleanup: false
   script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service travis-ci
