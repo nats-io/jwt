@@ -23,12 +23,14 @@ before_script:
   - misspell -error -locale US .
   - staticcheck ./...
 script:
-  - go test -v -race ./...
-  - go test -v -coverprofile=./coverage.out ./...
+  - mkdir cov
+  - go test -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
+  - gocovmerge ./cov/*.out > coverage.out
+
 deploy:
 - provider: script
   cleanup: false
-  script: $HOME/gopath/bin/goveralls -coverprofile=./coverage.out -service travis-ci
+  script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service travis-ci
   on:
     condition: ${V} = "" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1.14
 
