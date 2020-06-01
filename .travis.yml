@@ -26,9 +26,11 @@ script:
   - go test -v -race ./...
   - go test -v -coverprofile=./coverage.out ./...
   - ls -lg ./coverage.out
-  - cd $TRAVIS_BUILD_DIR/${V}
-  - ls -lg ./coverage.out
+  - pwd
 deploy:
+- provider: script
+  cleanup: false
+  script: pwd
 - provider: script
   cleanup: false
   script: $HOME/gopath/bin/goveralls -coverprofile=./coverage.out -service travis-ci
