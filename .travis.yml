@@ -29,7 +29,7 @@ script:
 
 deploy:
 - provider: script
-  cleanup: false
+  skip_cleanup: true
   script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service travis-ci
   on:
     condition: ${V} = "" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1.14
