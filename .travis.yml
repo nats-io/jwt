@@ -27,10 +27,9 @@ script:
   - go test -v -coverprofile=./coverage.out ./...
 deploy:
 - provider: script
-  script: $HOME/gopath/bin/goveralls -coverprofile=v2/coverage.out -service travis-ci
+  script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service travis-ci
   on:
-    tags: true
-    condition: ${V} = v2 && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1.14
+    condition: ${V} = "" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ ^1.14
 
 
 
