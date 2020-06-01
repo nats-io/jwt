@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The NATS Authors
+ * Copyright 2018 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +28,7 @@ func TestNewUserClaims(t *testing.T) {
 	ukp := createUserNKey(t)
 
 	uc := NewUserClaims(publicKey(ukp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, akp, t)
 
 	uc2, err := DecodeUserClaims(uJwt)
@@ -47,7 +47,7 @@ func TestUserClaimIssuer(t *testing.T) {
 	ukp := createUserNKey(t)
 
 	uc := NewUserClaims(publicKey(ukp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, akp, t)
 
 	temp, err := DecodeGeneric(uJwt)
@@ -226,42 +226,6 @@ func TestUserValidation(t *testing.T) {
 
 	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
 		t.Error("bad limit should be invalid")
-	}
-
-	uc.Limits.Times = []TimeRange{}
-	uc.Permissions.Pub.Allow.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Pub.Allow.Remove("bad subject")
-	uc.Permissions.Sub.Allow.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Sub.Allow.Remove("bad subject")
-	uc.Permissions.Pub.Deny.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
-	}
-
-	uc.Permissions.Pub.Deny.Remove("bad subject")
-	uc.Permissions.Sub.Deny.Add("bad subject")
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad permission should be invalid")
 	}
 }
 

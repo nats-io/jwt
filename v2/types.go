@@ -228,7 +228,7 @@ type ResponsePermission struct {
 }
 
 // Validate the response permission.
-func (p *ResponsePermission) Validate(vr *ValidationResults) {
+func (p *ResponsePermission) Validate(_ *ValidationResults) {
 	// Any values can be valid for now.
 }
 
@@ -241,8 +241,6 @@ type Permissions struct {
 
 // Validate the pub and sub fields in the permissions list
 func (p *Permissions) Validate(vr *ValidationResults) {
-	p.Pub.Validate(vr)
-	p.Sub.Validate(vr)
 	if p.Resp != nil {
 		p.Resp.Validate(vr)
 	}
@@ -329,6 +327,6 @@ type Identity struct {
 }
 
 // Validate checks the values in an Identity
-func (u *Identity) Validate(vr *ValidationResults) {
+func (u *Identity) Validate(_ *ValidationResults) {
 	//Fixme identity validation
 }

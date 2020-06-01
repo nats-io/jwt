@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The NATS Authors
+ * Copyright 2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -222,5 +222,68 @@ func Test_DecorateNKeys(t *testing.T) {
 	_, err := ParseDecoratedNKey([]byte("bad"))
 	if err == nil {
 		t.Fatal("required error parsing bad nkey")
+	}
+}
+
+func Test_ParseCreds(t *testing.T) {
+	token, kp := makeJWT(t)
+	d, err := FormatUserConfig(token, seedKey(kp, t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, err := kp.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	token2, err := ParseDecoratedJWT(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != token2 {
+		t.Fatal("expected jwts to match")
+	}
+	kp2, err := ParseDecoratedUserNKey(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk2, err := kp2.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pk != pk2 {
+		t.Fatal("expected keys to match")
+	}
+}
+
+func Test_ParseCredsWithCrLfs(t *testing.T) {
+	token, kp := makeJWT(t)
+	d, err := FormatUserConfig(token, seedKey(kp, t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk, err := kp.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	d = bytes.ReplaceAll(d, []byte{'\n'}, []byte{'\r', '\n'})
+
+	token2, err := ParseDecoratedJWT(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if token != token2 {
+		t.Fatal("expected jwts to match")
+	}
+	kp2, err := ParseDecoratedUserNKey(d)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pk2, err := kp2.PublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pk != pk2 {
+		t.Fatal("expected keys to match")
 	}
 }

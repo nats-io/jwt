@@ -30,7 +30,7 @@ func TestNewActivationClaims(t *testing.T) {
 
 	activation := NewActivationClaims(apk)
 	activation.Max = 1024 * 1024
-	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	activation.Expires = time.Now().Add(time.Hour).Unix()
 	activation.Limits.Max = 10
 	activation.Limits.Payload = 10
 	activation.Limits.Src = "192.0.2.0/24"
@@ -90,7 +90,7 @@ func TestInvalidActivationTargets(t *testing.T) {
 func TestInvalidActivationClaimIssuer(t *testing.T) {
 	akp := createAccountNKey(t)
 	ac := NewActivationClaims(publicKey(akp, t))
-	ac.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	ac.Expires = time.Now().Add(time.Hour).Unix()
 	aJwt := encode(ac, akp, t)
 
 	temp, err := DecodeGeneric(aJwt)
@@ -215,7 +215,7 @@ func TestActivationValidation(t *testing.T) {
 	activation := NewActivationClaims(apk)
 	activation.Issuer = apk
 	activation.Subject = apk2
-	activation.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	activation.Expires = time.Now().Add(time.Hour).Unix()
 
 	activation.ImportSubject = "foo"
 	activation.Name = "Foo"
@@ -371,7 +371,7 @@ func TestActivationClaimAccountIDValidation(t *testing.T) {
 	ac := NewActivationClaims(importerPK)
 	ac.IssuerAccount = issuerAccountPK
 	ac.Name = "foo.bar"
-	ac.Activation.ImportSubject = Subject("foo.bar")
+	ac.Activation.ImportSubject = "foo.bar"
 	ac.Activation.ImportType = Stream
 
 	var vr ValidationResults

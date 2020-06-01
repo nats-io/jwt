@@ -27,7 +27,7 @@ func TestNewOperatorClaims(t *testing.T) {
 	ckp := createOperatorNKey(t)
 
 	uc := NewOperatorClaims(publicKey(ckp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, ckp, t)
 
 	uc2, err := DecodeOperatorClaims(uJwt)
@@ -72,7 +72,7 @@ func TestOperatorSubjects(t *testing.T) {
 func TestInvalidOperatorClaimIssuer(t *testing.T) {
 	akp := createOperatorNKey(t)
 	ac := NewOperatorClaims(publicKey(akp, t))
-	ac.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
+	ac.Expires = time.Now().Add(time.Hour).Unix()
 	aJwt := encode(ac, akp, t)
 
 	temp, err := DecodeGeneric(aJwt)
@@ -133,8 +133,8 @@ func TestSigningKeyValidation(t *testing.T) {
 	ckp2 := createOperatorNKey(t)
 
 	uc := NewOperatorClaims(publicKey(ckp, t))
-	uc.Expires = time.Now().Add(time.Duration(time.Hour)).Unix()
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.Expires = time.Now().Add(time.Hour).Unix()
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	uJwt := encode(uc, ckp, t)
 
 	uc2, err := DecodeOperatorClaims(uJwt)
@@ -152,7 +152,7 @@ func TestSigningKeyValidation(t *testing.T) {
 		t.Fatal("valid operator key should have no validation issues")
 	}
 
-	uc.AddSigningKey("") // add an invalid one
+	uc.SigningKeys.Add("") // add an invalid one
 
 	vr = &ValidationResults{}
 	uc.Validate(vr)
@@ -193,22 +193,8 @@ func TestSignedBy(t *testing.T) {
 
 	AssertEquals(uc.DidSign(ac), false, t) // no signing key
 	AssertEquals(uc2.DidSign(ac), true, t) // actual key
-	uc.AddSigningKey(publicKey(ckp2, t))
+	uc.SigningKeys.Add(publicKey(ckp2, t))
 	AssertEquals(uc.DidSign(ac), true, t) // signing key
-
-	clusterKey := createClusterNKey(t)
-	clusterClaims := NewClusterClaims(publicKey(clusterKey, t))
-	enc, err = clusterClaims.Encode(ckp2) // sign with the operator key
-	if err != nil {
-		t.Fatal("failed to encode", err)
-	}
-	clusterClaims, err = DecodeClusterClaims(enc)
-	if err != nil {
-		t.Fatal("failed to decode", err)
-	}
-
-	AssertEquals(uc.DidSign(clusterClaims), true, t)  // signing key
-	AssertEquals(uc2.DidSign(clusterClaims), true, t) // actual key
 }
 
 func testAccountWithAccountServerURL(t *testing.T, u string) error {
@@ -233,6 +219,30 @@ func testAccountWithAccountServerURL(t *testing.T, u string) error {
 		return errs[0]
 	}
 	return nil
+}
+
+func Test_AccountServerURL(t *testing.T) {
+	var asuTests = []struct {
+		u          string
+		shouldFail bool
+	}{
+		{"", false},
+		{"HTTP://foo.bar.com", false},
+		{"http://foo.bar.com/foo/bar", false},
+		{"http://user:pass@foo.bar.com/foo/bar", false},
+		{"https://foo.bar.com", false},
+		{"nats://foo.bar.com", false},
+		{"/hello", true},
+	}
+
+	for i, tt := range asuTests {
+		err := testAccountWithAccountServerURL(t, tt.u)
+		if err != nil && tt.shouldFail == false {
+			t.Fatalf("expected not to fail: %v", err)
+		} else if err == nil && tt.shouldFail {
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].u)
+		}
+	}
 }
 
 func Test_SystemAccount(t *testing.T) {
@@ -276,26 +286,54 @@ func Test_SystemAccount(t *testing.T) {
 	}
 }
 
-func Test_AccountServerURL(t *testing.T) {
+func Test_AssertServerVersion(t *testing.T) {
+	operatorWithAssertServerVer := func(t *testing.T, v string) error {
+		kp := createOperatorNKey(t)
+		pk := publicKey(kp, t)
+		oc := NewOperatorClaims(pk)
+		oc.AssertServerVersion = v
+		s, err := oc.Encode(kp)
+		if err != nil {
+			return err
+		}
+		oc, err = DecodeOperatorClaims(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		AssertEquals(oc.AssertServerVersion, v, t)
+		vr := ValidationResults{}
+		oc.Validate(&vr)
+		if !vr.IsEmpty() {
+			return fmt.Errorf("%s", vr.Errors()[0])
+		}
+		return nil
+	}
 	var asuTests = []struct {
-		u          string
+		assertVer  string
 		shouldFail bool
 	}{
-		{"", false},
-		{"HTTP://foo.bar.com", false},
-		{"http://foo.bar.com/foo/bar", false},
-		{"http://user:pass@foo.bar.com/foo/bar", false},
-		{"https://foo.bar.com", false},
-		{"nats://foo.bar.com", false},
-		{"/hello", true},
+		{"1.2.3", false},
+		{"10.2.3", false},
+		{"1.20.3", false},
+		{"1.2.30", false},
+		{"10.20.30", false},
+		{"0.0.0", false},
+		{"0.0", true},
+		{"0", true},
+		{"a", true},
+		{"a.b.c", true},
+		{"1..1", true},
+		{"1a.b.c", true},
+		{"-1.0.0", true},
+		{"1.-1.0", true},
+		{"1.0.-1", true},
 	}
-
 	for i, tt := range asuTests {
-		err := testAccountWithAccountServerURL(t, tt.u)
+		err := operatorWithAssertServerVer(t, tt.assertVer)
 		if err != nil && tt.shouldFail == false {
 			t.Fatalf("expected not to fail: %v", err)
 		} else if err == nil && tt.shouldFail {
-			t.Fatalf("test %s expected to fail but didn't", asuTests[i].u)
+			t.Fatalf("test %s expected to fail but didn't", asuTests[i].assertVer)
 		}
 	}
 }
@@ -394,11 +432,30 @@ func Test_OperatorServiceURL(t *testing.T) {
 	AssertEquals(len(errs), shouldFail, t)
 }
 
-func Test_ForwardCompatibility(t *testing.T) {
-	newOp := `eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJTSUYyR0ZRSEhWWUtDQlZYRklYUURYV1FCQUcyWEw3SVZLVVJZT0ZTWlhVT0tTRUpLWDdBIiwiaWF0IjoxNTkwNTI0NTAwLCJpc3MiOiJPQlQ2REtGSzQ2STM3TjdCUkwyUkpMVVJLWUdSQTZBWVJQREFISFFFQUFBR05ZWExNR1JEUEtMQyIsInN1YiI6Ik9CVDZES0ZLNDZJMzdON0JSTDJSSkxVUktZR1JBNkFZUlBEQUhIUUVBQUFHTllYTE1HUkRQS0xDIiwibmF0cyI6eyJ0YWdzIjpbIm9uZSIsInR3byIsInRocmVlIl0sInR5cGUiOiJvcGVyYXRvciIsInZlcnNpb24iOjJ9fQ.u6JFiISIh2o-CWxktfEw3binmCLhLaFVMyuIa2HNo_x_6EGWVPVICVWc_MOLFS-6Nm17Cj4SmOh3zUtlTRkfDA`
-	if _, err := DecodeOperatorClaims(newOp); err == nil {
-		t.Fatal("Expected error")
-	} else if err.Error() != `unexpected "ed25519-nkey" algorithm` {
-		t.Fatal("Expected different error, got: ", err)
+func TestTags(t *testing.T) {
+	okp := createOperatorNKey(t)
+	opk := publicKey(okp, t)
+
+	oc := NewOperatorClaims(opk)
+	oc.Tags.Add("one")
+	oc.Tags.Add("one") // duplicated tags should be ignored
+	oc.Tags.Add("TWO") // should become lower case
+	oc.Tags.Add("three")
+
+	oJwt := encode(oc, okp, t)
+
+	oc2, err := DecodeOperatorClaims(oJwt)
+	if err != nil {
+		t.Fatal(err)
 	}
+	if len(oc2.GenericFields.Tags) != 3 {
+		t.Fatal("expected 3 tags")
+	}
+	for _, v := range oc.GenericFields.Tags {
+		AssertFalse(v == "TWO", t)
+	}
+
+	AssertTrue(oc.GenericFields.Tags.Contains("one"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("two"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("three"), t)
 }

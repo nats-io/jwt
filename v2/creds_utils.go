@@ -27,11 +27,11 @@ import (
 
 // DecorateJWT returns a decorated JWT that describes the kind of JWT
 func DecorateJWT(jwtString string) ([]byte, error) {
-	gc, err := DecodeGeneric(jwtString)
+	gc, err := Decode(jwtString)
 	if err != nil {
 		return nil, err
 	}
-	return formatJwt(string(gc.Type), jwtString)
+	return formatJwt(string(gc.ClaimType()), jwtString)
 }
 
 func formatJwt(kind string, jwtString string) ([]byte, error) {
@@ -97,7 +97,7 @@ NKEYs are sensitive and should be treated as secrets.
 	return w.Bytes(), nil
 }
 
-var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}[^\n]*[-]{3,}\n)(.+)(?:\n\s*[-]{3,}[^\n]*[-]{3,}\n))`)
+var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}.*[-]{3,}\r?\n)([\w\-.=]+)(?:\r?\n[-]{3,}.*[-]{3,}\r?\n))`)
 
 // An user config file looks like this:
 //  -----BEGIN NATS USER JWT-----
@@ -114,17 +114,17 @@ var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}[^\n]*[-]{3,}\n)(.+)(?:\n
 
 // FormatUserConfig returns a decorated file with a decorated JWT and decorated seed
 func FormatUserConfig(jwtString string, seed []byte) ([]byte, error) {
-	gc, err := DecodeGeneric(jwtString)
+	gc, err := Decode(jwtString)
 	if err != nil {
 		return nil, err
 	}
-	if gc.Type != UserClaim {
-		return nil, fmt.Errorf("%q cannot be serialized as a user config", string(gc.Type))
+	if gc.ClaimType() != UserClaim {
+		return nil, fmt.Errorf("%q cannot be serialized as a user config", string(gc.ClaimType()))
 	}
 
 	w := bytes.NewBuffer(nil)
 
-	jd, err := formatJwt(string(gc.Type), jwtString)
+	jd, err := formatJwt(string(gc.ClaimType()), jwtString)
 	if err != nil {
 		return nil, err
 	}
