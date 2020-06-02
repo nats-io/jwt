@@ -289,3 +289,75 @@ func TestExport_Sorting(t *testing.T) {
 		t.Fatal("exports not sorted")
 	}
 }
+
+func TestExportAccountTokenPos(t *testing.T) {
+	okp := createOperatorNKey(t)
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	tbl := map[Subject]uint{
+		"*":           1,
+		"foo.*":       2,
+		"foo.*.bar.*": 2,
+		"foo.*.bar.>": 2,
+		"*.*.*.>":     2,
+		"*.*.>":       1,
+	}
+	for k, v := range tbl {
+		t.Run(string(k), func(t *testing.T) {
+			account := NewAccountClaims(apk)
+			//account.Limits = OperatorLimits{}
+			account.Exports = append(account.Exports,
+				&Export{Type: Stream, Subject: k, AccountTokenPosition: v})
+			actJwt := encode(account, okp, t)
+			account2, err := DecodeAccountClaims(actJwt)
+			if err != nil {
+				t.Fatal("error decoding account jwt", err)
+			}
+			AssertEquals(account.String(), account2.String(), t)
+			vr := &ValidationResults{}
+			account2.Validate(vr)
+			if len(vr.Issues) != 0 {
+				t.Fatal("validation issues", *vr)
+			}
+		})
+	}
+}
+
+func TestExportAccountTokenPosFail(t *testing.T) {
+	okp := createOperatorNKey(t)
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	tbl := map[Subject]uint{
+		">":          5,
+		"foo.>":      2,
+		"bar.>":      1,
+		"*":          5,
+		"*.*":        5,
+		"bar":        1,
+		"foo.bar":    2,
+		"foo.*.bar":  3,
+		"*.>":        3,
+		"*.*.>":      3,
+		"foo.*x.bar": 2,
+		"foo.x*.bar": 2,
+	}
+	for k, v := range tbl {
+		t.Run(string(k), func(t *testing.T) {
+			account := NewAccountClaims(apk)
+			//account.Limits = OperatorLimits{}
+			account.Exports = append(account.Exports,
+				&Export{Type: Stream, Subject: k, AccountTokenPosition: v})
+			actJwt := encode(account, okp, t)
+			account2, err := DecodeAccountClaims(actJwt)
+			if err != nil {
+				t.Fatal("error decoding account jwt", err)
+			}
+			AssertEquals(account.String(), account2.String(), t)
+			vr := &ValidationResults{}
+			account2.Validate(vr)
+			if len(vr.Issues) != 1 {
+				t.Fatal("validation issue expected", *vr)
+			}
+		})
+	}
+}
