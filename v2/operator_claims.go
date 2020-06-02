@@ -44,7 +44,7 @@ type Operator struct {
 	// Identity of the system account
 	SystemAccount string `json:"system_account,omitempty"`
 	// Min Server version
-	AssertServerVersion string `json:"assert_server_version,omitempty"`
+	AssertServerVersion uint `json:"assert_server_version,omitempty"`
 	GenericFields
 }
 
@@ -93,9 +93,6 @@ func (o *Operator) Validate(vr *ValidationResults) {
 		if !nkeys.IsValidPublicAccountKey(o.SystemAccount) {
 			vr.AddError("%s is not an account public key", o.SystemAccount)
 		}
-	}
-	if _, _, _, err := ParseServerVersion(o.AssertServerVersion); err != nil {
-		vr.AddError("assert server version error: %s", err)
 	}
 }
 

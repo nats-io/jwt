@@ -287,7 +287,7 @@ func Test_SystemAccount(t *testing.T) {
 }
 
 func Test_AssertServerVersion(t *testing.T) {
-	operatorWithAssertServerVer := func(t *testing.T, v string) error {
+	operatorWithAssertServerVer := func(t *testing.T, v uint) error {
 		kp := createOperatorNKey(t)
 		pk := publicKey(kp, t)
 		oc := NewOperatorClaims(pk)
@@ -308,32 +308,11 @@ func Test_AssertServerVersion(t *testing.T) {
 		}
 		return nil
 	}
-	var asuTests = []struct {
-		assertVer  string
-		shouldFail bool
-	}{
-		{"1.2.3", false},
-		{"10.2.3", false},
-		{"1.20.3", false},
-		{"1.2.30", false},
-		{"10.20.30", false},
-		{"0.0.0", false},
-		{"0.0", true},
-		{"0", true},
-		{"a", true},
-		{"a.b.c", true},
-		{"1..1", true},
-		{"1a.b.c", true},
-		{"-1.0.0", true},
-		{"1.-1.0", true},
-		{"1.0.-1", true},
-	}
-	for i, tt := range asuTests {
-		err := operatorWithAssertServerVer(t, tt.assertVer)
-		if err != nil && tt.shouldFail == false {
+	var asuTests = []uint{0, 1, 10}
+	for _, tt := range asuTests {
+		err := operatorWithAssertServerVer(t, tt)
+		if err != nil {
 			t.Fatalf("expected not to fail: %v", err)
-		} else if err == nil && tt.shouldFail {
-			t.Fatalf("test %s expected to fail but didn't", asuTests[i].assertVer)
 		}
 	}
 }
