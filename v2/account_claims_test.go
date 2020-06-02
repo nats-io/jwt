@@ -530,3 +530,30 @@ func TestUserRevocation(t *testing.T) {
 		t.Errorf("revocation be true we revoked in the future")
 	}
 }
+
+func TestAccountDefaultPermissions(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	account.DefaultPermissions.Sub = Permission{
+		Allow: []string{"foo.1", "bar.*"},
+		Deny:  []string{"foo.2", "baz.>"},
+	}
+	account.DefaultPermissions.Pub = Permission{
+		Allow: []string{"foo.4", "bar.>"},
+		Deny:  []string{"foo.4", "baz.*"},
+	}
+	account.DefaultPermissions.Resp = &ResponsePermission{
+		5,
+		5 * time.Second}
+
+	actJwt := encode(account, akp, t)
+
+	account2, err := DecodeAccountClaims(actJwt)
+	if err != nil {
+		t.Fatal("error decoding account jwt", err)
+	}
+
+	AssertEquals(account.String(), account2.String(), t)
+}
