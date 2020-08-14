@@ -361,3 +361,29 @@ func TestExportAccountTokenPosFail(t *testing.T) {
 		})
 	}
 }
+
+func TestExport_ResponseThreshold(t *testing.T) {
+	var exports Exports
+	exports.Add(&Export{Subject: "x", Type: Service, ResponseThreshold: time.Second})
+	vr := ValidationResults{}
+	exports.Validate(&vr)
+	if !vr.IsEmpty() {
+		t.Fatal("expected this to pass")
+	}
+
+	exports = Exports{}
+	exports.Add(&Export{Subject: "x", Type: Stream, ResponseThreshold: time.Second})
+	vr = ValidationResults{}
+	exports.Validate(&vr)
+	if vr.IsEmpty() {
+		t.Fatal("expected this to fail due to type")
+	}
+
+	exports = Exports{}
+	exports.Add(&Export{Subject: "x", Type: Service, ResponseThreshold: -1 * time.Second})
+	vr = ValidationResults{}
+	exports.Validate(&vr)
+	if vr.IsEmpty() {
+		t.Fatal("expected this to fail due to negative duration")
+	}
+}

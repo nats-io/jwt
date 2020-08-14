@@ -29,11 +29,7 @@ func TestNewActivationClaims(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	activation := NewActivationClaims(apk)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).Unix()
-	activation.Limits.Max = 10
-	activation.Limits.Payload = 10
-	activation.Limits.Src = "192.0.2.0/24"
 
 	activation.ImportSubject = "foo"
 	activation.Name = "Foo"
@@ -221,20 +217,6 @@ func TestActivationValidation(t *testing.T) {
 	activation.Name = "Foo"
 	activation.ImportType = Stream
 
-	activation.Limits.Max = 10
-	activation.Limits.Payload = 10
-	activation.Limits.Src = "192.0.2.0/24"
-	activation.Limits.Times = []TimeRange{
-		{
-			Start: "01:15:00",
-			End:   "03:15:00",
-		},
-		{
-			Start: "06:15:00",
-			End:   "09:15:00",
-		},
-	}
-
 	vr := CreateValidationResults()
 	activation.Validate(vr)
 
@@ -251,58 +233,6 @@ func TestActivationValidation(t *testing.T) {
 
 	if !vr.IsEmpty() || vr.IsBlocking(true) {
 		t.Error("valid activation should pass validation")
-	}
-
-	activation.ImportSubject = "other.*"
-	activation.ImportType = Stream
-	activation.Name = "other"
-
-	activation.Limits.Max = -1
-	vr = CreateValidationResults()
-	activation.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	activation.Limits.Max = 10
-	activation.Limits.Payload = -1
-	vr = CreateValidationResults()
-	activation.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	activation.Limits.Payload = 10
-	activation.Limits.Src = "hello world"
-	vr = CreateValidationResults()
-	activation.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	activation.Limits.Payload = 10
-	activation.Limits.Src = "hello world"
-	vr = CreateValidationResults()
-	activation.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	tr := TimeRange{
-		Start: "hello",
-		End:   "03:15:00",
-	}
-	activation.Limits.Src = "192.0.2.0/24"
-	activation.Limits.Times = append(activation.Limits.Times, tr)
-	vr = CreateValidationResults()
-	activation.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
 	}
 }
 

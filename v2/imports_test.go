@@ -55,7 +55,6 @@ func TestImportValidation(t *testing.T) {
 	}
 
 	activation := NewActivationClaims(akp)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 
 	activation.ImportSubject = "test"
@@ -153,7 +152,6 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	}
 
 	activation := NewActivationClaims(akp)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 
 	activation.ImportSubject = "test"
@@ -263,7 +261,6 @@ func TestTokenURLImportValidation(t *testing.T) {
 	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
 
 	activation := NewActivationClaims(akp)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 	activation.ImportSubject = "test"
 	activation.ImportType = Stream
@@ -323,7 +320,6 @@ func TestImportSubjectValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	activation := NewActivationClaims(akp)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 	activation.ImportSubject = "one.*"
 	activation.ImportType = Stream

@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	v1jwt "github.com/nats-io/jwt"
 	"github.com/nats-io/nkeys"
 )
@@ -175,7 +177,6 @@ func TestMigrateAccount(t *testing.T) {
 }
 
 func TestMigrateUser(t *testing.T) {
-
 	ukp, err := nkeys.CreateUser()
 	AssertNoError(err, t)
 	upk, err := ukp.PublicKey()
@@ -214,6 +215,63 @@ func TestMigrateUser(t *testing.T) {
 	AssertTrue(ok, t)
 
 	equalUsers(t, uc, uc2)
+}
+
+func TestMigrateUserWithDeprecatedLimits(t *testing.T) {
+	ukp, err := nkeys.CreateUser()
+	AssertNoError(err, t)
+	upk, err := ukp.PublicKey()
+	AssertNoError(err, t)
+	akp, err := nkeys.CreateAccount()
+	AssertNoError(err, t)
+	uc := v1jwt.NewUserClaims(upk)
+	uc.Name = "U"
+	uc.Audience = "Audience"
+	uc.Max = 1
+
+	tok, err := uc.Encode(akp)
+	AssertNoError(err, t)
+	_, err = Decode(tok)
+	assert.Error(t, err)
+}
+
+func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
+	akp, err := nkeys.CreateAccount()
+	AssertNoError(err, t)
+	apk, err := akp.PublicKey()
+	AssertNoError(err, t)
+	acOrig := v1jwt.NewActivationClaims(apk)
+
+	ac := acOrig
+	ac.Max = 1
+	tok, err := ac.Encode(akp)
+	AssertNoError(err, t)
+	_, err = Decode(tok)
+	assert.Error(t, err)
+
+	ac = acOrig
+	ac.Src = "foo"
+	tok, err = ac.Encode(akp)
+	AssertNoError(err, t)
+	_, err = Decode(tok)
+	assert.Error(t, err)
+
+	ac = acOrig
+	ac.Limits.Payload = 5
+	tok, err = ac.Encode(akp)
+	AssertNoError(err, t)
+	_, err = Decode(tok)
+	assert.Error(t, err)
+
+	ac = acOrig
+	ac.Times = append(ac.Times, v1jwt.TimeRange{
+		Start: "15:43:22",
+		End:   "27:11:11",
+	})
+	tok, err = ac.Encode(akp)
+	AssertNoError(err, t)
+	_, err = Decode(tok)
+	assert.Error(t, err)
 }
 
 func equalClaims(t *testing.T, o *v1jwt.ClaimsData, n *ClaimsData, gf *GenericFields) {
