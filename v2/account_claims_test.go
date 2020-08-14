@@ -354,6 +354,31 @@ func TestWildcardExportLimit(t *testing.T) {
 	}
 }
 
+func TestJetstreamLimits(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	acc1 := NewAccountClaims(apk)
+	if !acc1.Limits.IsUnlimited() {
+		t.Fatal()
+	}
+	acc1.Limits.Consumer = 1
+	acc1.Limits.Streams = 2
+	acc1.Limits.MemoryStorage = 3
+	acc1.Limits.DiskStorage = 4
+	vr := CreateValidationResults()
+	acc1.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("valid account should have no validation issues")
+	}
+	if token, err := acc1.Encode(akp); err != nil {
+		t.Fatal("valid account should have no validation issues")
+	} else if acc2, err := DecodeAccountClaims(token); err != nil {
+		t.Fatal("valid account should have no validation issues")
+	} else if acc1.Limits.JetStreamLimits != acc2.Limits.JetStreamLimits {
+		t.Fatal("account should have same properties")
+	}
+}
+
 func TestAccountSigningKeyValidation(t *testing.T) {
 	okp := createOperatorNKey(t)
 

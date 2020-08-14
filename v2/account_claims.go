@@ -26,16 +26,32 @@ import (
 // NoLimit is used to indicate a limit field is unlimited in value.
 const NoLimit = -1
 
-// OperatorLimits are used to limit access by an account
-type OperatorLimits struct {
-	Subs            int64 `json:"subs,omitempty"`      // Max number of subscriptions
-	Conn            int64 `json:"conn,omitempty"`      // Max number of active connections
-	LeafNodeConn    int64 `json:"leaf,omitempty"`      // Max number of active leaf node connections
+type AccountLimits struct {
 	Imports         int64 `json:"imports,omitempty"`   // Max number of imports
 	Exports         int64 `json:"exports,omitempty"`   // Max number of exports
-	Data            int64 `json:"data,omitempty"`      // Max number of bytes
-	Payload         int64 `json:"payload,omitempty"`   // Max message payload
 	WildcardExports bool  `json:"wildcards,omitempty"` // Are wildcards allowed in exports
+}
+
+type NatsLimits struct {
+	Subs         int64 `json:"subs,omitempty"`    // Max number of subscriptions
+	Conn         int64 `json:"conn,omitempty"`    // Max number of active connections
+	LeafNodeConn int64 `json:"leaf,omitempty"`    // Max number of active leaf node connections
+	Data         int64 `json:"data,omitempty"`    // Max number of bytes
+	Payload      int64 `json:"payload,omitempty"` // Max message payload
+}
+
+type JetStreamLimits struct {
+	MemoryStorage int64 `json:"mem_storage,omitempty"`  // Max number of bytes stored in memory across all streams. (0 means disabled)
+	DiskStorage   int64 `json:"disk_storage,omitempty"` // Max number of bytes stored on disk across all streams. (0 means disabled)
+	Streams       int64 `json:"streams,omitempty"`      // Max number of streams
+	Consumer      int64 `json:"consumer,omitempty"`     // Max number of consumer
+}
+
+// OperatorLimits are used to limit access by an account
+type OperatorLimits struct {
+	NatsLimits
+	AccountLimits
+	JetStreamLimits
 }
 
 // IsEmpty returns true if all of the limits are 0/false.
@@ -45,7 +61,10 @@ func (o *OperatorLimits) IsEmpty() bool {
 
 // IsUnlimited returns true if all limits are
 func (o *OperatorLimits) IsUnlimited() bool {
-	return *o == OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
+	return *o == OperatorLimits{
+		NatsLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit},
+		AccountLimits{NoLimit, NoLimit, true},
+		JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit}}
 }
 
 // Validate checks that the operator limits contain valid values
@@ -121,7 +140,10 @@ func NewAccountClaims(subject string) *AccountClaims {
 	c := &AccountClaims{}
 	// Set to unlimited to start. We do it this way so we get compiler
 	// errors if we add to the OperatorLimits.
-	c.Limits = OperatorLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, true}
+	c.Limits = OperatorLimits{
+		NatsLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit},
+		AccountLimits{NoLimit, NoLimit, true},
+		JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit}}
 	c.Subject = subject
 	return c
 }
