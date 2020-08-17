@@ -64,9 +64,6 @@ func (oa v1UserClaims) Migrate() (*UserClaims, error) {
 }
 
 func (oa v1UserClaims) migrateV1() (*UserClaims, error) {
-	if oa.Max != NoLimit {
-		return nil, fmt.Errorf("jwtV1 user: deprecated Max/Times in jwtV2")
-	}
 	var u UserClaims
 	// copy the base claim
 	u.ClaimsData = oa.ClaimsData

@@ -232,7 +232,7 @@ func TestMigrateUserWithDeprecatedLimits(t *testing.T) {
 	tok, err := uc.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
@@ -247,21 +247,21 @@ func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
 	tok, err := ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 
 	ac = acOrig
 	ac.Src = "foo"
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 
 	ac = acOrig
 	ac.Limits.Payload = 5
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 
 	ac = acOrig
 	ac.Times = append(ac.Times, v1jwt.TimeRange{
@@ -271,7 +271,7 @@ func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 }
 
 func equalClaims(t *testing.T, o *v1jwt.ClaimsData, n *ClaimsData, gf *GenericFields) {

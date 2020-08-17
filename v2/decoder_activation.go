@@ -62,9 +62,6 @@ func (oa v1ActivationClaims) Migrate() (*ActivationClaims, error) {
 }
 
 func (oa v1ActivationClaims) migrateV1() (*ActivationClaims, error) {
-	if oa.Max != NoLimit || oa.Payload != NoLimit || oa.Src != "" || len(oa.Times) != 0 {
-		return nil, fmt.Errorf("jwtV1 activation: deprecated Max/Payload/Src/Times in jwtV2")
-	}
 	var a ActivationClaims
 	// copy the base claim
 	a.ClaimsData = oa.ClaimsData
