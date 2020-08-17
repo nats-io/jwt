@@ -168,7 +168,7 @@ func (a *AccountClaims) Encode(pair nkeys.KeyPair) (string, error) {
 	sort.Sort(a.Exports)
 	sort.Sort(a.Imports)
 	a.Type = AccountClaim
-	return a.ClaimsData.Encode(pair, a)
+	return a.ClaimsData.encode(pair, a)
 }
 
 // DecodeAccountClaims decodes account claims from a JWT string

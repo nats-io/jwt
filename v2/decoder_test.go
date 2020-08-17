@@ -97,22 +97,16 @@ func TestBadAlgo(t *testing.T) {
 	c := NewGenericClaims(publicKey(createUserNKey(t), t))
 	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp, c)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := c.doEncode(&h, kp, c); err == nil {
+		t.Fatal("expected an error due to bad algorithm")
 	}
 
-	claim, err := DecodeGeneric(token)
-	if claim != nil {
-		t.Fatal("non nil claim on bad token")
-	}
+	h = Header{TokenTypeJwt, AlgorithmNkeyOld}
+	c = NewGenericClaims(publicKey(createUserNKey(t), t))
+	c.Data["foo"] = "bar"
 
-	if err == nil {
-		t.Fatal("nil error on bad token")
-	}
-
-	if err.Error() != fmt.Sprintf("unexpected %q algorithm", "foobar") {
-		t.Fatal("expected unexpected algorithm")
+	if _, err := c.doEncode(&h, kp, c); err == nil {
+		t.Fatal("expected an error due to bad algorithm")
 	}
 }
 
@@ -150,30 +144,33 @@ func TestBadJWT(t *testing.T) {
 
 func TestBadSignature(t *testing.T) {
 	kp := createAccountNKey(t)
+	for algo, error := range map[string]string{
+		AlgorithmNkey: "claim failed V2 signature verification",
+	} {
+		h := Header{TokenTypeJwt, algo}
+		c := NewGenericClaims(publicKey(createUserNKey(t), t))
+		c.Data["foo"] = "bar"
 
-	h := Header{TokenTypeJwt, AlgorithmNkey}
-	c := NewGenericClaims(publicKey(createUserNKey(t), t))
-	c.Data["foo"] = "bar"
+		token, err := c.doEncode(&h, kp, c)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	token, err := c.doEncode(&h, kp, c)
-	if err != nil {
-		t.Fatal(err)
-	}
+		token = token + "A"
 
-	token = token + "A"
+		claim, err := DecodeGeneric(token)
+		if claim != nil {
+			t.Fatal("non nil claim on bad token")
+		}
 
-	claim, err := DecodeGeneric(token)
-	if claim != nil {
-		t.Fatal("non nil claim on bad token")
-	}
+		if err == nil {
+			t.Fatal("nil error on bad token")
+		}
 
-	if err == nil {
-		t.Fatal("nil error on bad token")
-	}
-
-	if err.Error() != "claim failed signature verification" {
-		m := fmt.Sprintf("expected failed signature: %q", err.Error())
-		t.Fatal(m)
+		if err.Error() != error {
+			m := fmt.Sprintf("expected failed signature: %q", err.Error())
+			t.Fatal(m)
+		}
 	}
 }
 
@@ -201,7 +198,7 @@ func TestDifferentPayload(t *testing.T) {
 		t.Fatal("nil error on bad token")
 	}
 
-	if err.Error() != "claim failed signature verification" {
+	if err.Error() != "claim failed V2 signature verification" {
 		m := fmt.Sprintf("expected failed signature: %q", err.Error())
 		t.Fatal(m)
 	}
@@ -332,7 +329,7 @@ func TestBadClaimsJSON(t *testing.T) {
 func TestBadPublicKeyDecodeGeneric(t *testing.T) {
 	c := &GenericClaims{}
 	c.Issuer = "foo"
-	if ok := c.Verify("foo", []byte("bar")); ok {
+	if ok := c.verify("foo", []byte("bar")); ok {
 		t.Fatal("Should have failed to verify")
 	}
 }
