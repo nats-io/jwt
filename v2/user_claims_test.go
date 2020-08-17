@@ -28,6 +28,10 @@ func TestNewUserClaims(t *testing.T) {
 	ukp := createUserNKey(t)
 
 	uc := NewUserClaims(publicKey(ukp, t))
+	if !uc.Limits.IsUnlimited() {
+		t.Fatal("unlimited after creation")
+	}
+
 	uc.Expires = time.Now().Add(time.Hour).Unix()
 	uJwt := encode(uc, akp, t)
 
@@ -160,7 +164,6 @@ func TestUserValidation(t *testing.T) {
 		MaxMsgs: 10,
 		Expires: 50 * time.Minute,
 	}
-	uc.Limits.Max = 10
 	uc.Limits.Payload = 10
 	uc.Limits.Src = "192.0.2.0/24"
 	uc.Limits.Times = []TimeRange{
@@ -180,24 +183,7 @@ func TestUserValidation(t *testing.T) {
 	if !vr.IsEmpty() {
 		t.Error("valid user permissions should be valid")
 	}
-	uc.Limits.Max = -1
-	vr = CreateValidationResults()
-	uc.Validate(vr)
 
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	uc.Limits.Max = 10
-	uc.Limits.Payload = -1
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	if vr.IsEmpty() || len(vr.Issues) != 1 || !vr.IsBlocking(true) {
-		t.Error("bad limit should be invalid")
-	}
-
-	uc.Limits.Payload = 10
 	uc.Limits.Src = "hello world"
 	vr = CreateValidationResults()
 	uc.Validate(vr)

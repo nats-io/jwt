@@ -30,7 +30,6 @@ func TestNewAccountClaims(t *testing.T) {
 	apk2 := publicKey(akp2, t)
 
 	activation := NewActivationClaims(apk)
-	activation.Max = 1024 * 1024
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 	activation.ImportSubject = "test"
 	activation.ImportType = Stream
