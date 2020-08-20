@@ -20,8 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-
 	v1jwt "github.com/nats-io/jwt"
 	"github.com/nats-io/nkeys"
 )
@@ -232,7 +230,7 @@ func TestMigrateUserWithDeprecatedLimits(t *testing.T) {
 	tok, err := uc.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.NoError(t, err)
+	AssertNoError(err, t)
 }
 
 func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
@@ -247,21 +245,21 @@ func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
 	tok, err := ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.NoError(t, err)
+	AssertNoError(err, t)
 
 	ac = acOrig
 	ac.Src = "foo"
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.NoError(t, err)
+	AssertNoError(err, t)
 
 	ac = acOrig
 	ac.Limits.Payload = 5
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.NoError(t, err)
+	AssertNoError(err, t)
 
 	ac = acOrig
 	ac.Times = append(ac.Times, v1jwt.TimeRange{
@@ -271,7 +269,7 @@ func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
 	tok, err = ac.Encode(akp)
 	AssertNoError(err, t)
 	_, err = Decode(tok)
-	assert.NoError(t, err)
+	AssertNoError(err, t)
 }
 
 func equalClaims(t *testing.T, o *v1jwt.ClaimsData, n *ClaimsData, gf *GenericFields) {
