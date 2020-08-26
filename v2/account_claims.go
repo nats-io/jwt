@@ -30,24 +30,24 @@ type AccountLimits struct {
 	Imports         int64 `json:"imports,omitempty"`   // Max number of imports
 	Exports         int64 `json:"exports,omitempty"`   // Max number of exports
 	WildcardExports bool  `json:"wildcards,omitempty"` // Are wildcards allowed in exports
+	Conn            int64 `json:"conn,omitempty"`      // Max number of active connections
+	LeafNodeConn    int64 `json:"leaf,omitempty"`      // Max number of active leaf node connections
 }
 
 // IsUnlimited returns true if all limits are unlimited
 func (a *AccountLimits) IsUnlimited() bool {
-	return *a == AccountLimits{NoLimit, NoLimit, true}
+	return *a == AccountLimits{NoLimit, NoLimit, true, NoLimit, NoLimit}
 }
 
 type NatsLimits struct {
-	Subs         int64 `json:"subs,omitempty"`    // Max number of subscriptions
-	Conn         int64 `json:"conn,omitempty"`    // Max number of active connections
-	LeafNodeConn int64 `json:"leaf,omitempty"`    // Max number of active leaf node connections
-	Data         int64 `json:"data,omitempty"`    // Max number of bytes
-	Payload      int64 `json:"payload,omitempty"` // Max message payload
+	Subs    int64 `json:"subs,omitempty"`    // Max number of subscriptions
+	Data    int64 `json:"data,omitempty"`    // Max number of bytes
+	Payload int64 `json:"payload,omitempty"` // Max message payload
 }
 
 // IsUnlimited returns true if all limits are unlimited
 func (n *NatsLimits) IsUnlimited() bool {
-	return *n == NatsLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit}
+	return *n == NatsLimits{NoLimit, NoLimit, NoLimit}
 }
 
 type JetStreamLimits struct {
@@ -153,8 +153,8 @@ func NewAccountClaims(subject string) *AccountClaims {
 	// Set to unlimited to start. We do it this way so we get compiler
 	// errors if we add to the OperatorLimits.
 	c.Limits = OperatorLimits{
-		NatsLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit},
-		AccountLimits{NoLimit, NoLimit, true},
+		NatsLimits{NoLimit, NoLimit, NoLimit},
+		AccountLimits{NoLimit, NoLimit, true, NoLimit, NoLimit},
 		JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit}}
 	c.Subject = subject
 	return c
