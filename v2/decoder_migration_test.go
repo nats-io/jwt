@@ -211,6 +211,9 @@ func TestMigrateUser(t *testing.T) {
 	AssertNoError(err, t)
 	uc2, ok := c.(*UserClaims)
 	AssertTrue(ok, t)
+	AssertTrue(uc2.Limits.Payload == NoLimit, t)
+	AssertTrue(uc2.Limits.Subs == NoLimit, t)
+	AssertTrue(uc2.Limits.Data == NoLimit, t)
 
 	equalUsers(t, uc, uc2)
 }
