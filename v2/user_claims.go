@@ -53,7 +53,7 @@ func NewUserClaims(subject string) *UserClaims {
 	c := &UserClaims{}
 	c.Subject = subject
 	c.Limits = Limits{
-		UserLimits{"", nil},
+		UserLimits{CIDRList{}, nil, ""},
 		NatsLimits{NoLimit, NoLimit, NoLimit},
 	}
 	return c
