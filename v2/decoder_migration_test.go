@@ -183,7 +183,7 @@ func TestMigrateUser(t *testing.T) {
 	uc := v1jwt.NewUserClaims(upk)
 	uc.Name = "U"
 	uc.Audience = "Audience"
-
+	uc.Src = " 127.0.0.1/1 , 127.0.0.1/2 "
 	now := time.Now()
 	uc.NotBefore = now.Unix()
 	e := now.Add(time.Hour)
@@ -214,6 +214,9 @@ func TestMigrateUser(t *testing.T) {
 	AssertTrue(uc2.Limits.Payload == NoLimit, t)
 	AssertTrue(uc2.Limits.Subs == NoLimit, t)
 	AssertTrue(uc2.Limits.Data == NoLimit, t)
+	AssertTrue(len(uc2.Src) == 2, t)
+	AssertTrue(uc2.Src.Contains("127.0.0.1/1"), t)
+	AssertTrue(uc2.Src.Contains("127.0.0.1/2"), t)
 
 	equalUsers(t, uc, uc2)
 }
