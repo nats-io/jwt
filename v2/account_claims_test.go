@@ -81,25 +81,6 @@ func TestAccountCanSignOperatorLimits(t *testing.T) { // don't block encoding!!!
 	}
 }
 
-func TestAccountCanSignIdentities(t *testing.T) { // don't block encoding!!!
-	akp := createAccountNKey(t)
-	apk := publicKey(akp, t)
-
-	account := NewAccountClaims(apk)
-	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
-	account.Identities = []Identity{
-		{
-			ID:    "stephen",
-			Proof: "yougotit",
-		},
-	}
-
-	_, err := account.Encode(akp)
-	if err != nil {
-		t.Fatal("account should not be able to encode identities", err)
-	}
-}
-
 func TestOperatorCanSignClaims(t *testing.T) {
 	akp := createAccountNKey(t)
 	okp := createOperatorNKey(t)
@@ -109,13 +90,6 @@ func TestOperatorCanSignClaims(t *testing.T) {
 	account.Expires = time.Now().Add(time.Hour * 24 * 365).Unix()
 	account.Limits.Conn = 1
 	account.Limits.LeafNodeConn = 4
-
-	account.Identities = []Identity{
-		{
-			ID:    "stephen",
-			Proof: "yougotit",
-		},
-	}
 
 	actJwt := encode(account, okp, t)
 
@@ -241,12 +215,6 @@ func TestLimitValidationInAccount(t *testing.T) {
 	account.Limits.Payload = 1024
 	account.Limits.Subs = 10
 	account.Limits.WildcardExports = true
-	account.Identities = []Identity{
-		{
-			ID:    "stephen",
-			Proof: "yougotit",
-		},
-	}
 
 	vr := CreateValidationResults()
 	account.Validate(vr)
@@ -279,37 +247,12 @@ func TestLimitValidationInAccount(t *testing.T) {
 		t.Fatal("operator can encode limits and identity")
 	}
 
-	account.Identities = nil
 	account.Issuer = apk
 	vr = CreateValidationResults()
 	account.Validate(vr)
 
 	if vr.IsEmpty() || vr.IsBlocking(true) {
 		t.Fatal("bad issuer for limits should have non-blocking validation results")
-	}
-
-	account.Identities = []Identity{
-		{
-			ID:    "stephen",
-			Proof: "yougotit",
-		},
-	}
-	account.Limits = OperatorLimits{}
-	account.Issuer = apk
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if vr.IsEmpty() || vr.IsBlocking(true) {
-		t.Fatal("bad issuer for identities should have non-blocking validation results")
-	}
-
-	account.Identities = nil
-	account.Issuer = apk
-	vr = CreateValidationResults()
-	account.Validate(vr)
-
-	if !vr.IsEmpty() || vr.IsBlocking(true) {
-		t.Fatal("account can encode without limits and identity")
 	}
 }
 
