@@ -300,9 +300,6 @@ func equalOperators(t *testing.T, o *v1jwt.OperatorClaims, n *OperatorClaims) {
 	for _, v := range o.SigningKeys {
 		AssertTrue(n.Operator.SigningKeys.Contains(v), t)
 	}
-
-	AssertEquals(o.Identities[0].ID, n.Operator.Identities[0].ID, t)
-	AssertEquals(o.Identities[0].Proof, n.Operator.Identities[0].Proof, t)
 	AssertEquals(o.SystemAccount, o.Operator.SystemAccount, t)
 }
 
@@ -310,8 +307,6 @@ func equalAccounts(t *testing.T, o *v1jwt.AccountClaims, n *AccountClaims) {
 	equalClaims(t, &o.ClaimsData, &n.ClaimsData, &n.GenericFields)
 	equalImports(t, o.Imports[0], n.Imports[0])
 	equalExports(t, o.Exports[0], n.Exports[0])
-	AssertEquals(o.Identities[0].ID, n.Account.Identities[0].ID, t)
-	AssertEquals(o.Identities[0].Proof, n.Account.Identities[0].Proof, t)
 	equalLimits(t, &o.Account.Limits, &n.Account.Limits)
 	for _, v := range o.SigningKeys {
 		AssertTrue(n.Account.SigningKeys.Contains(v), t)
