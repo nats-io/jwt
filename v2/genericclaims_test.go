@@ -49,3 +49,20 @@ func TestNewGenericClaims(t *testing.T) {
 	AssertEquals(gc.Claims() != nil, true, t)
 	AssertEquals(gc.Payload() != nil, true, t)
 }
+
+func TestNewGenericOperatorClaims(t *testing.T) {
+	okp := createOperatorNKey(t)
+	opk := publicKey(okp, t)
+
+	op := NewOperatorClaims(opk)
+
+	oJwt := encode(op, okp, t)
+
+	oc2, err := DecodeGeneric(oJwt)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+	if OperatorClaim != oc2.ClaimType() {
+		t.Fatalf("Bad Claim type")
+	}
+}
