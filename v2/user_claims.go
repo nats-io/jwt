@@ -25,7 +25,8 @@ import (
 type User struct {
 	Permissions
 	Limits
-	BearerToken bool `json:"bearer_token,omitempty"`
+	BearerToken            bool                `json:"bearer_token,omitempty"`
+	AllowedConnectionTypes map[string]struct{} `json:"allowed_connection_types,omitempty"`
 	// IssuerAccount stores the public key for the account the issuer represents.
 	// When set, the claim was issued by a signing key.
 	IssuerAccount string `json:"issuer_account,omitempty"`

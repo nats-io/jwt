@@ -350,3 +350,19 @@ func TestSourceNetworkValidation(t *testing.T) {
 		t.Error("limits should be invalid")
 	}
 }
+
+func TestUserAllowedConnectionTypes(t *testing.T) {
+	ukp := createUserNKey(t)
+	uc := NewUserClaims(publicKey(ukp, t))
+
+	vr := CreateValidationResults()
+	uc.Validate(vr)
+
+	uc.AllowedConnectionTypes = map[string]struct{}{"WEBSOCKET": struct{}{}}
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+
+	uc.AllowedConnectionTypes = map[string]struct{}{"anything": struct{}{}, "WEBSOCKET": struct{}{}}
+	vr = CreateValidationResults()
+	uc.Validate(vr)
+}
