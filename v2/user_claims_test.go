@@ -352,17 +352,18 @@ func TestSourceNetworkValidation(t *testing.T) {
 }
 
 func TestUserAllowedConnectionTypes(t *testing.T) {
+	akp := createAccountNKey(t)
 	ukp := createUserNKey(t)
+
 	uc := NewUserClaims(publicKey(ukp, t))
+	uc.AllowedConnectionTypes.Add(ConnectionTypeStandard)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeWebsocket)
+	uJwt := encode(uc, akp, t)
 
-	vr := CreateValidationResults()
-	uc.Validate(vr)
-
-	uc.AllowedConnectionTypes = map[string]struct{}{"WEBSOCKET": struct{}{}}
-	vr = CreateValidationResults()
-	uc.Validate(vr)
-
-	uc.AllowedConnectionTypes = map[string]struct{}{"anything": struct{}{}, "WEBSOCKET": struct{}{}}
-	vr = CreateValidationResults()
-	uc.Validate(vr)
+	uc2, err := DecodeUserClaims(uJwt)
+	if err != nil {
+		t.Fatal("failed to decode uc", err)
+	}
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeStandard), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeWebsocket), t)
 }
