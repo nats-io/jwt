@@ -103,6 +103,7 @@ func TestMigrateOperator(t *testing.T) {
 	AssertTrue(ok, t)
 
 	equalOperators(t, oc, oc2)
+	AssertEquals(oc2.Version, 1, t)
 }
 
 func TestMigrateAccount(t *testing.T) {
@@ -172,6 +173,7 @@ func TestMigrateAccount(t *testing.T) {
 	ac2, ok := c.(*AccountClaims)
 	AssertTrue(ok, t)
 	equalAccounts(t, ac, ac2)
+	AssertEquals(ac2.Version, 1, t)
 }
 
 func TestMigrateUser(t *testing.T) {
@@ -217,7 +219,7 @@ func TestMigrateUser(t *testing.T) {
 	AssertTrue(len(uc2.Src) == 2, t)
 	AssertTrue(uc2.Src.Contains("127.0.0.1/1"), t)
 	AssertTrue(uc2.Src.Contains("127.0.0.1/2"), t)
-
+	AssertEquals(uc2.Version, 1, t)
 	equalUsers(t, uc, uc2)
 }
 

@@ -68,5 +68,6 @@ func (oa v1OperatorClaims) migrateV1() (*OperatorClaims, error) {
 	a.Operator.AccountServerURL = oa.v1NatsOperator.AccountServerURL
 	a.Operator.OperatorServiceURLs = oa.v1NatsOperator.OperatorServiceURLs
 	a.Operator.SystemAccount = oa.v1NatsOperator.SystemAccount
+	a.Version = 1
 	return &a, nil
 }
