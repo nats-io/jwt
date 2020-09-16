@@ -350,3 +350,20 @@ func TestSourceNetworkValidation(t *testing.T) {
 		t.Error("limits should be invalid")
 	}
 }
+
+func TestUserAllowedConnectionTypes(t *testing.T) {
+	akp := createAccountNKey(t)
+	ukp := createUserNKey(t)
+
+	uc := NewUserClaims(publicKey(ukp, t))
+	uc.AllowedConnectionTypes.Add(ConnectionTypeStandard)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeWebsocket)
+	uJwt := encode(uc, akp, t)
+
+	uc2, err := DecodeUserClaims(uJwt)
+	if err != nil {
+		t.Fatal("failed to decode uc", err)
+	}
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeStandard), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeWebsocket), t)
+}
