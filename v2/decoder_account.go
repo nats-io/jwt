@@ -75,5 +75,6 @@ func (oa v1AccountClaims) migrateV1() (*AccountClaims, error) {
 	a.Account.Limits.JetStreamLimits = JetStreamLimits{0, 0, 0, 0}
 	a.Account.SigningKeys = oa.v1NatsAccount.SigningKeys
 	a.Account.Revocations = oa.v1NatsAccount.Revocations
+	a.Version = 1
 	return &a, nil
 }
