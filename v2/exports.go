@@ -111,6 +111,10 @@ func (e *Export) IsStreamResponse() bool {
 
 // Validate appends validation issues to the passed in results list
 func (e *Export) Validate(vr *ValidationResults) {
+	if e == nil {
+		vr.AddError("null export is not allowed")
+		return
+	}
 	if !e.IsService() && !e.IsStream() {
 		vr.AddError("invalid export type: %q", e.Type)
 	}

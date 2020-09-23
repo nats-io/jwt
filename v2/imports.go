@@ -53,6 +53,10 @@ func (i *Import) IsStream() bool {
 
 // Validate checks if an import is valid for the wrapping account
 func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
+	if i == nil {
+		vr.AddError("null import is not allowed")
+		return
+	}
 	if !i.IsService() && !i.IsStream() {
 		vr.AddError("invalid import type: %q", i.Type)
 	}
