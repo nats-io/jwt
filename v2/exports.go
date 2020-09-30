@@ -228,6 +228,10 @@ func (e *Exports) Validate(vr *ValidationResults) error {
 	var streamSubjects []Subject
 
 	for _, v := range *e {
+		if v == nil {
+			vr.AddError("null export is not allowed")
+			continue
+		}
 		if v.IsService() {
 			serviceSubjects = append(serviceSubjects, v.Subject)
 		} else {

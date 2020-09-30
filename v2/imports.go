@@ -127,6 +127,10 @@ type Imports []*Import
 func (i *Imports) Validate(acctPubKey string, vr *ValidationResults) {
 	toSet := make(map[Subject]bool, len(*i))
 	for _, v := range *i {
+		if v == nil {
+			vr.AddError("null import is not allowed")
+			continue
+		}
 		if v.Type == Service {
 			if _, ok := toSet[v.To]; ok {
 				vr.AddError("Duplicate To subjects for %q", v.To)
