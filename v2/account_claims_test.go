@@ -465,30 +465,30 @@ func TestUserRevocation(t *testing.T) {
 	// test that clear is safe before we add any
 	account.ClearRevocation(pubKey)
 
-	if account.IsRevokedAt(pubKey, now) {
+	if account.isRevoked(pubKey, now) {
 		t.Errorf("no revocation was added so is revoked should be false")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*100))
 
-	if !account.IsRevokedAt(pubKey, now) {
+	if !account.isRevoked(pubKey, now) {
 		t.Errorf("revocation should hold when timestamp is in the future")
 	}
 
-	if account.IsRevokedAt(pubKey, now.Add(time.Second*150)) {
+	if account.isRevoked(pubKey, now.Add(time.Second*150)) {
 		t.Errorf("revocation should time out")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*50)) // shouldn't change the revocation, you can't move it in
 
-	if !account.IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+	if !account.isRevoked(pubKey, now.Add(time.Second*60)) {
 		t.Errorf("revocation should hold, 100 > 50")
 	}
 
 	encoded, _ := account.Encode(akp)
 	decoded, _ := DecodeAccountClaims(encoded)
 
-	if !decoded.IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+	if !decoded.isRevoked(pubKey, now.Add(time.Second*60)) {
 		t.Errorf("revocation should last across encoding")
 	}
 

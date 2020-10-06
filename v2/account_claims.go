@@ -251,12 +251,11 @@ func (a *AccountClaims) ClearRevocation(pubKey string) {
 	a.Revocations.ClearRevocation(pubKey)
 }
 
-// IsRevokedAt checks if the public key is in the revoked list with a timestamp later than the one passed in.
+// isRevoked checks if the public key is in the revoked list with a timestamp later than the one passed in.
 // Generally this method is called with the subject and issue time of the jwt to be tested.
 // DO NOT pass time.Now(), it will not produce a stable/expected response.
-// Deprecated: use IsClaimRevokedAt
-func (a *AccountClaims) IsRevokedAt(pubKey string, timestamp time.Time) bool {
-	return a.Revocations.IsRevoked(pubKey, timestamp)
+func (a *AccountClaims) isRevoked(pubKey string, claimIssuedAt time.Time) bool {
+	return a.Revocations.IsRevoked(pubKey, claimIssuedAt)
 }
 
 // IsClaimRevoked checks if the account revoked the claim passed in.
@@ -265,5 +264,5 @@ func (a *AccountClaims) IsClaimRevoked(claim *UserClaims) bool {
 	if claim == nil || claim.IssuedAt == 0 || claim.Subject == "" {
 		return true
 	}
-	return a.Revocations.IsRevoked(claim.Subject, time.Unix(claim.IssuedAt, 0))
+	return a.isRevoked(claim.Subject, time.Unix(claim.IssuedAt, 0))
 }
