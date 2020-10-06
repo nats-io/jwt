@@ -452,48 +452,55 @@ func TestUserRevocation(t *testing.T) {
 	apk := publicKey(akp, t)
 	account := NewAccountClaims(apk)
 
-	pubKey := "bar"
+	ukp := createUserNKey(t)
+	pubKey := publicKey(ukp, t)
+	uc := NewUserClaims(pubKey)
+	uJwt, _ := uc.Encode(akp)
+	uc, err := DecodeUserClaims(uJwt)
+	if err != nil {
+		t.Errorf("Failed to decode user claim: %v", err)
+	}
 	now := time.Now()
 
 	// test that clear is safe before we add any
 	account.ClearRevocation(pubKey)
 
-	if account.IsRevokedAt(pubKey, now) {
+	if account.isRevoked(pubKey, now) {
 		t.Errorf("no revocation was added so is revoked should be false")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*100))
 
-	if !account.IsRevokedAt(pubKey, now) {
+	if !account.isRevoked(pubKey, now) {
 		t.Errorf("revocation should hold when timestamp is in the future")
 	}
 
-	if account.IsRevokedAt(pubKey, now.Add(time.Second*150)) {
+	if account.isRevoked(pubKey, now.Add(time.Second*150)) {
 		t.Errorf("revocation should time out")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*50)) // shouldn't change the revocation, you can't move it in
 
-	if !account.IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+	if !account.isRevoked(pubKey, now.Add(time.Second*60)) {
 		t.Errorf("revocation should hold, 100 > 50")
 	}
 
 	encoded, _ := account.Encode(akp)
 	decoded, _ := DecodeAccountClaims(encoded)
 
-	if !decoded.IsRevokedAt(pubKey, now.Add(time.Second*60)) {
+	if !decoded.isRevoked(pubKey, now.Add(time.Second*60)) {
 		t.Errorf("revocation should last across encoding")
 	}
 
 	account.ClearRevocation(pubKey)
 
-	if account.IsRevokedAt(pubKey, now) {
+	if account.IsClaimRevoked(uc) {
 		t.Errorf("revocations should be cleared")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*1000))
 
-	if !account.IsRevoked(pubKey) {
+	if !account.IsClaimRevoked(uc) {
 		t.Errorf("revocation be true we revoked in the future")
 	}
 }
