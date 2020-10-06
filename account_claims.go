@@ -217,8 +217,7 @@ func (a *AccountClaims) IsRevokedAt(pubKey string, timestamp time.Time) bool {
 	return a.Revocations.IsRevoked(pubKey, timestamp)
 }
 
-// IsRevoked checks if the public key is in the revoked list with time.Now()
-// Deprecated: use IsRevokedAt instead.
-func (a *AccountClaims) IsRevoked(pubKey string) bool {
-	return a.Revocations.IsRevoked(pubKey, time.Now())
+// IsRevoked does not perform a valid check. Use IsRevokedAt instead.
+func (a *AccountClaims) IsRevoked(_ string) bool {
+	return true
 }
