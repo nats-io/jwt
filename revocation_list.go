@@ -28,5 +28,5 @@ func (r RevocationList) ClearRevocation(pubKey string) {
 // be used for testing.
 func (r RevocationList) IsRevoked(pubKey string, timestamp time.Time) bool {
 	ts, ok := r[pubKey]
-	return ok && ts > timestamp.Unix()
+	return ok && ts >= timestamp.Unix()
 }
