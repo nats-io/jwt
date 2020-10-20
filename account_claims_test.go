@@ -488,7 +488,14 @@ func TestUserRevocation(t *testing.T) {
 	apk := publicKey(akp, t)
 	account := NewAccountClaims(apk)
 
-	pubKey := "bar"
+	ukp := createUserNKey(t)
+	pubKey := publicKey(ukp, t)
+	uc := NewUserClaims(pubKey)
+	uJwt, _ := uc.Encode(akp)
+	uc, err := DecodeUserClaims(uJwt)
+	if err != nil {
+		t.Errorf("Failed to decode user claim: %v", err)
+	}
 	now := time.Now()
 
 	// test that clear is safe before we add any
@@ -523,13 +530,13 @@ func TestUserRevocation(t *testing.T) {
 
 	account.ClearRevocation(pubKey)
 
-	if account.IsRevokedAt(pubKey, now) {
+	if account.IsClaimRevoked(uc) {
 		t.Errorf("revocations should be cleared")
 	}
 
 	account.RevokeAt(pubKey, now.Add(time.Second*1000))
 
-	if !account.IsRevoked(pubKey) {
+	if !account.IsClaimRevoked(uc) {
 		t.Errorf("revocation be true we revoked in the future")
 	}
 }
