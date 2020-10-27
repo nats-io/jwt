@@ -238,11 +238,11 @@ func (a *AccountClaims) Revoke(pubKey string) {
 // RevokeAt enters a revocation by public key and timestamp into this account
 // This will revoke all jwt issued for pubKey, prior to timestamp
 // If there is already a revocation for this public key that is newer, it is kept.
+// The value is expected to be a public key or "*"
 func (a *AccountClaims) RevokeAt(pubKey string, timestamp time.Time) {
 	if a.Revocations == nil {
 		a.Revocations = RevocationList{}
 	}
-
 	a.Revocations.Revoke(pubKey, timestamp)
 }
 

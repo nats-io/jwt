@@ -533,3 +533,23 @@ func TestUserRevocation(t *testing.T) {
 		t.Errorf("revocation be true we revoked in the future")
 	}
 }
+
+func TestUserRevocationAll(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+
+	now := time.Now().Add(time.Second * -10)
+	account.RevokeAt(All, now)
+
+	before := now.Add(time.Second * -1)
+	if !account.IsRevokedAt("foo", before) {
+		t.Error("foo should have been revoked (before)")
+	}
+	if !account.IsRevokedAt("foo", now) {
+		t.Error("foo should have been revoked (now)")
+	}
+	if account.IsRevokedAt("foo", now.Add(time.Second)) {
+		t.Error("foo should have not been revoked")
+	}
+}

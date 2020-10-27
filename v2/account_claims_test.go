@@ -531,3 +531,31 @@ func TestAccountDefaultPermissions(t *testing.T) {
 
 	AssertEquals(account.String(), account2.String(), t)
 }
+
+func TestUserRevocationAll(t *testing.T) {
+	akp := createAccountNKey(t)
+	ukp := createUserNKey(t)
+	upk := publicKey(ukp, t)
+	user := NewUserClaims(upk)
+	token, err := user.Encode(akp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ud, err := DecodeUserClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+	account.RevokeAt(All, time.Now().Add(time.Second))
+	if !account.IsClaimRevoked(ud) {
+		t.Fatal("user should have been revoked")
+	}
+
+	account.RevokeAt(All, time.Now().Add(time.Second * -10))
+	if !account.IsClaimRevoked(ud) {
+		t.Fatal("user should have not been revoked")
+	}
+}
