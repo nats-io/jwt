@@ -221,3 +221,12 @@ func (a *AccountClaims) IsRevokedAt(pubKey string, timestamp time.Time) bool {
 func (a *AccountClaims) IsRevoked(_ string) bool {
 	return true
 }
+
+// IsClaimRevoked checks if the account revoked the claim passed in.
+// Invalid claims (nil, no Subject or IssuedAt) will return true.
+func (a *AccountClaims) IsClaimRevoked(claim *UserClaims) bool {
+	if claim == nil || claim.IssuedAt == 0 || claim.Subject == "" {
+		return true
+	}
+	return a.Revocations.IsRevoked(claim.Subject, time.Unix(claim.IssuedAt, 0))
+}
