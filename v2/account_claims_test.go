@@ -554,7 +554,7 @@ func TestUserRevocationAll(t *testing.T) {
 		t.Fatal("user should have been revoked")
 	}
 
-	account.RevokeAt(All, time.Now().Add(time.Second * -10))
+	account.RevokeAt(All, time.Now().Add(time.Second*-10))
 	if !account.IsClaimRevoked(ud) {
 		t.Fatal("user should have not been revoked")
 	}

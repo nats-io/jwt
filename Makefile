@@ -13,6 +13,7 @@ test:
 
 fmt:
 	gofmt -w -s *.go
+	gofmt -w -s v2/*.go
 
 cover:
 	 go test -v -covermode=count -coverprofile=coverage.out
