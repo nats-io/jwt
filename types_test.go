@@ -38,8 +38,13 @@ func TestVersionMatchesTag(t *testing.T) {
 	// We expect a tag of the form vX.Y.Z. If that's not the case,
 	// we need someone to have a look. So fail if first letter is not
 	// a `v`
-	if tag[0] != 'v' {
+	if len(tag) < 2 || tag[0] != 'v' {
 		t.Fatalf("Expect tag to start with `v`, tag is: %s", tag)
+	}
+	// Look only at tag from current 'v', that is v1 for this file.
+	if tag[1] != '1' {
+		// Ignore, it is not a v1 tag.
+		return
 	}
 	// Strip the `v` from the tag for the version comparison.
 	if Version != tag[1:] {
