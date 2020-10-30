@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -422,5 +422,39 @@ func TestCleanSubject(t *testing.T) {
 		if pair[1] != clean {
 			t.Errorf("Expected %s but got %s", pair[1], clean)
 		}
+	}
+}
+
+func TestActivationClaimRevocation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+	e := &Export{Subject: "q.>", Type: Service, TokenReq: true}
+	account.Exports.Add(e)
+
+	a := publicKey(createAccountNKey(t), t)
+	aminAgo := time.Now().Add(-time.Minute)
+
+	if account.Exports[0].Revocations.IsRevoked(a, aminAgo) {
+		t.Fatal("should not be revoked")
+	}
+	e.RevokeAt(a, aminAgo)
+	if !account.Exports[0].Revocations.IsRevoked(a, aminAgo) {
+		t.Fatal("should be revoked")
+	}
+
+	a2 := publicKey(createAccountNKey(t), t)
+	if account.Exports[0].Revocations.IsRevoked(a2, aminAgo) {
+		t.Fatal("should not be revoked")
+	}
+	e.RevokeAt("*", aminAgo)
+	if !account.Exports[0].Revocations.IsRevoked(a2, time.Now().Add(-time.Hour)) {
+		t.Fatal("should be revoked")
+	}
+
+	vr := ValidationResults{}
+	account.Validate(&vr)
+	if !vr.IsEmpty() {
+		t.Fatal("account validation shouldn't have failed")
 	}
 }
