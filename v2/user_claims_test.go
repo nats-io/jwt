@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -366,4 +366,35 @@ func TestUserAllowedConnectionTypes(t *testing.T) {
 	}
 	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeStandard), t)
 	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeWebsocket), t)
+}
+
+func TestUserClaimRevocation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+
+	u := publicKey(createUserNKey(t), t)
+	aminAgo := time.Now().Add(-time.Minute)
+	if account.Revocations.IsRevoked(u, aminAgo) {
+		t.Fatal("shouldn't be revoked")
+	}
+	account.RevokeAt(u, aminAgo)
+	if !account.Revocations.IsRevoked(u, aminAgo) {
+		t.Fatal("should be revoked")
+	}
+
+	u2 := publicKey(createUserNKey(t), t)
+	if account.Revocations.IsRevoked(u2, aminAgo) {
+		t.Fatal("should not be revoked")
+	}
+	account.RevokeAt("*", aminAgo)
+	if !account.Revocations.IsRevoked(u2, time.Now().Add(-time.Hour)) {
+		t.Fatal("should be revoked")
+	}
+
+	vr := ValidationResults{}
+	account.Validate(&vr)
+	if !vr.IsEmpty() {
+		t.Fatal("account validation shouldn't have failed")
+	}
 }

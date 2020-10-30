@@ -379,3 +379,34 @@ func TestSourceNetworkValidation(t *testing.T) {
 		t.Error("limits should be invalid")
 	}
 }
+
+func TestUserClaimRevocation(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+
+	u := publicKey(createUserNKey(t), t)
+	aminAgo := time.Now().Add(-time.Minute)
+	if account.Revocations.IsRevoked(u, aminAgo) {
+		t.Fatal("shouldn't be revoked")
+	}
+	account.RevokeAt(u, aminAgo)
+	if !account.Revocations.IsRevoked(u, aminAgo) {
+		t.Fatal("should be revoked")
+	}
+
+	u2 := publicKey(createUserNKey(t), t)
+	if account.Revocations.IsRevoked(u2, aminAgo) {
+		t.Fatal("should not be revoked")
+	}
+	account.RevokeAt("*", aminAgo)
+	if !account.Revocations.IsRevoked(u2, time.Now().Add(-time.Hour)) {
+		t.Fatal("should be revoked")
+	}
+
+	vr := ValidationResults{}
+	account.Validate(&vr)
+	if !vr.IsEmpty() {
+		t.Fatal("account validation shouldn't have failed")
+	}
+}
