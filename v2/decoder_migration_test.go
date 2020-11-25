@@ -241,6 +241,27 @@ func TestMigrateUserWithDeprecatedLimits(t *testing.T) {
 	AssertNoError(err, t)
 }
 
+func TestMigrateUserToGeneric(t *testing.T) {
+	ukp, err := nkeys.CreateUser()
+	AssertNoError(err, t)
+	upk, err := ukp.PublicKey()
+	AssertNoError(err, t)
+	akp, err := nkeys.CreateAccount()
+	AssertNoError(err, t)
+	uc := v1jwt.NewUserClaims(upk)
+	uc.Name = "U"
+	uc.Audience = "Audience"
+	uc.Max = 1
+	uc.Tags = []string{"foo", "bar"}
+
+	tok, err := uc.Encode(akp)
+	AssertNoError(err, t)
+	uc2, err := DecodeGeneric(tok)
+	AssertNoError(err, t)
+	AssertTrue(string(uc2.ClaimType()) == string(uc.Type), t)
+	AssertTrue(uc2.Data["tags"].(TagList)[0] == uc.Tags[0], t)
+}
+
 func TestMigrateActivationWithDeprecatedLimits(t *testing.T) {
 	akp, err := nkeys.CreateAccount()
 	AssertNoError(err, t)

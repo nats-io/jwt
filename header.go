@@ -64,7 +64,10 @@ func (h *Header) Valid() error {
 		return fmt.Errorf("not supported type %q", h.Type)
 	}
 
-	if AlgorithmNkey != strings.ToLower(h.Algorithm) {
+	if alg := strings.ToLower(h.Algorithm); alg != AlgorithmNkey {
+		if alg == "ed25519-nkey" {
+			return fmt.Errorf("more recent jwt version")
+		}
 		return fmt.Errorf("unexpected %q algorithm", h.Algorithm)
 	}
 	return nil
