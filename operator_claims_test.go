@@ -398,7 +398,7 @@ func Test_ForwardCompatibility(t *testing.T) {
 	newOp := `eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJTSUYyR0ZRSEhWWUtDQlZYRklYUURYV1FCQUcyWEw3SVZLVVJZT0ZTWlhVT0tTRUpLWDdBIiwiaWF0IjoxNTkwNTI0NTAwLCJpc3MiOiJPQlQ2REtGSzQ2STM3TjdCUkwyUkpMVVJLWUdSQTZBWVJQREFISFFFQUFBR05ZWExNR1JEUEtMQyIsInN1YiI6Ik9CVDZES0ZLNDZJMzdON0JSTDJSSkxVUktZR1JBNkFZUlBEQUhIUUVBQUFHTllYTE1HUkRQS0xDIiwibmF0cyI6eyJ0YWdzIjpbIm9uZSIsInR3byIsInRocmVlIl0sInR5cGUiOiJvcGVyYXRvciIsInZlcnNpb24iOjJ9fQ.u6JFiISIh2o-CWxktfEw3binmCLhLaFVMyuIa2HNo_x_6EGWVPVICVWc_MOLFS-6Nm17Cj4SmOh3zUtlTRkfDA`
 	if _, err := DecodeOperatorClaims(newOp); err == nil {
 		t.Fatal("Expected error")
-	} else if err.Error() != `unexpected "ed25519-nkey" algorithm` {
+	} else if err.Error() != `more recent jwt version` {
 		t.Fatal("Expected different error, got: ", err)
 	}
 }
