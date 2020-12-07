@@ -70,6 +70,66 @@ func TestImportValidation(t *testing.T) {
 	}
 }
 
+func TestImportValidationExpiredToken(t *testing.T) {
+	ak := createAccountNKey(t)
+	ak2 := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	akp2 := publicKey(ak2, t)
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+
+	activation := NewActivationClaims(akp)
+	activation.Expires = time.Now().Add(-time.Hour).UTC().Unix()
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
+	i.Token = encode(activation, ak2, t)
+	vr := CreateValidationResults()
+	i.Validate(akp, vr)
+	if vr.IsEmpty() || !vr.IsBlocking(true) || vr.IsBlocking(false) {
+		t.Errorf("Expired token needs to result in a time check error")
+	}
+}
+
+func TestImportValidationDifferentAccount(t *testing.T) {
+	ak := createAccountNKey(t)
+	ak2 := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	akp2 := publicKey(ak2, t)
+	otherAccount := publicKey(createAccountNKey(t), t)
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+
+	activation := NewActivationClaims(otherAccount)
+	activation.Expires = time.Now().Add(-time.Hour).UTC().Unix()
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
+	i.Token = encode(activation, ak2, t)
+	vr := CreateValidationResults()
+	i.Validate(akp, vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Errorf("Expired import needs to result in a time check error")
+	}
+}
+
+func TestImportValidationSigningKey(t *testing.T) {
+	ak := createAccountNKey(t)
+	ak2 := createAccountNKey(t)
+	ak2Sk := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	akp2 := publicKey(ak2, t)
+	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+
+	activation := NewActivationClaims(akp)
+	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
+	activation.IssuerAccount = akp2
+	i.Token = encode(activation, ak2Sk, t)
+	vr := CreateValidationResults()
+	i.Validate(akp, vr)
+	if !vr.IsEmpty() {
+		t.Errorf("Expired import needs to not result in an error")
+	}
+}
+
 func TestInvalidImportType(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
