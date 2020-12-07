@@ -22,7 +22,7 @@ import (
 )
 
 func TestSimpleExportValidation(t *testing.T) {
-	e := &Export{Subject: "foo", Type: Stream}
+	e := &Export{Subject: "foo", Type: Stream, Info: Info{InfoURL: "http://localhost/foo/bar", Description: "description"}}
 
 	vr := CreateValidationResults()
 	e.Validate(vr)
@@ -116,6 +116,18 @@ func TestInvalidExportType(t *testing.T) {
 
 	if !vr.IsBlocking(true) {
 		t.Errorf("invalid type is blocking")
+	}
+}
+
+func TestInvalidExportInfo(t *testing.T) {
+	e := &Export{Subject: "foo", Type: Stream, Info: Info{InfoURL: "/bad"}}
+	vr := CreateValidationResults()
+	e.Validate(vr)
+	if vr.IsEmpty() {
+		t.Errorf("export info should not validate cleanly")
+	}
+	if !vr.IsBlocking(true) {
+		t.Errorf("invalid info needs to be blocking")
 	}
 }
 

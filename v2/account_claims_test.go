@@ -42,6 +42,8 @@ func TestNewAccountClaims(t *testing.T) {
 
 	account.Expires = time.Now().Add(time.Hour * 24 * 365).UTC().Unix()
 
+	account.InfoURL = "http://localhost/my-account/doc"
+	account.Description = "my account"
 	account.Imports = Imports{}
 	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
 
@@ -64,6 +66,8 @@ func TestNewAccountClaims(t *testing.T) {
 
 	AssertEquals(account2.Claims() != nil, true, t)
 	AssertEquals(account2.Payload() != nil, true, t)
+	AssertEquals(account.InfoURL, account2.InfoURL, t)
+	AssertEquals(account.Description, account2.Description, t)
 }
 
 func TestAccountCanSignOperatorLimits(t *testing.T) { // don't block encoding!!!
@@ -557,5 +561,18 @@ func TestUserRevocationAll(t *testing.T) {
 	account.RevokeAt(All, time.Now().Add(time.Second*-10))
 	if !account.IsClaimRevoked(ud) {
 		t.Fatal("user should have not been revoked")
+	}
+}
+
+func TestInvalidAccountInfo(t *testing.T) {
+	a := NewAccountClaims(publicKey(createAccountNKey(t), t))
+	a.InfoURL = "/bad"
+	vr := CreateValidationResults()
+	a.Validate(vr)
+	if vr.IsEmpty() {
+		t.Errorf("export info should not validate cleanly")
+	}
+	if !vr.IsBlocking(true) {
+		t.Errorf("invalid info needs to be blocking")
 	}
 }
