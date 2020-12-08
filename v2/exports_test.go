@@ -19,6 +19,8 @@ import (
 	"sort"
 	"testing"
 	"time"
+
+	"github.com/nats-io/nkeys"
 )
 
 func TestSimpleExportValidation(t *testing.T) {
@@ -267,6 +269,14 @@ func TestExportTrackLatency(t *testing.T) {
 		t.Errorf("Expected to validate with simple tracking")
 	}
 
+	e = &Export{Subject: "foo", Type: Service}
+	e.Latency = &ServiceLatency{Sampling: Headers, Results: "results"}
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Errorf("Headers must not need to ")
+	}
+
 	e = &Export{Subject: "foo", Type: Stream}
 	e.Latency = &ServiceLatency{Sampling: 100, Results: "results"}
 	vr = CreateValidationResults()
@@ -276,7 +286,7 @@ func TestExportTrackLatency(t *testing.T) {
 	}
 
 	e = &Export{Subject: "foo", Type: Service}
-	e.Latency = &ServiceLatency{Sampling: 0, Results: "results"}
+	e.Latency = &ServiceLatency{Sampling: -1, Results: "results"}
 	vr = CreateValidationResults()
 	e.Validate(vr)
 	if vr.IsEmpty() {
@@ -297,6 +307,24 @@ func TestExportTrackLatency(t *testing.T) {
 	e.Validate(vr)
 	if vr.IsEmpty() {
 		t.Errorf("Results subject needs to be valid publish subject")
+	}
+}
+
+func TestExportTrackHeader(t *testing.T) {
+	akp, err := nkeys.CreateAccount()
+	AssertNoError(err, t)
+	apk, err := akp.PublicKey()
+	AssertNoError(err, t)
+	ac := NewAccountClaims(apk)
+	e := &Export{Subject: "foo", Type: Service}
+	e.Latency = &ServiceLatency{Sampling: Headers, Results: "results"}
+	ac.Exports.Add(e)
+	theJWT, err := ac.Encode(akp)
+	AssertNoError(err, t)
+	ac2, err := DecodeAccountClaims(theJWT)
+	AssertNoError(err, t)
+	if *(ac2.Exports[0].Latency) != *e.Latency {
+		t.Errorf("Headers need to de serialize as headers")
 	}
 }
 
