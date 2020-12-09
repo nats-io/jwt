@@ -117,7 +117,7 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 		if act.ClaimsData.Subject != actPubKey {
 			vr.AddError("activation token doesn't match account it is being included in, %q", i.Subject)
 		}
-		act.Validate(vr)
+		act.validateWithTimeChecks(vr, false)
 	} else {
 		vr.AddWarning("no activation provided for import %s", i.Subject)
 	}
