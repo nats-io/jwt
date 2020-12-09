@@ -76,7 +76,7 @@ func TestImportValidationExpiredToken(t *testing.T) {
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
 	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
-
+	// test success, expiration is not checked
 	activation := NewActivationClaims(akp)
 	activation.Expires = time.Now().Add(-time.Hour).UTC().Unix()
 	activation.ImportSubject = "test"
@@ -84,8 +84,20 @@ func TestImportValidationExpiredToken(t *testing.T) {
 	i.Token = encode(activation, ak2, t)
 	vr := CreateValidationResults()
 	i.Validate(akp, vr)
-	if vr.IsEmpty() || !vr.IsBlocking(true) || vr.IsBlocking(false) {
-		t.Errorf("Expired token needs to result in a time check error")
+	if !vr.IsEmpty() {
+		t.Errorf("Expired token should not trigger a validation issue")
+	}
+	// test failure, different issuer
+	ak3 := createAccountNKey(t)
+	activation = NewActivationClaims(akp)
+	activation.Expires = time.Now().Add(-time.Hour).UTC().Unix()
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
+	i.Token = encode(activation, ak3, t)
+	vr = CreateValidationResults()
+	i.Validate(akp, vr)
+	if vr.IsEmpty() {
+		t.Errorf("Issuer mismatch must trigger a validation issue")
 	}
 }
 
