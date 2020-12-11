@@ -98,7 +98,7 @@ func (t *ExportType) UnmarshalJSON(b []byte) error {
 		*t = Service
 		return nil
 	}
-	return fmt.Errorf("unknown export type")
+	return fmt.Errorf("unknown export type %q", j)
 }
 
 // Subject is a string that represents a NATS subject
@@ -204,13 +204,6 @@ type Limits struct {
 	NatsLimits
 }
 
-func (l *Limits) Empty() bool {
-	if !l.UserLimits.Empty() {
-		return false
-	}
-	return l.NatsLimits.Empty()
-}
-
 func (l *Limits) IsUnlimited() bool {
 	return l.UserLimits.IsUnlimited() && l.NatsLimits.IsUnlimited()
 }
@@ -278,16 +271,6 @@ type Permissions struct {
 	Resp *ResponsePermission `json:"resp,omitempty"`
 }
 
-func (p *Permissions) Empty() bool {
-	if !p.Pub.Empty() {
-		return false
-	}
-	if !p.Sub.Empty() {
-		return false
-	}
-	return p.Resp == nil
-}
-
 // Validate the pub and sub fields in the permissions list
 func (p *Permissions) Validate(vr *ValidationResults) {
 	if p.Resp != nil {
@@ -328,10 +311,6 @@ func (u *StringList) Remove(p ...string) {
 			}
 		}
 	}
-}
-
-func (u *StringList) Empty() bool {
-	return len(*u) == 0
 }
 
 // TagList is a unique array of lower case strings

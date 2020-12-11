@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/nats-io/nkeys"
 )
 
@@ -28,12 +29,46 @@ type Scope interface {
 	Validate(vr *ValidationResults)
 }
 
-const UserScopeType = "user_template"
+type ScopeType int
+
+const (
+	UserScopeType ScopeType = iota + 1
+)
+
+func (t ScopeType) String() string {
+	switch t {
+	case UserScopeType:
+		return "user_scope"
+	}
+	return "unknown"
+}
+
+func (t *ScopeType) MarshalJSON() ([]byte, error) {
+	switch *t {
+	case UserScopeType:
+		return []byte("\"user_scope\""), nil
+	}
+	return nil, fmt.Errorf("unknown scope type %q", t)
+}
+
+func (t *ScopeType) UnmarshalJSON(b []byte) error {
+	var s string
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	switch s {
+	case "user_scope":
+		*t = UserScopeType
+		return nil
+	}
+	return fmt.Errorf("unknown scope type %q", t)
+}
 
 type UserScope struct {
-	Kind string `json:"kind"`
-	Key string `json:"key"`
-	Role string `json:"role"`
+	Kind     ScopeType            `json:"kind"`
+	Key      string               `json:"key"`
+	Role     string               `json:"role"`
 	Template UserPermissionLimits `json:"template"`
 }
 
@@ -62,24 +97,16 @@ func (us UserScope) ValidateScopedSigner(c Claims) error {
 	if uc.Claims().Issuer != us.Key {
 		return errors.New("issuer not the scoped signer")
 	}
-
-	ul := UserPermissionLimits{}
-	ul.Permissions = uc.Permissions
-	ul.BearerToken = uc.BearerToken
-	ul.Limits = uc.Limits
-	ul.AllowedConnectionTypes = uc.AllowedConnectionTypes
-
-	if !ul.Empty() {
+	if !uc.HasEmptyPermissions() {
 		return errors.New("scoped users require no permissions or limits set")
 	}
-
 	return nil
 }
 
 // SigningKeys is a map keyed by a public account key
 type SigningKeys map[string]Scope
 
-func (sk SigningKeys) Validate(vr *ValidationResults){
+func (sk SigningKeys) Validate(vr *ValidationResults) {
 	for k, v := range sk {
 		// regular signing keys won't have a scope
 		if v != nil {
@@ -124,8 +151,7 @@ func (sk SigningKeys) UnmarshalJSON(data []byte) error {
 				return err
 			}
 			switch v["kind"] {
-
-			case UserScopeType:
+			case UserScopeType.String():
 				us := NewUserScope()
 				if err := json.Unmarshal(d, &us); err != nil {
 					return err
@@ -136,7 +162,7 @@ func (sk SigningKeys) UnmarshalJSON(data []byte) error {
 			}
 		}
 	}
- 	return nil
+	return nil
 }
 
 // GetScope returns nil if the key is not associated
@@ -168,6 +194,3 @@ func (sk SigningKeys) Remove(keys ...string) {
 		delete(sk, k)
 	}
 }
-
-
-

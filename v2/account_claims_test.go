@@ -348,8 +348,6 @@ func TestAccountSigningKeyValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(token)
-
 	ac2, err := DecodeAccountClaims(token)
 	if err != nil {
 		t.Fatal(err)

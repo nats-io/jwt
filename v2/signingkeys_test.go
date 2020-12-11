@@ -38,6 +38,9 @@ func makeRole(t *testing.T, role string, pub []string, sub []string, bearer bool
 func makeUser(t *testing.T, ac *AccountClaims, signer nkeys.KeyPair, pub []string, sub []string) *UserClaims {
 	ukp := createUserNKey(t)
 	uc := NewUserClaims(publicKey(ukp, t))
+	if pub == nil && sub == nil {
+		uc.UserPermissionLimits = UserPermissionLimits{}
+	}
 	spk := publicKey(signer, t)
 	if ac.Subject != spk {
 		uc.IssuerAccount = ac.Subject
@@ -198,7 +201,7 @@ func TestScopedSigningKeysBasics(t *testing.T) {
 		t.Fatal("expected scope to be dashboard key")
 	}
 	if err := scope.ValidateScopedSigner(uc); err != nil {
-		t.Fatalf("expected scope to be correct")
+		t.Fatalf("expected scope to be correct: %v", err)
 	}
 
 	// test user with a scope that has wrong permissions

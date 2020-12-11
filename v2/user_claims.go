@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/nats-io/nkeys"
 )
@@ -33,19 +34,6 @@ type UserPermissionLimits struct {
 	Limits
 	BearerToken            bool       `json:"bearer_token,omitempty"`
 	AllowedConnectionTypes StringList `json:"allowed_connection_types,omitempty"`
-}
-
-func (up UserPermissionLimits) Empty() bool {
-	if !up.Permissions.Empty() {
-		return false
-	}
-	if !up.Limits.Empty() {
-		return false
-	}
-	if up.BearerToken {
-		return false
-	}
-	return up.AllowedConnectionTypes.Empty()
 }
 
 // User defines the user specific data in a user JWT
@@ -82,6 +70,21 @@ func NewUserClaims(subject string) *UserClaims {
 		NatsLimits{NoLimit, NoLimit, NoLimit},
 	}
 	return c
+}
+
+func (u *UserClaims) SetScoped(t bool) {
+	if t {
+		u.UserPermissionLimits = UserPermissionLimits{}
+	} else {
+		u.Limits = Limits{
+			UserLimits{CIDRList{}, nil, ""},
+			NatsLimits{NoLimit, NoLimit, NoLimit},
+		}
+	}
+}
+
+func (u *UserClaims) HasEmptyPermissions() bool {
+	return reflect.DeepEqual(u.UserPermissionLimits, UserPermissionLimits{})
 }
 
 // Encode tries to turn the user claims into a JWT string

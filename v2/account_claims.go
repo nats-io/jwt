@@ -50,11 +50,6 @@ func (n *NatsLimits) IsUnlimited() bool {
 	return *n == NatsLimits{NoLimit, NoLimit, NoLimit}
 }
 
-func (n *NatsLimits) Empty() bool {
-	// this is the default - consider that 'empty'
-	return n.IsUnlimited()
-}
-
 type JetStreamLimits struct {
 	MemoryStorage int64 `json:"mem_storage,omitempty"`  // Max number of bytes stored in memory across all streams. (0 means disabled)
 	DiskStorage   int64 `json:"disk_storage,omitempty"` // Max number of bytes stored on disk across all streams. (0 means disabled)
