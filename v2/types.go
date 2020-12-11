@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -189,6 +190,10 @@ type UserLimits struct {
 	Locale string      `json:"times_location,omitempty"`
 }
 
+func (u *UserLimits) Empty() bool {
+	return reflect.DeepEqual(*u, UserLimits{})
+}
+
 func (u *UserLimits) IsUnlimited() bool {
 	return len(u.Src) == 0 && len(u.Times) == 0
 }
@@ -197,6 +202,13 @@ func (u *UserLimits) IsUnlimited() bool {
 type Limits struct {
 	UserLimits
 	NatsLimits
+}
+
+func (l *Limits) Empty() bool {
+	if !l.UserLimits.Empty() {
+		return false
+	}
+	return l.NatsLimits.Empty()
 }
 
 func (l *Limits) IsUnlimited() bool {
@@ -233,6 +245,10 @@ type Permission struct {
 	Deny  StringList `json:"deny,omitempty"`
 }
 
+func (p *Permission) Empty() bool {
+	return len(p.Allow) == 0 && len(p.Deny) == 0
+}
+
 // Validate the allow, deny elements of a permission
 func (p *Permission) Validate(vr *ValidationResults) {
 	for _, subj := range p.Allow {
@@ -260,6 +276,16 @@ type Permissions struct {
 	Pub  Permission          `json:"pub,omitempty"`
 	Sub  Permission          `json:"sub,omitempty"`
 	Resp *ResponsePermission `json:"resp,omitempty"`
+}
+
+func (p *Permissions) Empty() bool {
+	if !p.Pub.Empty() {
+		return false
+	}
+	if !p.Sub.Empty() {
+		return false
+	}
+	return p.Resp == nil
 }
 
 // Validate the pub and sub fields in the permissions list
@@ -302,6 +328,10 @@ func (u *StringList) Remove(p ...string) {
 			}
 		}
 	}
+}
+
+func (u *StringList) Empty() bool {
+	return len(*u) == 0
 }
 
 // TagList is a unique array of lower case strings

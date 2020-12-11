@@ -347,6 +347,9 @@ func TestAccountSigningKeyValidation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log(token)
+
 	ac2, err := DecodeAccountClaims(token)
 	if err != nil {
 		t.Fatal(err)
@@ -354,8 +357,8 @@ func TestAccountSigningKeyValidation(t *testing.T) {
 	if len(ac2.SigningKeys) != 1 {
 		t.Fatal("expected claim to have a signing key")
 	}
-	if ac.SigningKeys[0] != apk2 {
-		t.Fatalf("expected signing key to be %s - got %s", apk2, ac.SigningKeys[0])
+	if !ac.SigningKeys.Contains(apk2) {
+		t.Fatalf("expected signing key %s", apk2)
 	}
 
 	bkp := createUserNKey(t)
@@ -388,8 +391,8 @@ func TestAccountSignedBy(t *testing.T) {
 	if len(ac2.SigningKeys) != 1 {
 		t.Fatal("expected claim to have a signing key")
 	}
-	if ac.SigningKeys[0] != apk2 {
-		t.Fatalf("expected signing key to be %s - got %s", apk2, ac.SigningKeys[0])
+	if !ac.SigningKeys.Contains(apk2) {
+		t.Fatalf("expected signing key %s", apk2)
 	}
 
 	ukp := createUserNKey(t)

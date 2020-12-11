@@ -28,12 +28,29 @@ const (
 	ConnectionTypeMqtt      = "MQTT"
 )
 
-// User defines the user specific data in a user JWT
-type User struct {
+type UserPermissionLimits struct {
 	Permissions
 	Limits
 	BearerToken            bool       `json:"bearer_token,omitempty"`
 	AllowedConnectionTypes StringList `json:"allowed_connection_types,omitempty"`
+}
+
+func (up UserPermissionLimits) Empty() bool {
+	if !up.Permissions.Empty() {
+		return false
+	}
+	if !up.Limits.Empty() {
+		return false
+	}
+	if up.BearerToken {
+		return false
+	}
+	return up.AllowedConnectionTypes.Empty()
+}
+
+// User defines the user specific data in a user JWT
+type User struct {
+	UserPermissionLimits
 	// IssuerAccount stores the public key for the account the issuer represents.
 	// When set, the claim was issued by a signing key.
 	IssuerAccount string `json:"issuer_account,omitempty"`

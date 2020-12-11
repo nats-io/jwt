@@ -50,6 +50,11 @@ func (n *NatsLimits) IsUnlimited() bool {
 	return *n == NatsLimits{NoLimit, NoLimit, NoLimit}
 }
 
+func (n *NatsLimits) Empty() bool {
+	// this is the default - consider that 'empty'
+	return n.IsUnlimited()
+}
+
 type JetStreamLimits struct {
 	MemoryStorage int64 `json:"mem_storage,omitempty"`  // Max number of bytes stored in memory across all streams. (0 means disabled)
 	DiskStorage   int64 `json:"disk_storage,omitempty"` // Max number of bytes stored on disk across all streams. (0 means disabled)
@@ -89,7 +94,7 @@ type Account struct {
 	Imports            Imports        `json:"imports,omitempty"`
 	Exports            Exports        `json:"exports,omitempty"`
 	Limits             OperatorLimits `json:"limits,omitempty"`
-	SigningKeys        StringList     `json:"signing_keys,omitempty"`
+	SigningKeys        SigningKeys    `json:"signing_keys,omitempty"`
 	Revocations        RevocationList `json:"revocations,omitempty"`
 	DefaultPermissions Permissions    `json:"default_permissions,omitempty"`
 	Info
@@ -126,12 +131,7 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 			}
 		}
 	}
-
-	for _, k := range a.SigningKeys {
-		if !nkeys.IsValidPublicAccountKey(k) {
-			vr.AddError("%s is not an account public key", k)
-		}
-	}
+	a.SigningKeys.Validate(vr)
 	a.Info.Validate(vr)
 }
 
@@ -147,6 +147,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 		return nil
 	}
 	c := &AccountClaims{}
+	c.SigningKeys = make(SigningKeys)
 	// Set to unlimited to start. We do it this way so we get compiler
 	// errors if we add to the OperatorLimits.
 	c.Limits = OperatorLimits{
@@ -221,9 +222,9 @@ func (a *AccountClaims) Claims() *ClaimsData {
 }
 
 // DidSign checks the claims against the account's public key and its signing keys
-func (a *AccountClaims) DidSign(op Claims) bool {
-	if op != nil {
-		issuer := op.Claims().Issuer
+func (a *AccountClaims) DidSign(uc Claims) bool {
+	if uc != nil {
+		issuer := uc.Claims().Issuer
 		if issuer == a.Subject {
 			return true
 		}
