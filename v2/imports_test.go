@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2020 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -34,24 +34,16 @@ func TestImportValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
 	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
 	activation := NewActivationClaims(akp)
@@ -203,24 +195,16 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
 	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
 	activation := NewActivationClaims(akp)
@@ -263,8 +247,8 @@ func TestMissingAccountInImport(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
-		t.Errorf("imports without token or url should warn the caller, as should missing account")
+	if len(vr.Issues) != 1 {
+		t.Errorf("expected only one issue")
 	}
 
 	if vr.IsBlocking(true) {
@@ -280,8 +264,8 @@ func TestServiceImportWithWildcard(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
-		t.Errorf("imports without token or url should warn the caller, as should wildcard service")
+	if len(vr.Issues) != 1 {
+		t.Errorf("expected only one issue")
 	}
 
 	if !vr.IsBlocking(true) {
@@ -295,8 +279,8 @@ func TestStreamImportWithWildcardPrefix(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 3 {
-		t.Errorf("should have registered 3 issues with this import, got %d", len(vr.Issues))
+	if len(vr.Issues) != 2 {
+		t.Errorf("should have registered 2 issues with this import, got %d", len(vr.Issues))
 	}
 
 	if !vr.IsBlocking(true) {
@@ -312,7 +296,7 @@ func TestStreamImportInformationSharing(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
+	if len(vr.Issues) != 1 {
 		t.Errorf("should have registered 1 issues with this import, got %d", len(vr.Issues))
 	}
 	if !vr.IsBlocking(true) {
@@ -323,11 +307,8 @@ func TestStreamImportInformationSharing(t *testing.T) {
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 1 {
+	if len(vr.Issues) != 0 {
 		t.Errorf("should have registered 0 issues with this import, got %d", len(vr.Issues))
-	}
-	if vr.IsBlocking(true) {
-		t.Fatalf("remaining issue is not expected to be blocking")
 	}
 }
 
@@ -343,7 +324,7 @@ func TestImportsValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	imports.Validate("", vr)
 
-	if len(vr.Issues) != 3 {
+	if len(vr.Issues) != 1 {
 		t.Errorf("imports without token or url should warn the caller x2, wildcard service as well")
 	}
 

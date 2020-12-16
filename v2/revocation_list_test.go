@@ -36,7 +36,7 @@ func TestRevocationCompact(t *testing.T) {
 	a.Revocations.Revoke(keys[2], now.Add(-time.Second))
 	// no change expected - there's no
 	deleted := a.Revocations.MaybeCompact()
-	if len(a.Revocations) != 3 || deleted != nil{
+	if len(a.Revocations) != 3 || deleted != nil {
 		t.Error("expected 3 revocations")
 	}
 	// should delete the first key
@@ -52,4 +52,3 @@ func TestRevocationCompact(t *testing.T) {
 		t.Error("didn't revoke expected entries")
 	}
 }
-
