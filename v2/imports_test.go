@@ -257,34 +257,40 @@ func TestMissingAccountInImport(t *testing.T) {
 }
 
 func TestServiceImportWithWildcard(t *testing.T) {
-	ak := createAccountNKey(t)
-	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
+	i := &Import{Subject: "foo.*", Account: publicKey(createAccountNKey(t), t), To: "bar", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 1 {
-		t.Errorf("expected only one issue")
+	if !vr.IsEmpty() {
+		t.Errorf("expected no issue")
 	}
 
-	if !vr.IsBlocking(true) {
-		t.Errorf("expected service import with a wildcard subject to be a blocking error")
+	i.Subject = ">"
+	vr = CreateValidationResults()
+	i.Validate("", vr)
+
+	if !vr.IsEmpty() {
+		t.Errorf("expected no issue")
 	}
 }
 
 func TestStreamImportWithWildcardPrefix(t *testing.T) {
-	i := &Import{Subject: "foo", To: "bar.>", Type: Stream}
+	i := &Import{Subject: "foo",  Account: publicKey(createAccountNKey(t), t), To: "bar.*", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
-		t.Errorf("should have registered 2 issues with this import, got %d", len(vr.Issues))
+	if !vr.IsEmpty() {
+		t.Errorf("expected no issue")
 	}
 
-	if !vr.IsBlocking(true) {
-		t.Fatalf("expected stream import prefix with a wildcard to produce a blocking error")
+	i.Subject = ">"
+	vr = CreateValidationResults()
+	i.Validate("", vr)
+
+	if !vr.IsEmpty() {
+		t.Errorf("expected no issue")
 	}
 }
 
@@ -324,12 +330,8 @@ func TestImportsValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	imports.Validate("", vr)
 
-	if len(vr.Issues) != 1 {
-		t.Errorf("imports without token or url should warn the caller x2, wildcard service as well")
-	}
-
-	if !vr.IsBlocking(true) {
-		t.Errorf("expected service import with a wildcard subject to be a blocking error")
+	if !vr.IsEmpty() {
+		t.Errorf("no issues expected")
 	}
 }
 
@@ -468,6 +470,21 @@ func TestImportServiceDoubleToSubjectsValidation(t *testing.T) {
 	if !vr.IsBlocking(true) {
 		t.Fatalf("Expected multiple import 'to' subjects to produce an error")
 	}
+}
+
+func TestWildcard(t *testing.T) {
+	account := NewAccountClaims(publicKey(createAccountNKey(t), t))
+
+	i := &Import{Subject: ">", Account: publicKey(createAccountNKey(t), t), To: "foo.bar", Type: Service}
+	account.Imports.Add(i)
+
+	vr := CreateValidationResults()
+	account.Validate(vr)
+
+	if vr.IsBlocking(true) {
+		t.Fatalf("Expected no blocking validation errors")
+	}
+
 }
 
 func TestImport_Sorting(t *testing.T) {

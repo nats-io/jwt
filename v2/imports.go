@@ -68,12 +68,6 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 
 	i.Subject.Validate(vr)
 
-	if i.IsService() && i.Subject.HasWildCards() {
-		vr.AddError("services cannot have wildcard subject: %q", i.Subject)
-	}
-	if i.IsStream() && i.To.HasWildCards() {
-		vr.AddError("streams cannot have wildcard to subject: %q", i.Subject)
-	}
 	if i.Share && !i.IsService() {
 		vr.AddError("sharing information (for latency tracking) is only valid for services: %q", i.Subject)
 	}

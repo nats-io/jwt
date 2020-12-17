@@ -166,13 +166,22 @@ func TestActivationImportSubjectValidation(t *testing.T) {
 		t.Error("valid activation should pass validation")
 	}
 
-	activation.ImportSubject = "foo.*" // wildcards are bad
+	activation.ImportSubject = "foo.*" // wildcards are ok
 
 	vr = CreateValidationResults()
 	activation.Validate(vr)
 
-	if vr.IsEmpty() || !vr.IsBlocking(true) {
-		t.Error("wildcard service activation should not pass validation")
+	if !vr.IsEmpty() {
+		t.Error("wildcard service activation should pass validation")
+	}
+
+	activation.ImportSubject = ">" // wildcards are ok
+
+	vr = CreateValidationResults()
+	activation.Validate(vr)
+
+	if !vr.IsEmpty() {
+		t.Error("wildcard service activation should pass validation")
 	}
 
 	activation.ImportType = Stream // Stream is ok with wildcards
