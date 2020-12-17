@@ -18,6 +18,8 @@ package jwt
 import (
 	"testing"
 	"time"
+
+	jwtv1 "github.com/nats-io/jwt"
 )
 
 func TestNewGenericClaims(t *testing.T) {
@@ -84,7 +86,34 @@ func TestGenericClaimsCanHaveCustomType(t *testing.T) {
 		t.Fatal("failed to decode", err)
 	}
 	if gc2.ClaimType() != GenericClaim {
-		t.Fatalf("expected claimtype to be generic got: %v", gc.ClaimType())
+		t.Fatalf("expected claimtype to be generic got: %v", gc2.ClaimType())
+	}
+	if gc2.Data["type"] != "my_type" {
+		t.Fatalf("expected internal type to be 'my_type': %v", gc2.Data["type"])
+	}
+}
+
+func TestGenericClaimsCanHaveCustomTypeFromV1(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	gc := jwtv1.NewGenericClaims(apk)
+	gc.Expires = time.Now().Add(time.Hour).UTC().Unix()
+	gc.Name = "alberto"
+	gc.Data["hello"] = "world"
+	gc.Data["count"] = 5
+	gc.Type = "my_type"
+	token, err := gc.Encode(akp)
+	if err != nil {
+		t.Fatalf("failed to encode v1 JWT: %v", err)
+	}
+
+	gc2, err := DecodeGeneric(token)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+	if gc2.ClaimType() != GenericClaim {
+		t.Fatalf("expected claimtype to be generic got: %v", gc2.ClaimType())
 	}
 	if gc2.Data["type"] != "my_type" {
 		t.Fatalf("expected internal type to be 'my_type': %v", gc2.Data["type"])
