@@ -66,3 +66,27 @@ func TestNewGenericOperatorClaims(t *testing.T) {
 		t.Fatalf("Bad Claim type")
 	}
 }
+
+func TestGenericClaimsCanHaveCustomType(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	gc := NewGenericClaims(apk)
+	gc.Expires = time.Now().Add(time.Hour).UTC().Unix()
+	gc.Name = "alberto"
+	gc.Data["hello"] = "world"
+	gc.Data["count"] = 5
+	gc.Data["type"] = "my_type"
+	gcJwt := encode(gc, akp, t)
+
+	gc2, err := DecodeGeneric(gcJwt)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+	if gc2.ClaimType() != GenericClaim {
+		t.Fatalf("expected claimtype to be generic got: %v", gc.ClaimType())
+	}
+	if gc2.Data["type"] != "my_type" {
+		t.Fatalf("expected internal type to be 'my_type': %v", gc2.Data["type"])
+	}
+}
