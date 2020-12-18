@@ -276,7 +276,7 @@ func TestServiceImportWithWildcard(t *testing.T) {
 }
 
 func TestStreamImportWithWildcardPrefix(t *testing.T) {
-	i := &Import{Subject: "foo",  Account: publicKey(createAccountNKey(t), t), To: "bar.*", Type: Stream}
+	i := &Import{Subject: "foo", Account: publicKey(createAccountNKey(t), t), To: "bar.*", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)

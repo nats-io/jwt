@@ -223,3 +223,29 @@ func TestScopedSigningKeysBasics(t *testing.T) {
 		t.Fatalf("expected scope to reject user")
 	}
 }
+
+func TestGetKeys(t *testing.T) {
+
+	ac, apk := makeAccount(t, nil, nil)
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+
+	token, err := ac.Encode(apk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aac, err := DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := aac.SigningKeys.Keys()
+	if len(keys) != 3 {
+		t.Fatal("expected 3 signing keys")
+	}
+	for _, k := range keys {
+		if !ac.SigningKeys.Contains(k) {
+			t.Fatal("expected to find key")
+		}
+	}
+}
