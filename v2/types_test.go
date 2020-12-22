@@ -234,8 +234,16 @@ func TestSubjectContainment(t *testing.T) {
 	var o Subject
 
 	s = "one.two.three"
-	o = "one.two.three"
+	o = "one.*.three"
 	AssertEquals(true, s.IsContainedIn(o), t)
+
+	s = "one.*.three"
+	o = "one.*.three"
+	AssertEquals(true, s.IsContainedIn(o), t)
+
+	s = "one.*.three"
+	o = "one.two.three"
+	AssertEquals(false, s.IsContainedIn(o), t)
 
 	s = "one.two.three"
 	o = "one.two.*"
@@ -268,6 +276,12 @@ func TestSubjectContainment(t *testing.T) {
 	s = "one"
 	o = "one.two"
 	AssertEquals(false, s.IsContainedIn(o), t)
+}
+
+func TestRenamingSubject_ToSubject(t *testing.T) {
+	AssertEquals(RenamingSubject("foo.$2.$1.bar").ToSubject(), Subject("foo.*.*.bar"), t)
+	AssertEquals(RenamingSubject("foo.*.bar").ToSubject(), Subject("foo.*.bar"), t)
+	AssertEquals(RenamingSubject("foo.$2.*.bar").ToSubject(), Subject("foo.*.*.bar"), t)
 }
 
 func TestInvalidInfo(t *testing.T) {
