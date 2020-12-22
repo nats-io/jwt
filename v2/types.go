@@ -119,6 +119,7 @@ func (s RenamingSubject) Validate(from Subject, vr *ValidationResults) {
 	if matchesSuffix(v) != matchesSuffix(from) {
 		vr.AddError("both, renaming subject and subject, need to end or not end in >")
 	}
+	fromCnt := from.countTokenWildcards()
 	refCnt := 0
 	for _, tk := range strings.Split(string(v), ".") {
 		if tk == "*" {
@@ -128,12 +129,16 @@ func (s RenamingSubject) Validate(from Subject, vr *ValidationResults) {
 			continue
 		}
 		if tk[0] == '$' {
-			if _, err := strconv.Atoi(tk[1:]); err == nil {
-				refCnt++
+			if idx, err := strconv.Atoi(tk[1:]); err == nil {
+				if idx > fromCnt {
+					vr.AddError("Reference $%d in %q reference * in %q that do not exist", idx, s, from)
+				} else {
+					refCnt++
+				}
 			}
 		}
 	}
-	if refCnt != from.countTokenWildcards() {
+	if refCnt != fromCnt {
 		vr.AddError("subject does not contain enough * or reference wildcards $[0-9]")
 	}
 }

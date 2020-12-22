@@ -284,6 +284,39 @@ func TestRenamingSubject_ToSubject(t *testing.T) {
 	AssertEquals(RenamingSubject("foo.$2.*.bar").ToSubject(), Subject("foo.*.*.bar"), t)
 }
 
+func TestRenamigSubject_Validate(t *testing.T) {
+	for from, to := range map[string]string{
+		"foo":">",
+		"bar":"*",
+		"foo.*":"*.*",
+		"foo.>":"*.*",
+		"bar.>":"*.>",
+		"bar.*.*>":"*.>",
+		"*.bar":"$2",
+	} {
+		vr := ValidationResults{}
+		RenamingSubject(to).Validate(Subject(from), &vr)
+		if !vr.IsBlocking(false) {
+			t.Fatalf("expected blocking issue %q:%q", to, from)
+		}
+	}
+	for from, to := range map[string]string{
+		"foo":"bar",
+		"foo.bar":"baz",
+		"x":"x.y.z",
+		">":"foo.>",
+		"*":"$1.foo",
+		"*.*":"$1.foo.$2",
+		"*.bar":"$1",
+	} {
+		vr := ValidationResults{}
+		RenamingSubject(to).Validate(Subject(from), &vr)
+		if !vr.IsEmpty() {
+			t.Fatalf("expected no issue %q:%q got: %v", to, from, vr.Issues)
+		}
+	}
+}
+
 func TestInvalidInfo(t *testing.T) {
 	for _, info := range []Info{{
 		Description: "",
