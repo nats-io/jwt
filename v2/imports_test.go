@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 )
@@ -335,6 +336,54 @@ func TestImportsValidation(t *testing.T) {
 	}
 }
 
+func TestImportsLocalSubjectExclusiveTo(t *testing.T) {
+	ak := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	i := &Import{Subject: "foo", Account: akp, LocalSubject: "bar", Type: Stream}
+	i2 := &Import{Subject: "foo", Account: akp, LocalSubject: "bar", Type: Service}
+
+	imports := &Imports{}
+	imports.Add(i, i2)
+
+	vr := CreateValidationResults()
+	imports.Validate("", vr)
+
+	if !vr.IsEmpty() {
+		t.Errorf("no issues expected")
+	}
+
+	i.To = "bar"
+	i2.To = "bar"
+	imports = &Imports{}
+	imports.Add(i, i2)
+
+	vr = CreateValidationResults()
+	imports.Validate("", vr)
+
+	if vr.IsEmpty() {
+		t.Errorf("issues expected")
+	}
+	if !vr.IsBlocking(false) {
+		t.Errorf("issues expected to be blocking")
+	}
+}
+
+func TestImportsLocalSubjectVariants(t *testing.T) {
+	ak := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	imports := &Imports{}
+	imports.Add(
+		&Import{Subject: "foo.*.bar.*.>", Account: akp, LocalSubject: "my.$2.$1.>", Type: Stream},
+		&Import{Subject: "baz.*.bar.*.>", Account: akp, LocalSubject: "bar.*.*.>", Type: Service},
+		&Import{Subject: "baz.*", Account: akp, LocalSubject: "my.$1", Type: Stream},
+		&Import{Subject: "bar.*", Account: akp, LocalSubject: "baz.*", Type: Service})
+	vr := CreateValidationResults()
+	imports.Validate("", vr)
+	if !vr.IsEmpty() {
+		t.Errorf("no issues expected")
+	}
+}
+
 func TestTokenURLImportValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	ak2 := createAccountNKey(t)
@@ -484,7 +533,6 @@ func TestWildcard(t *testing.T) {
 	if vr.IsBlocking(true) {
 		t.Fatalf("Expected no blocking validation errors")
 	}
-
 }
 
 func TestImport_Sorting(t *testing.T) {
@@ -499,5 +547,23 @@ func TestImport_Sorting(t *testing.T) {
 	sort.Sort(imports)
 	if imports[0].Subject != "x" && imports[1].Subject != "y" && imports[2].Subject != "z" {
 		t.Fatal("imports not sorted")
+	}
+}
+
+func TestImports_Validate(t *testing.T) {
+	var imports Imports
+	pk := publicKey(createAccountNKey(t), t)
+	imports.Add(&Import{Subject: "x", LocalSubject: "foo", Type: Service, Account: pk})
+	imports.Add(&Import{Subject: "z.*", LocalSubject: "*", Type: Service, Account: pk})
+	imports.Add(&Import{Subject: "y.>", LocalSubject: ">", Type: Service, Account: pk})
+	vr := ValidationResults{}
+	imports.Validate("", &vr)
+	if len(vr.Issues) != 3 || !vr.IsBlocking(false) {
+		t.Fatal("expected 3 blocking issues")
+	}
+	for _, v := range vr.Issues {
+		if !strings.HasPrefix(v.Description, "overlapping subject namespace") {
+			t.Fatalf("Expected every error to contain: overlapping subject namespace")
+		}
 	}
 }
