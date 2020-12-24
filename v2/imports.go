@@ -59,6 +59,11 @@ func (i *Import) IsStream() bool {
 	return i.Type == Stream
 }
 
+// Returns the value of To without triggering the deprecation warning for a read
+func (i *Import) GetTo() string {
+	return string(i.To)
+}
+
 // Validate checks if an import is valid for the wrapping account
 func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	if i == nil {
