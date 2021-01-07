@@ -278,6 +278,69 @@ func TestSubjectContainment(t *testing.T) {
 	AssertEquals(false, s.IsContainedIn(o), t)
 }
 
+func TestPermissions_Validate(t *testing.T) {
+	p := Permissions{
+		Pub:  Permission{},
+		Sub:  Permission{},
+		Resp: nil,
+	}
+	vr := ValidationResults{}
+	resetAndValidate := func() {
+		vr = ValidationResults{}
+		p.Validate(&vr)
+	}
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Resp = &ResponsePermission{
+		MaxMsgs: 0,
+		Expires: 0,
+	}
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Pub.Allow.Add("foo")
+	p.Pub.Deny.Add("bar")
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Pub.Allow.Add("foo queue")
+	p.Pub.Deny.Add("bar queue")
+	resetAndValidate()
+	AssertTrue(!vr.IsEmpty(), t)
+	AssertTrue(vr.IsBlocking(false), t)
+	AssertTrue(len(vr.Errors()) == 2, t)
+
+	p.Pub = Permission{}
+
+	p.Sub.Allow.Add("1")
+	p.Sub.Deny.Add("2")
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Sub.Allow.Add("3 queue")
+	p.Sub.Deny.Add("4 queue")
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Sub.Allow.Add("5.* queue.*.foo")
+	p.Sub.Deny.Add("6.* queue.*.bar")
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Sub.Allow.Add("7.> queue.>")
+	p.Sub.Deny.Add("8.> queue.>")
+	resetAndValidate()
+	AssertTrue(vr.IsEmpty(), t)
+
+	p.Sub.Allow.Add("9 too many spaces")
+	p.Sub.Deny.Add("0 too many spaces")
+	resetAndValidate()
+	AssertTrue(!vr.IsEmpty(), t)
+	AssertTrue(vr.IsBlocking(false), t)
+	AssertTrue(len(vr.Errors()) == 2, t)
+}
+
 func TestRenamingSubject_ToSubject(t *testing.T) {
 	AssertEquals(RenamingSubject("foo.$2.$1.bar").ToSubject(), Subject("foo.*.*.bar"), t)
 	AssertEquals(RenamingSubject("foo.*.bar").ToSubject(), Subject("foo.*.bar"), t)
@@ -286,13 +349,13 @@ func TestRenamingSubject_ToSubject(t *testing.T) {
 
 func TestRenamigSubject_Validate(t *testing.T) {
 	for from, to := range map[string]string{
-		"foo":">",
-		"bar":"*",
-		"foo.*":"*.*",
-		"foo.>":"*.*",
-		"bar.>":"*.>",
-		"bar.*.*>":"*.>",
-		"*.bar":"$2",
+		"foo":      ">",
+		"bar":      "*",
+		"foo.*":    "*.*",
+		"foo.>":    "*.*",
+		"bar.>":    "*.>",
+		"bar.*.*>": "*.>",
+		"*.bar":    "$2",
 	} {
 		vr := ValidationResults{}
 		RenamingSubject(to).Validate(Subject(from), &vr)
@@ -301,13 +364,13 @@ func TestRenamigSubject_Validate(t *testing.T) {
 		}
 	}
 	for from, to := range map[string]string{
-		"foo":"bar",
-		"foo.bar":"baz",
-		"x":"x.y.z",
-		">":"foo.>",
-		"*":"$1.foo",
-		"*.*":"$1.foo.$2",
-		"*.bar":"$1",
+		"foo":     "bar",
+		"foo.bar": "baz",
+		"x":       "x.y.z",
+		">":       "foo.>",
+		"*":       "$1.foo",
+		"*.*":     "$1.foo.$2",
+		"*.bar":   "$1",
 	} {
 		vr := ValidationResults{}
 		RenamingSubject(to).Validate(Subject(from), &vr)
