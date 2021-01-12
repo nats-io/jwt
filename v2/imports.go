@@ -68,7 +68,11 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	}
 
 	if i.Account == "" {
-		vr.AddWarning("account to import from is not specified")
+		vr.AddError("account to import from is not specified")
+	}
+
+	if i.GetTo() != "" {
+		vr.AddWarning("the field to has been deprecated (use LocalSubject instead)")
 	}
 
 	i.Subject.Validate(vr)
@@ -85,10 +89,39 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 	var act *ActivationClaims
 
 	if i.Token != "" {
+<<<<<<< HEAD
 		var err error
 		act, err = DecodeActivationClaims(i.Token)
 		if err != nil {
 			vr.AddWarning("import %q contains an invalid activation token", i.Subject)
+=======
+		// Check to see if its an embedded JWT or a URL.
+		if u, err := url.Parse(i.Token); err == nil && u.Scheme != "" {
+			c := &http.Client{Timeout: 5 * time.Second}
+			resp, err := c.Get(u.String())
+			if err != nil {
+				vr.AddError("import %s contains an unreachable token URL %q", i.Subject, i.Token)
+			}
+
+			if resp != nil {
+				defer resp.Body.Close()
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					vr.AddError("import %s contains an unreadable token URL %q", i.Subject, i.Token)
+				} else {
+					act, err = DecodeActivationClaims(string(body))
+					if err != nil {
+						vr.AddError("import %s contains a URL %q with an invalid activation token", i.Subject, i.Token)
+					}
+				}
+			}
+		} else {
+			var err error
+			act, err = DecodeActivationClaims(i.Token)
+			if err != nil {
+				vr.AddError("import %q contains an invalid activation token", i.Subject)
+			}
+>>>>>>> 2a4bf94 ([fixed] validation to return error when token are in the wrong context)
 		}
 	}
 
@@ -96,11 +129,20 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 		if !(act.Issuer == i.Account || act.IssuerAccount == i.Account) {
 			vr.AddError("activation token doesn't match account for import %q", i.Subject)
 		}
-
 		if act.ClaimsData.Subject != actPubKey {
 			vr.AddError("activation token doesn't match account it is being included in, %q", i.Subject)
 		}
+		if act.ImportType != i.Type {
+			vr.AddError("mismatch between token import type %s and type of import %s", act.ImportType, i.Type)
+		}
 		act.validateWithTimeChecks(vr, false)
+		subj := i.Subject
+		if i.IsService() && i.To != "" {
+			subj = i.To
+		}
+		if !subj.IsContainedIn(act.ImportSubject) {
+			vr.AddError("activation token import subject %q doesn't match import %q", act.ImportSubject, i.Subject)
+		}
 	}
 }
 

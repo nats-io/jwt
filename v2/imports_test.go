@@ -27,7 +27,7 @@ func TestImportValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -36,7 +36,6 @@ func TestImportValidation(t *testing.T) {
 		t.Errorf("imports should not generate an issue")
 	}
 
-	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
@@ -65,7 +64,7 @@ func TestImportValidationExpiredToken(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 	// test success, expiration is not checked
 	activation := NewActivationClaims(akp)
 	activation.Expires = time.Now().Add(-time.Hour).UTC().Unix()
@@ -117,7 +116,7 @@ func TestImportValidationSigningKey(t *testing.T) {
 	ak2Sk := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
 
 	activation := NewActivationClaims(akp)
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
@@ -158,18 +157,18 @@ func TestInvalidImportToken(t *testing.T) {
 	i.Validate("", vr)
 
 	if vr.IsEmpty() {
-		t.Errorf("imports with a bad token or url should warn the caller")
+		t.Errorf("imports with a bad token or url should cause an error")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("invalid type shouldnt be blocking")
+	if !vr.IsBlocking(false) {
+		t.Errorf("invalid type should be blocking")
 	}
 }
 
 func TestInvalidImportURL(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad token url", To: "bar", Type: Stream}
+	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad-token-url", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -178,8 +177,8 @@ func TestInvalidImportURL(t *testing.T) {
 		t.Errorf("imports with a bad token or url should warn the caller")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("invalid type shouldnt be blocking")
+	if !vr.IsBlocking(true) {
+		t.Errorf("invalid type should be blocking")
 	}
 }
 
@@ -188,7 +187,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "test", Account: akp2, LocalSubject: "bar", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -209,7 +208,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 
 	activation.ImportSubject = "test"
-	activation.ImportType = Stream
+	activation.ImportType = Service
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -240,7 +239,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	}
 }
 func TestMissingAccountInImport(t *testing.T) {
-	i := &Import{Subject: "foo", To: "bar", Type: Stream}
+	i := &Import{Subject: "foo", LocalSubject: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -249,13 +248,13 @@ func TestMissingAccountInImport(t *testing.T) {
 		t.Errorf("expected only one issue")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("Missing Account is not blocking, must import failures are warnings")
+	if !vr.IsBlocking(true) {
+		t.Errorf("Missing Account is blocking")
 	}
 }
 
 func TestServiceImportWithWildcard(t *testing.T) {
-	i := &Import{Subject: "foo.*", Account: publicKey(createAccountNKey(t), t), To: "bar", Type: Service}
+	i := &Import{Subject: "foo.>", Account: publicKey(createAccountNKey(t), t), LocalSubject: "bar.>", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -274,7 +273,7 @@ func TestServiceImportWithWildcard(t *testing.T) {
 }
 
 func TestStreamImportWithWildcardPrefix(t *testing.T) {
-	i := &Import{Subject: "foo", Account: publicKey(createAccountNKey(t), t), To: "bar.*", Type: Stream}
+	i := &Import{Subject: "foo.>", Account: publicKey(createAccountNKey(t), t), LocalSubject: "bar.>", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -319,8 +318,8 @@ func TestStreamImportInformationSharing(t *testing.T) {
 func TestImportsValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, To: "bar", Type: Stream}
-	i2 := &Import{Subject: "foo.*", Account: akp, To: "bar", Type: Service}
+	i := &Import{Subject: "foo", Account: akp, LocalSubject: "bar", Type: Stream}
+	i2 := &Import{Subject: "foo.*", Account: akp, LocalSubject: "bar.*", Type: Service}
 
 	imports := &Imports{}
 	imports.Add(i, i2)
@@ -381,6 +380,72 @@ func TestImportsLocalSubjectVariants(t *testing.T) {
 	}
 }
 
+<<<<<<< HEAD
+=======
+func TestTokenURLImportValidation(t *testing.T) {
+	ak := createAccountNKey(t)
+	ak2 := createAccountNKey(t)
+	akp := publicKey(ak, t)
+	akp2 := publicKey(ak2, t)
+	i := &Import{Subject: "test", Account: akp2, LocalSubject: "bar", Type: Stream}
+
+	activation := NewActivationClaims(akp)
+	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
+	activation.ImportSubject = "test"
+	activation.ImportType = Stream
+
+	actJWT := encode(activation, ak2, t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(actJWT))
+	}))
+	defer ts.Close()
+
+	i.Token = ts.URL
+	vr := CreateValidationResults()
+	i.Validate(akp, vr)
+
+	if !vr.IsEmpty() {
+		fmt.Printf("vr is %+v\n", vr)
+		t.Errorf("imports with token url should be valid")
+	}
+
+	i.Token = "http://Bad URL"
+	vr = CreateValidationResults()
+	i.Validate(akp, vr)
+
+	if vr.IsEmpty() {
+		t.Errorf("imports with bad token url should be valid")
+	}
+
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("bad jwt"))
+	}))
+	defer ts.Close()
+
+	i.Token = ts.URL
+	vr = CreateValidationResults()
+	i.Validate(akp, vr)
+
+	if vr.IsEmpty() {
+		t.Errorf("imports with token url pointing to bad JWT")
+	}
+
+	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer ts.Close()
+
+	i.Token = ts.URL
+	vr = CreateValidationResults()
+	i.Validate(akp, vr)
+
+	if vr.IsEmpty() {
+		t.Errorf("imports with token url pointing to bad url")
+	}
+}
+
+>>>>>>> 2a4bf94 ([fixed] validation to return error when token are in the wrong context)
 func TestImportSubjectValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
@@ -391,10 +456,9 @@ func TestImportSubjectValidation(t *testing.T) {
 
 	ak2 := createAccountNKey(t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "one.two", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "one.two", Account: akp2, LocalSubject: "bar", Type: Stream}
 
-	actJWT := encode(activation, ak2, t)
-	i.Token = actJWT
+	i.Token = encode(activation, ak2, t)
 	vr := CreateValidationResults()
 	i.Validate(akp, vr)
 
@@ -405,19 +469,17 @@ func TestImportSubjectValidation(t *testing.T) {
 
 	activation.ImportSubject = "two"
 	activation.ImportType = Stream
-	actJWT = encode(activation, ak2, t)
-	i.Token = actJWT
+	i.Token = encode(activation, ak2, t)
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
-	if !vr.IsEmpty() {
+	if vr.IsEmpty() {
 		t.Errorf("imports with non-contains subject should be not valid")
 	}
 
 	activation.ImportSubject = ">"
 	activation.ImportType = Stream
-	actJWT = encode(activation, ak2, t)
-	i.Token = actJWT
+	i.Token = encode(activation, ak2, t)
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 

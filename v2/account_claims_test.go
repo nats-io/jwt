@@ -54,7 +54,7 @@ func TestNewAccountClaims(t *testing.T) {
 	account.InfoURL = "http://localhost/my-account/doc"
 	account.Description = "my account"
 	account.Imports = Imports{}
-	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, To: "my", Type: Stream})
+	account.Imports.Add(&Import{Subject: "test", Name: "test import", Account: apk2, Token: actJWT, LocalSubject: "my", Type: Stream})
 
 	vr := CreateValidationResults()
 	account.Validate(vr)
