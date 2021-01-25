@@ -36,7 +36,16 @@ func TestNewAccountClaims(t *testing.T) {
 	actJWT := encode(activation, akp2, t)
 
 	account := NewAccountClaims(apk)
-	if !account.Limits.IsUnlimited() {
+	if !account.Limits.NatsLimits.IsUnlimited() {
+		t.Fatalf("Expected unlimited nats operator limits")
+	}
+	if !account.Limits.AccountLimits.IsUnlimited() {
+		t.Fatalf("Expected unlimited account operator limits")
+	}
+	if account.Limits.JetStreamLimits.DiskStorage != 0 ||
+		account.Limits.JetStreamLimits.MemoryStorage != 0 ||
+		account.Limits.JetStreamLimits.Consumer != 0 ||
+		account.Limits.JetStreamLimits.Streams != 0 {
 		t.Fatalf("Expected unlimited operator limits")
 	}
 
@@ -304,8 +313,11 @@ func TestJetstreamLimits(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
 	acc1 := NewAccountClaims(apk)
-	if !acc1.Limits.IsUnlimited() {
-		t.Fatal()
+	if acc1.Limits.JetStreamLimits.DiskStorage != 0 ||
+		acc1.Limits.JetStreamLimits.MemoryStorage != 0 ||
+		acc1.Limits.JetStreamLimits.Consumer != 0 ||
+		acc1.Limits.JetStreamLimits.Streams != 0 {
+		t.Fatalf("Expected unlimited operator limits")
 	}
 	acc1.Limits.Consumer = 1
 	acc1.Limits.Streams = 2
