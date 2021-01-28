@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"crypto/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -381,15 +382,14 @@ func TestRenamigSubject_Validate(t *testing.T) {
 }
 
 func TestInvalidInfo(t *testing.T) {
+	tooLong := [MaxInfoLength + 21]byte{}
+	rand.Read(tooLong[:])
 	for _, info := range []Info{{
 		Description: "",
 		InfoURL:     "/bad",
 	}, {
-		Description: `
-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890`,
-		InfoURL: "http://localhost/foo/bar",
+		Description: string(tooLong[:]),
+		InfoURL:     "http://localhost/foo/bar",
 	}, {
 		Description: "",
 		InfoURL: `http://1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
