@@ -195,6 +195,12 @@ func TestSignedBy(t *testing.T) {
 	AssertEquals(uc2.DidSign(ac), true, t) // actual key
 	uc.SigningKeys.Add(publicKey(ckp2, t))
 	AssertEquals(uc.DidSign(ac), true, t) // signing key
+	uc.StrictSigningKeyUsage = true
+	AssertEquals(uc.DidSign(uc), true, t)
+	AssertEquals(uc.DidSign(ac), true, t)
+	uc2.StrictSigningKeyUsage = true
+	AssertEquals(uc2.DidSign(uc2), true, t)
+	AssertEquals(uc2.DidSign(ac), false, t)
 }
 
 func testAccountWithAccountServerURL(t *testing.T, u string) error {
