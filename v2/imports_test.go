@@ -16,9 +16,6 @@
 package jwt
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"sort"
 	"strings"
 	"testing"
@@ -381,69 +378,6 @@ func TestImportsLocalSubjectVariants(t *testing.T) {
 	imports.Validate("", vr)
 	if !vr.IsEmpty() {
 		t.Errorf("no issues expected")
-	}
-}
-
-func TestTokenURLImportValidation(t *testing.T) {
-	ak := createAccountNKey(t)
-	ak2 := createAccountNKey(t)
-	akp := publicKey(ak, t)
-	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
-
-	activation := NewActivationClaims(akp)
-	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
-	activation.ImportSubject = "test"
-	activation.ImportType = Stream
-
-	actJWT := encode(activation, ak2, t)
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(actJWT))
-	}))
-	defer ts.Close()
-
-	i.Token = ts.URL
-	vr := CreateValidationResults()
-	i.Validate(akp, vr)
-
-	if !vr.IsEmpty() {
-		fmt.Printf("vr is %+v\n", vr)
-		t.Errorf("imports with token url should be valid")
-	}
-
-	i.Token = "http://Bad URL"
-	vr = CreateValidationResults()
-	i.Validate(akp, vr)
-
-	if vr.IsEmpty() {
-		t.Errorf("imports with bad token url should be valid")
-	}
-
-	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("bad jwt"))
-	}))
-	defer ts.Close()
-
-	i.Token = ts.URL
-	vr = CreateValidationResults()
-	i.Validate(akp, vr)
-
-	if vr.IsEmpty() {
-		t.Errorf("imports with token url pointing to bad JWT")
-	}
-
-	ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusBadRequest)
-	}))
-	defer ts.Close()
-
-	i.Token = ts.URL
-	vr = CreateValidationResults()
-	i.Validate(akp, vr)
-
-	if vr.IsEmpty() {
-		t.Errorf("imports with token url pointing to bad url")
 	}
 }
 
