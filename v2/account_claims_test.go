@@ -620,7 +620,7 @@ func TestAccountMapping(t *testing.T) { // don't block encoding!!!
 	vr = &ValidationResults{}
 	account.Mappings = Mapping{}
 	account.AddMapping("foo4",
-		WeightedMapping{Subject: "to1" }, // no weight means 100
+		WeightedMapping{Subject: "to1"}, // no weight means 100
 		WeightedMapping{Subject: "to2", Weight: 1})
 	account.Validate(vr)
 	if !vr.IsBlocking(false) {
