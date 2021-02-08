@@ -589,3 +589,49 @@ func TestInvalidAccountInfo(t *testing.T) {
 		t.Errorf("invalid info needs to be blocking")
 	}
 }
+
+func TestAccountMapping(t *testing.T) { // don't block encoding!!!
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	account.AddMapping("foo1", WeightedMapping{Subject: "to"})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+	account.AddMapping("foo2",
+		WeightedMapping{Subject: "to1", Weight: 50},
+		WeightedMapping{Subject: "to2", Weight: 50})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+	account.AddMapping("foo3",
+		WeightedMapping{Subject: "to1", Weight: 50},
+		WeightedMapping{Subject: "to2", Weight: 51})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking error as sum of weights is > 100")
+	}
+
+	vr = &ValidationResults{}
+	account.Mappings = Mapping{}
+	account.AddMapping("foo4",
+		WeightedMapping{Subject: "to1" }, // no weight means 100
+		WeightedMapping{Subject: "to2", Weight: 1})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking error as sum of weights is > 100")
+	}
+
+	vr = &ValidationResults{}
+	account.Mappings = Mapping{}
+	account.AddMapping("foo5", WeightedMapping{Subject: "to.*"})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("Expected errors due to wildcard in weighted mapping")
+	}
+}
