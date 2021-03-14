@@ -34,29 +34,19 @@ func TestImportValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
-	}
-
-	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("imports without token or url should not be blocking")
+	if !vr.IsEmpty() {
+		t.Errorf("imports should not generate an issue")
 	}
 
 	activation := NewActivationClaims(akp)
-	activation.Max = 1024 * 1024
-	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
+	activation.Expires = time.Now().Add(time.Hour).UTC().Unix()
 
 	activation.ImportSubject = "test"
 	activation.ImportType = Stream
@@ -96,19 +86,15 @@ func TestInvalidImportToken(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if vr.IsEmpty() {
-		t.Errorf("imports with a bad token or url should warn the caller")
-	}
-
-	if vr.IsBlocking(true) {
-		t.Errorf("invalid type shouldnt be blocking")
+	if !vr.IsBlocking(true) {
+		t.Errorf("bad token should be blocking")
 	}
 }
 
 func TestInvalidImportURL(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)
-	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad token url", To: "bar", Type: Stream}
+	i := &Import{Subject: "foo", Account: akp, Token: "foo://bad-token-url", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
@@ -117,8 +103,8 @@ func TestInvalidImportURL(t *testing.T) {
 		t.Errorf("imports with a bad token or url should warn the caller")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("invalid type shouldnt be blocking")
+	if !vr.IsBlocking(true) {
+		t.Errorf("invalid type should be blocking")
 	}
 }
 
@@ -127,14 +113,10 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp := publicKey(ak, t)
 	akp2 := publicKey(ak2, t)
-	i := &Import{Subject: "test", Account: akp2, To: "bar", Type: Stream}
+	i := &Import{Subject: "bar", Account: akp2, To: "test", Type: Service}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
-
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
 
 	if vr.IsBlocking(true) {
 		t.Errorf("imports without token or url should not be blocking")
@@ -143,10 +125,6 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	i.Type = Service
 	vr = CreateValidationResults()
 	i.Validate("", vr)
-
-	if vr.IsEmpty() {
-		t.Errorf("imports without token or url should warn the caller")
-	}
 
 	if vr.IsBlocking(true) {
 		t.Errorf("imports without token or url should not be blocking")
@@ -157,7 +135,7 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 	activation.Expires = time.Now().Add(time.Duration(time.Hour)).UTC().Unix()
 
 	activation.ImportSubject = "test"
-	activation.ImportType = Stream
+	activation.ImportType = Service
 	actJWT := encode(activation, ak2, t)
 
 	i.Token = actJWT
@@ -187,18 +165,19 @@ func TestInvalidImportTokenValuesValidation(t *testing.T) {
 		t.Errorf("imports with wrong issuer")
 	}
 }
+
 func TestMissingAccountInImport(t *testing.T) {
 	i := &Import{Subject: "foo", To: "bar", Type: Stream}
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 2 {
-		t.Errorf("imports without token or url should warn the caller, as should missing account")
+	if len(vr.Issues) != 1 {
+		t.Errorf("expected only one issue")
 	}
 
-	if vr.IsBlocking(true) {
-		t.Errorf("Missing Account is not blocking, must import failures are warnings")
+	if !vr.IsBlocking(true) {
+		t.Errorf("Missing Account is blocking")
 	}
 }
 
@@ -209,10 +188,6 @@ func TestServiceImportWithWildcard(t *testing.T) {
 
 	vr := CreateValidationResults()
 	i.Validate("", vr)
-
-	if len(vr.Issues) != 2 {
-		t.Errorf("imports without token or url should warn the caller, as should wildcard service")
-	}
 
 	if !vr.IsBlocking(true) {
 		t.Errorf("expected service import with a wildcard subject to be a blocking error")
@@ -225,8 +200,8 @@ func TestStreamImportWithWildcardPrefix(t *testing.T) {
 	vr := CreateValidationResults()
 	i.Validate("", vr)
 
-	if len(vr.Issues) != 3 {
-		t.Errorf("should have registered 3 issues with this import, got %d", len(vr.Issues))
+	if len(vr.Issues) != 2 {
+		t.Errorf("should have registered 2 issues with this import, got %d", len(vr.Issues))
 	}
 
 	if !vr.IsBlocking(true) {
@@ -246,8 +221,8 @@ func TestImportsValidation(t *testing.T) {
 	vr := CreateValidationResults()
 	imports.Validate("", vr)
 
-	if len(vr.Issues) != 3 {
-		t.Errorf("imports without token or url should warn the caller x2, wildcard service as well")
+	if len(vr.Issues) != 1 {
+		t.Errorf("warn about wildcard service")
 	}
 
 	if !vr.IsBlocking(true) {
@@ -349,7 +324,7 @@ func TestImportSubjectValidation(t *testing.T) {
 	vr = CreateValidationResults()
 	i.Validate(akp, vr)
 
-	if !vr.IsEmpty() {
+	if vr.IsEmpty() {
 		t.Errorf("imports with non-contains subject should be not valid")
 	}
 
