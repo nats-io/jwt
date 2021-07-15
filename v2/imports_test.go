@@ -372,7 +372,8 @@ func TestImportsLocalSubjectVariants(t *testing.T) {
 		&Import{Subject: "foo.*.bar.*.>", Account: akp, LocalSubject: "my.$2.$1.>", Type: Stream},
 		&Import{Subject: "baz.*.bar.*.>", Account: akp, LocalSubject: "bar.*.*.>", Type: Service},
 		&Import{Subject: "baz.*", Account: akp, LocalSubject: "my.$1", Type: Stream},
-		&Import{Subject: "bar.*", Account: akp, LocalSubject: "baz.*", Type: Service})
+		&Import{Subject: "bar.*", Account: akp, LocalSubject: "baz.*", Type: Service},
+		&Import{Subject: "biz.*.*.*", Account: akp, LocalSubject: "buz.*.*.*", Type: Service})
 	vr := CreateValidationResults()
 	imports.Validate("", vr)
 	if !vr.IsEmpty() {
