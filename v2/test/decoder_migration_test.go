@@ -374,6 +374,7 @@ func equalExports(t *testing.T, o *v1jwt.Export, n *Export) {
 func equalImports(t *testing.T, o *v1jwt.Import, n *Import) {
 	AssertEquals(o.Name, n.Name, t)
 	AssertEquals(string(o.Subject), string(n.Subject), t)
+	//lint:ignore SA1019 testing
 	AssertEquals(string(o.To), string(n.To), t)
 	AssertEquals(int(o.Type), int(n.Type), t)
 

@@ -81,34 +81,10 @@ func createAccountNKey(t *testing.T) nkeys.KeyPair {
 	return kp
 }
 
-func createUserNKey(t *testing.T) nkeys.KeyPair {
-	kp, err := nkeys.CreateUser()
-	if err != nil {
-		t.Fatal("error creating account kp", err)
-	}
-	return kp
-}
-
 func createOperatorNKey(t *testing.T) nkeys.KeyPair {
 	kp, err := nkeys.CreateOperator()
 	if err != nil {
 		t.Fatal("error creating operator kp", err)
-	}
-	return kp
-}
-
-func createServerNKey(t *testing.T) nkeys.KeyPair {
-	kp, err := nkeys.CreateServer()
-	if err != nil {
-		t.Fatal("error creating server kp", err)
-	}
-	return kp
-}
-
-func createClusterNKey(t *testing.T) nkeys.KeyPair {
-	kp, err := nkeys.CreateCluster()
-	if err != nil {
-		t.Fatal("error creating cluster kp", err)
 	}
 	return kp
 }
@@ -119,14 +95,6 @@ func publicKey(kp nkeys.KeyPair, t *testing.T) string {
 		t.Fatal("error reading public key", err)
 	}
 	return pk
-}
-
-func seedKey(kp nkeys.KeyPair, t *testing.T) []byte {
-	sk, err := kp.Seed()
-	if err != nil {
-		t.Fatal("error reading seed", err)
-	}
-	return sk
 }
 
 func encode(c Claims, kp nkeys.KeyPair, t *testing.T) string {
