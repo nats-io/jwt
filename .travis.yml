@@ -22,7 +22,7 @@ before_script:
   - staticcheck ./...
 script:
   - mkdir cov
-  - go test -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
+  - go test -modfile=go_test.mod -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
   - gocovmerge ./cov/*.out > coverage.out
 
 deploy:
