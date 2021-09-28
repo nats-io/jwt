@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/nats-io/jwt/v2"
 	jwtv1 "github.com/nats-io/jwt"
 )
 
