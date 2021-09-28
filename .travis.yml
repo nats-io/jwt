@@ -22,8 +22,8 @@ before_script:
   - staticcheck ./...
 script:
   - mkdir cov
-  - if [ "$V" == "v2" ]; then GO_MOD_FILE="go_test.mod"; else GO_MOD_FILE="go.mod"; fi
-  - go test -modfile=$GO_MOD_FILE -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
+  - if [ "$V" == "v2" ]; then GO_MOD_FILE="go_test.mod"; PKG_EXT="/v2"; else GO_MOD_FILE="go.mod"; PKG_EXT=""; fi
+  - go test -modfile=$GO_MOD_FILE -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt${PKG_EXT} .
   - gocovmerge ./cov/*.out > coverage.out
 
 deploy:
