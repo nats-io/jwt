@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -248,4 +249,34 @@ func TestGetKeys(t *testing.T) {
 			t.Fatal("expected to find key")
 		}
 	}
+}
+
+func TestJson(t *testing.T) {
+	ac, apk := makeAccount(t, nil, nil)
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
+
+	token, err := ac.Encode(apk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aac, err := DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	j, err := json.Marshal(aac)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var myAcc AccountClaims
+	err = json.Unmarshal(j, &myAcc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(myAcc.SigningKeys) != 3 {
+		t.Fatalf("Expected 3 signing keys got: %d",len(myAcc.SigningKeys))
+	}
+
 }
