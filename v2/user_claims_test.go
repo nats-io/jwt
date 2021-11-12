@@ -358,6 +358,10 @@ func TestUserAllowedConnectionTypes(t *testing.T) {
 	uc := NewUserClaims(publicKey(ukp, t))
 	uc.AllowedConnectionTypes.Add(ConnectionTypeStandard)
 	uc.AllowedConnectionTypes.Add(ConnectionTypeWebsocket)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeLeafnode)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeLeafnodeWS)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeMqtt)
+	uc.AllowedConnectionTypes.Add(ConnectionTypeMqttWS)
 	uJwt := encode(uc, akp, t)
 
 	uc2, err := DecodeUserClaims(uJwt)
@@ -366,6 +370,10 @@ func TestUserAllowedConnectionTypes(t *testing.T) {
 	}
 	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeStandard), t)
 	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeWebsocket), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeLeafnode), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeLeafnodeWS), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeMqtt), t)
+	AssertTrue(uc2.AllowedConnectionTypes.Contains(ConnectionTypeMqttWS), t)
 }
 
 func TestUserClaimRevocation(t *testing.T) {
