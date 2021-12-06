@@ -218,8 +218,8 @@ func ParseDecoratedUserNKey(contents []byte) (nkeys.KeyPair, error) {
 	return kp, nil
 }
 
-// IssueUserJWT takes an account signing key, account id, and use public key (and optionally a user's name, an expiration duration and tags) and returns a valid signed JWT.
-// The signingKey, is a mandatory account signing nkey pair to sign the generated jwt (note that it must be a signing key attached to the account, not the account's private (seed) key).
+// IssueUserJWT takes an account scoped signing key, account id, and use public key (and optionally a user's name, an expiration duration and tags) and returns a valid signed JWT.
+// The scopedSigningKey, is a mandatory account scoped signing nkey pair to sign the generated jwt (note that it _must_ be a signing key attached to the account (and a _scoped_ signing key), not the account's private (seed) key).
 // The accountId, is a mandatory public account nkey. Will return error when not set or not account nkey.
 // The publicUserKey, is a mandatory public user nkey. Will return error when not set or not user nkey.
 // The name, is an optional human-readable name. When absent, default to publicUserKey.
@@ -229,7 +229,7 @@ func ParseDecoratedUserNKey(contents []byte) (nkeys.KeyPair, error) {
 // Returns:
 // string, resulting jwt.
 // error, when issues arose.
-func IssueUserJWT(signingKey nkeys.KeyPair, accountId string, publicUserKey string, name string, expirationDuration time.Duration, tags ...string) (string, error) {
+func IssueUserJWT(scopedSigningKey nkeys.KeyPair, accountId string, publicUserKey string, name string, expirationDuration time.Duration, tags ...string) (string, error) {
 
 	if !nkeys.IsValidPublicAccountKey(accountId) {
 		return "", errors.New("issueUserJWT requires an account key for the accountId parameter, but got " + nkeys.Prefix(accountId).String())
@@ -258,9 +258,9 @@ func IssueUserJWT(signingKey nkeys.KeyPair, accountId string, publicUserKey stri
 	claim.Subject = publicUserKey
 	claim.Tags = tags
 
-	encoded, error := claim.Encode(signingKey)
-	if error != nil {
-		return "", errors.New("error encoding claim " + error.Error())
+	encoded, err := claim.Encode(scopedSigningKey)
+	if err != nil {
+		return "", errors.New("err encoding claim " + err.Error())
 	}
 
 	return encoded, nil
