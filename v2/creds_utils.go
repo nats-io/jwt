@@ -246,8 +246,6 @@ func IssueUserJWT(scopedSigningKey nkeys.KeyPair, accountId string, publicUserKe
 		claim.Expires = time.Now().Add(expirationDuration).UTC().Unix()
 	}
 
-	claim.IssuedAt = time.Now().UTC().Unix()
-
 	claim.IssuerAccount = accountId
 	if name != "" {
 		claim.Name = name
