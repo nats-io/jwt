@@ -51,6 +51,7 @@ func (n *NatsLimits) IsUnlimited() bool {
 }
 
 type JetStreamLimits struct {
+	HaResources      int64 `json:"ha_resources"`                 // Max number of bytes high availability resources (streams & consumer). (0 means disabled). no omitempty on purpose
 	MemoryStorage    int64 `json:"mem_storage,omitempty"`        // Max number of bytes stored in memory across all streams. (0 means disabled)
 	DiskStorage      int64 `json:"disk_storage,omitempty"`       // Max number of bytes stored on disk across all streams. (0 means disabled)
 	Streams          int64 `json:"streams,omitempty"`            // Max number of streams
@@ -60,7 +61,15 @@ type JetStreamLimits struct {
 
 // IsUnlimited returns true if all limits are unlimited
 func (j *JetStreamLimits) IsUnlimited() bool {
-	return *j == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, false}
+	return *j == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, NoLimit, false}
+}
+
+// IsJSEnabled returns true if JS is enabled by either disk or memory storage being enabled
+func (j *JetStreamLimits) IsJSEnabled() bool {
+	if j == nil {
+		return false
+	}
+	return j.MemoryStorage != 0 || j.DiskStorage != 0
 }
 
 // OperatorLimits are used to limit access by an account
@@ -189,7 +198,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 	c.Limits = OperatorLimits{
 		NatsLimits{NoLimit, NoLimit, NoLimit},
 		AccountLimits{NoLimit, NoLimit, true, NoLimit, NoLimit},
-		JetStreamLimits{0, 0, 0, 0, false}}
+		JetStreamLimits{0, 0, 0, 0, 0, false}}
 	c.Subject = subject
 	c.Mappings = Mapping{}
 	return c
