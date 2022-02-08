@@ -41,9 +41,13 @@ func loadAccount(data []byte, version int) (*AccountClaims, error) {
 		return v1a.Migrate()
 	case 2:
 		var v2a AccountClaims
+		v2a.Limits.HaResources = NoLimit
 		v2a.SigningKeys = make(SigningKeys)
 		if err := json.Unmarshal(data, &v2a); err != nil {
 			return nil, err
+		}
+		if !v2a.Limits.IsJSEnabled() {
+			v2a.Limits.HaResources = 0
 		}
 		return &v2a, nil
 	default:
