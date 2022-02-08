@@ -276,7 +276,7 @@ func TestJson(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(myAcc.SigningKeys) != 3 {
-		t.Fatalf("Expected 3 signing keys got: %d",len(myAcc.SigningKeys))
+		t.Fatalf("Expected 3 signing keys got: %d", len(myAcc.SigningKeys))
 	}
 
 }

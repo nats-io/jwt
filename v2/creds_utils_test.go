@@ -138,10 +138,10 @@ func Test_ParseDecoratedJWTBad(t *testing.T) {
 
 func Test_ParseDecoratedOPJWT(t *testing.T) {
 	content := []string{
-`-----BEGIN TEST OPERATOR JWT-----
+		`-----BEGIN TEST OPERATOR JWT-----
 eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJhdWQiOiJURVNUUyIsImV4cCI6MTg1OTEyMTI3NSwianRpIjoiWE5MWjZYWVBIVE1ESlFSTlFPSFVPSlFHV0NVN01JNVc1SlhDWk5YQllVS0VRVzY3STI1USIsImlhdCI6MTU0Mzc2MTI3NSwiaXNzIjoiT0NBVDMzTVRWVTJWVU9JTUdOR1VOWEo2NkFIMlJMU0RBRjNNVUJDWUFZNVFNSUw2NU5RTTZYUUciLCJuYW1lIjoiU3luYWRpYSBDb21tdW5pY2F0aW9ucyBJbmMuIiwibmJmIjoxNTQzNzYxMjc1LCJzdWIiOiJPQ0FUMzNNVFZVMlZVT0lNR05HVU5YSjY2QUgyUkxTREFGM01VQkNZQVk1UU1JTDY1TlFNNlhRRyIsInR5cGUiOiJvcGVyYXRvciIsIm5hdHMiOnsic2lnbmluZ19rZXlzIjpbIk9EU0tSN01ZRlFaNU1NQUo2RlBNRUVUQ1RFM1JJSE9GTFRZUEpSTUFWVk40T0xWMllZQU1IQ0FDIiwiT0RTS0FDU1JCV1A1MzdEWkRSVko2NTdKT0lHT1BPUTZLRzdUNEhONk9LNEY2SUVDR1hEQUhOUDIiLCJPRFNLSTM2TFpCNDRPWTVJVkNSNlA1MkZaSlpZTVlXWlZXTlVEVExFWjVUSzJQTjNPRU1SVEFCUiJdfX0.hyfz6E39BMUh0GLzovFfk3wT4OfualftjdJ_eYkLfPvu5tZubYQ_Pn9oFYGCV_6yKy3KMGhWGUCyCdHaPhalBw
 ------END TEST OPERATOR JWT------`,
-`-----BEGIN TEST OPERATOR JWT-----
+		`-----BEGIN TEST OPERATOR JWT-----
 eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJqdGkiOiJKV01TUzNRUFpDS0lHSE1BWko3RUpQSlVHN01DTFNQUkJaTEpSUUlRQkRVTkFaUE5MQVVBIiwiaWF0IjoxNTY1ODg5NzEyLCJpc3MiOiJPQU01VlNINDJXRlZWTkpXNFNMRTZRVkpCREpVRTJGUVNYWkxRTk1SRDdBMlBaTTIzTDIyWFlVWSIsIm5hbWUiOiJzeW5hZGlhIiwic3ViIjoiT0FNNVZTSDQyV0ZWVk5KVzRTTEU2UVZKQkRKVUUyRlFTWFpMUU5NUkQ3QTJQWk0yM0wyMlhZVVkiLCJ0eXBlIjoib3BlcmF0b3IiLCJuYXRzIjp7ImFjY291bnRfc2VydmVyX3VybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NjA2MC9qd3QvdjEiLCJvcGVyYXRvcl9zZXJ2aWNlX3VybHMiOlsibmF0czovL2xvY2FsaG9zdDo0MTQxIl19fQ.XPvAezQj3AxwEvYLVBq-EIssP4OhjoMGLbIaripzBKv1oCtHdPNKz96YwB2vUoY-4OrN9ZOPo9TKR3jVxq0uBQ
 ------END TEST OPERATOR JWT------`}
 	test := func(content string) {
@@ -155,22 +155,21 @@ eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5In0.eyJqdGkiOiJKV01TUzNRUFpDS0lHSE1BWko3RUpQ
 		}
 	}
 	for i, cont := range content {
-		t.Run( fmt.Sprintf("%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			test(cont)
 		})
-		t.Run( fmt.Sprintf("%d-win", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d-win", i), func(t *testing.T) {
 			test(strings.ReplaceAll(cont, "\n", "\r\n"))
 		})
 		cont = cont + "\n"
-		t.Run( fmt.Sprintf("%d-trail-nl", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d-trail-nl", i), func(t *testing.T) {
 			test(cont)
 		})
-		t.Run( fmt.Sprintf("%d-trail-nl-win", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d-trail-nl-win", i), func(t *testing.T) {
 			test(strings.ReplaceAll(cont, "\n", "\r\n"))
 		})
 	}
 }
-
 
 func Test_ParseDecoratedSeed(t *testing.T) {
 	token, ukp := makeJWT(t)

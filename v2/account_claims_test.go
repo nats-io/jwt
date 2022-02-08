@@ -362,7 +362,6 @@ func TestJetstreamLimitsDeEnCode(t *testing.T) {
 	}
 }
 
-
 func TestAccountSigningKeyValidation(t *testing.T) {
 	okp := createOperatorNKey(t)
 
