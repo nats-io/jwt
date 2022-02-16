@@ -3,8 +3,8 @@ os:
   - windows
 language: go
 go:
+  - 1.17.x
   - 1.16.x
-  - 1.15.x
 git:
   depth: false
 env:
@@ -13,8 +13,8 @@ env:
 before_script:
   - cd $TRAVIS_BUILD_DIR/${V}
   - go get -t ./...
-  - go get -u honnef.co/go/tools/cmd/staticcheck
-  - go get -u github.com/client9/misspell/cmd/misspell
+  - go install honnef.co/go/tools/cmd/staticcheck@latest
+  - go install github.com/client9/misspell/cmd/misspell@latest
   - go get github.com/mattn/goveralls
   - go get github.com/wadey/gocovmerge
   - go vet ./...
@@ -33,4 +33,4 @@ deploy:
   on:
     # Does not matter what is the value of ${V} here, just that we want to do the
     # release only once. So we put all conditions that reduce the matrix to 1 run.
-    condition: ${V} = "v2" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ 1.16
+    condition: ${V} = "v2" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ 1.17
