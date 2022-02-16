@@ -51,7 +51,7 @@ func (n *NatsLimits) IsUnlimited() bool {
 }
 
 type JetStreamLimits struct {
-	HaResources      int64 `json:"ha_resources"`                 // Max number of bytes high availability resources (streams & consumer). (0 means disabled). no omitempty on purpose
+	HAResources      int64 `json:"ha_resources"`                 // Max number of bytes high availability resources (streams & consumer). (0 means disabled). no omitempty on purpose
 	MemoryStorage    int64 `json:"mem_storage,omitempty"`        // Max number of bytes stored in memory across all streams. (0 means disabled)
 	DiskStorage      int64 `json:"disk_storage,omitempty"`       // Max number of bytes stored on disk across all streams. (0 means disabled)
 	Streams          int64 `json:"streams,omitempty"`            // Max number of streams
