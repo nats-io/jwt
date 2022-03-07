@@ -317,11 +317,9 @@ func TestJetstreamLimits(t *testing.T) {
 		acc1.Limits.JetStreamLimits.MemoryStorage != 0 ||
 		acc1.Limits.JetStreamLimits.Consumer != 0 ||
 		acc1.Limits.JetStreamLimits.Streams != 0 ||
-		acc1.Limits.JetStreamLimits.HAResources != 0 ||
 		acc1.Limits.JetStreamLimits.MaxBytesRequired != false {
 		t.Fatalf("Expected unlimited operator limits")
 	}
-	acc1.Limits.HAResources = 1
 	acc1.Limits.Consumer = 1
 	acc1.Limits.Streams = 2
 	acc1.Limits.MemoryStorage = 3
@@ -341,6 +339,43 @@ func TestJetstreamLimits(t *testing.T) {
 	}
 }
 
+func TestTieredLimits(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	acc1 := NewAccountClaims(apk)
+	l := JetStreamLimits{
+		MemoryStorage:    1024,
+		DiskStorage:      1024,
+		Streams:          1,
+		Consumer:         1,
+		MaxBytesRequired: true,
+	}
+	acc1.Limits.TieredLimits["R1"] = l
+	acc1.Limits.TieredLimits["R3"] = l
+
+	vr := CreateValidationResults()
+	acc1.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("valid account should have validation issues")
+	}
+
+	if token, err := acc1.Encode(akp); err != nil {
+		t.Fatal("valid account should have no validation issues")
+	} else if acc2, err := DecodeAccountClaims(token); err != nil {
+		t.Fatal("valid account should have no validation issues")
+	} else if acc1.Limits.TieredLimits["R1"] != acc2.Limits.TieredLimits["R1"] {
+		t.Fatal("tier R1 should have same limits")
+	} else if acc1.Limits.TieredLimits["R3"] != acc2.Limits.TieredLimits["R3"] {
+		t.Fatal("tier R2 should have same limits")
+	}
+	// test tiers and js limits being mutual exclusive
+	acc1.Limits.JetStreamLimits = l
+	acc1.Validate(vr)
+	if vr.IsEmpty() {
+		t.Fatal("valid account should have validation issues")
+	}
+}
+
 func TestJetstreamLimitsDeEnCode(t *testing.T) {
 	// token (generated without this change) with js disabled
 	c1, err := DecodeAccountClaims(`eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiI3V0NYQkZKS0lIN1Y0SkdPR0FVTEtTS05aQUxVTUZMVExZWVgyNTdDSzZORk5OWTdGRVdBIiwiaWF0IjoxNjQ0Mjc5NDY3LCJpc3MiOiJPQk5UUVJFSEVJUFJFVE1BVlBWUVVDSUdFUktHWkIzRVJBVjVTNUdNM0lPRVFOSFJFQkpPVUFSRiIsIm5hbWUiOiJ0ZXN0Iiwic3ViIjoiQUM2SFFJMlVBTVVQREVQN1dTWVFZV1JDTEVZQkxZVlNQTDZBSExDVVBKVEdVMzJUNEtRQktZU0ciLCJuYXRzIjp7ImxpbWl0cyI6eyJzdWJzIjotMSwiZGF0YSI6LTEsInBheWxvYWQiOi0xLCJpbXBvcnRzIjotMSwiZXhwb3J0cyI6LTEsIndpbGRjYXJkcyI6dHJ1ZSwiY29ubiI6LTEsImxlYWYiOi0xfSwiZGVmYXVsdF9wZXJtaXNzaW9ucyI6eyJwdWIiOnt9LCJzdWIiOnt9fSwidHlwZSI6ImFjY291bnQiLCJ2ZXJzaW9uIjoyfX0.73vDu9osNeLKwQ-g1Uu1fAtszMNz_QRZXRJLp0kzZh-0eMBmt0nb2mMwBwg-fufJs1FqYe9WbWKeXAYStnVnBg`)
@@ -348,8 +383,6 @@ func TestJetstreamLimitsDeEnCode(t *testing.T) {
 		t.Fatal(err)
 	} else if c1.Limits.IsJSEnabled() {
 		t.Fatal("JetStream expected to be disabled")
-	} else if c1.Limits.JetStreamLimits.HAResources != 0 {
-		t.Fatal("expected value for HAResources is 0")
 	}
 	// token (generated without this change) with js enabled
 	c2, err := DecodeAccountClaims(`eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJPVFFXVEQyVkFMWkRQQTZYU1hLS09GRVFZR1VaVFBDNEtKV1BYMlAyWU1XMjVTMzRTVjNRIiwiaWF0IjoxNjQ0Mjc5MzM0LCJpc3MiOiJPQk5UUVJFSEVJUFJFVE1BVlBWUVVDSUdFUktHWkIzRVJBVjVTNUdNM0lPRVFOSFJFQkpPVUFSRiIsIm5hbWUiOiJ0ZXN0Iiwic3ViIjoiQUM2SFFJMlVBTVVQREVQN1dTWVFZV1JDTEVZQkxZVlNQTDZBSExDVVBKVEdVMzJUNEtRQktZU0ciLCJuYXRzIjp7ImxpbWl0cyI6eyJzdWJzIjotMSwiZGF0YSI6LTEsInBheWxvYWQiOi0xLCJpbXBvcnRzIjotMSwiZXhwb3J0cyI6LTEsIndpbGRjYXJkcyI6dHJ1ZSwiY29ubiI6LTEsImxlYWYiOi0xLCJkaXNrX3N0b3JhZ2UiOjEwMDAwMDB9LCJkZWZhdWx0X3Blcm1pc3Npb25zIjp7InB1YiI6e30sInN1YiI6e319LCJ0eXBlIjoiYWNjb3VudCIsInZlcnNpb24iOjJ9fQ.Xt5azhxOkC7nywz9Q8xVtzX8lZIqdOhpfGyQI30aNdd-nbVGX2O13OOfouIaTLyajZiS4bcJFXa29q6QCFRUDA`)
@@ -357,8 +390,6 @@ func TestJetstreamLimitsDeEnCode(t *testing.T) {
 		t.Fatal(err)
 	} else if !c2.Limits.IsJSEnabled() {
 		t.Fatal("JetStream expected to be enabled")
-	} else if c2.Limits.JetStreamLimits.HAResources != NoLimit {
-		t.Fatal("expected value for HAResources is NoLimit")
 	}
 }
 
