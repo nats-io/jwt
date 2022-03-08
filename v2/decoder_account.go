@@ -45,7 +45,7 @@ func loadAccount(data []byte, version int) (*AccountClaims, error) {
 		if err := json.Unmarshal(data, &v2a); err != nil {
 			return nil, err
 		}
-		if len(v2a.Limits.TieredLimits) > 0 {
+		if len(v2a.Limits.JetStreamTieredLimits) > 0 {
 			v2a.Limits.JetStreamLimits = JetStreamLimits{}
 		}
 		return &v2a, nil

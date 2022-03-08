@@ -71,14 +71,27 @@ func (j *JetStreamLimits) IsJSEnabled() bool {
 	return j.MemoryStorage != 0 || j.DiskStorage != 0
 }
 
-type TieredLimits map[string]JetStreamLimits
+type JetStreamTieredLimits map[string]JetStreamLimits
 
 // OperatorLimits are used to limit access by an account
 type OperatorLimits struct {
 	NatsLimits
 	AccountLimits
 	JetStreamLimits
-	TieredLimits `json:"tiered_limits,omitempty"`
+	JetStreamTieredLimits `json:"tiered_limits,omitempty"`
+}
+
+// IsJSEnabled returns if this account claim has JS enabled either through a tier or the non tiered limits.
+func (o *OperatorLimits) IsJSEnabled() bool {
+	if len(o.JetStreamTieredLimits) > 0 {
+		for _, l := range o.JetStreamTieredLimits {
+			if l.IsJSEnabled() {
+				return true
+			}
+		}
+		return false
+	}
+	return o.JetStreamLimits.IsJSEnabled()
 }
 
 // IsEmpty returns true if all limits are 0/false/empty.
@@ -86,19 +99,19 @@ func (o *OperatorLimits) IsEmpty() bool {
 	return o.NatsLimits == NatsLimits{} &&
 		o.AccountLimits == AccountLimits{} &&
 		o.JetStreamLimits == JetStreamLimits{} &&
-		len(o.TieredLimits) == 0
+		len(o.JetStreamTieredLimits) == 0
 }
 
 // IsUnlimited returns true if all limits are unlimited
 func (o *OperatorLimits) IsUnlimited() bool {
 	return o.AccountLimits.IsUnlimited() && o.NatsLimits.IsUnlimited() &&
-		o.JetStreamLimits.IsUnlimited() && len(o.TieredLimits) == 0
+		o.JetStreamLimits.IsUnlimited() && len(o.JetStreamTieredLimits) == 0
 }
 
 // Validate checks that the operator limits contain valid values
 func (o *OperatorLimits) Validate(vr *ValidationResults) {
 	// negative values mean unlimited, so all numbers are valid
-	if len(o.TieredLimits) > 0 && o.JetStreamLimits.IsJSEnabled() {
+	if len(o.JetStreamTieredLimits) > 0 && (o.JetStreamLimits != JetStreamLimits{}) {
 		vr.AddError("JetStream Limits and tiered JetStream Limits are mutually exclusive")
 	}
 }
@@ -208,7 +221,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 		NatsLimits{NoLimit, NoLimit, NoLimit},
 		AccountLimits{NoLimit, NoLimit, true, NoLimit, NoLimit},
 		JetStreamLimits{0, 0, 0, 0, false},
-		TieredLimits{},
+		JetStreamTieredLimits{},
 	}
 	c.Subject = subject
 	c.Mappings = Mapping{}

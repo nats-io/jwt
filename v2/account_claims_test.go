@@ -350,8 +350,9 @@ func TestTieredLimits(t *testing.T) {
 		Consumer:         1,
 		MaxBytesRequired: true,
 	}
-	acc1.Limits.TieredLimits["R1"] = l
-	acc1.Limits.TieredLimits["R3"] = l
+	acc1.Limits.JetStreamTieredLimits["R1"] = l
+	l.Streams = 2 // minor change so both tiers differ
+	acc1.Limits.JetStreamTieredLimits["R3"] = l
 
 	vr := CreateValidationResults()
 	acc1.Validate(vr)
@@ -363,9 +364,9 @@ func TestTieredLimits(t *testing.T) {
 		t.Fatal("valid account should have no validation issues")
 	} else if acc2, err := DecodeAccountClaims(token); err != nil {
 		t.Fatal("valid account should have no validation issues")
-	} else if acc1.Limits.TieredLimits["R1"] != acc2.Limits.TieredLimits["R1"] {
+	} else if acc1.Limits.JetStreamTieredLimits["R1"] != acc2.Limits.JetStreamTieredLimits["R1"] {
 		t.Fatal("tier R1 should have same limits")
-	} else if acc1.Limits.TieredLimits["R3"] != acc2.Limits.TieredLimits["R3"] {
+	} else if acc1.Limits.JetStreamTieredLimits["R3"] != acc2.Limits.JetStreamTieredLimits["R3"] {
 		t.Fatal("tier R2 should have same limits")
 	}
 	// test tiers and js limits being mutual exclusive
