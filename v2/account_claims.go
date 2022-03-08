@@ -63,14 +63,6 @@ func (j *JetStreamLimits) IsUnlimited() bool {
 	return *j == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, false}
 }
 
-// IsJSEnabled returns true if JS is enabled by either disk or memory storage being enabled
-func (j *JetStreamLimits) IsJSEnabled() bool {
-	if j == nil {
-		return false
-	}
-	return j.MemoryStorage != 0 || j.DiskStorage != 0
-}
-
 type JetStreamTieredLimits map[string]JetStreamLimits
 
 // OperatorLimits are used to limit access by an account
@@ -85,13 +77,14 @@ type OperatorLimits struct {
 func (o *OperatorLimits) IsJSEnabled() bool {
 	if len(o.JetStreamTieredLimits) > 0 {
 		for _, l := range o.JetStreamTieredLimits {
-			if l.IsJSEnabled() {
+			if l.MemoryStorage != 0 || l.DiskStorage != 0 {
 				return true
 			}
 		}
 		return false
 	}
-	return o.JetStreamLimits.IsJSEnabled()
+	l := o.JetStreamLimits
+	return l.MemoryStorage != 0 || l.DiskStorage != 0
 }
 
 // IsEmpty returns true if all limits are 0/false/empty.
