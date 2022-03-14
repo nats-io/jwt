@@ -4,20 +4,7 @@ build:
 	go build
 
 test:
-	gofmt -s -w *.go
-	goimports -w *.go
-	go vet ./...
-	go test -v
-	go test -v --race
-	staticcheck ./...
-
-	cd v2/
-	gofmt -s -w *.go
-	goimports -w *.go
-	go vet ./...
-	go test -v
-	go test -v --race
-	staticcheck ./...
+	./scripts/test.sh
 
 fmt:
 	gofmt -w -s *.go
