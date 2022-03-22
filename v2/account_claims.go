@@ -104,8 +104,13 @@ func (o *OperatorLimits) IsUnlimited() bool {
 // Validate checks that the operator limits contain valid values
 func (o *OperatorLimits) Validate(vr *ValidationResults) {
 	// negative values mean unlimited, so all numbers are valid
-	if len(o.JetStreamTieredLimits) > 0 && (o.JetStreamLimits != JetStreamLimits{}) {
-		vr.AddError("JetStream Limits and tiered JetStream Limits are mutually exclusive")
+	if len(o.JetStreamTieredLimits) > 0 {
+		if (o.JetStreamLimits != JetStreamLimits{}) {
+			vr.AddError("JetStream Limits and tiered JetStream Limits are mutually exclusive")
+		}
+		if _, ok := o.JetStreamTieredLimits[""]; ok {
+			vr.AddError(`Tiered JetStream Limits can nont contain a blank "" tier name`)
+		}
 	}
 }
 
