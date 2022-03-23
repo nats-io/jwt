@@ -55,7 +55,7 @@ type JetStreamLimits struct {
 	DiskStorage      int64 `json:"disk_storage,omitempty"`       // Max number of bytes stored on disk across all streams. (0 means disabled)
 	Streams          int64 `json:"streams,omitempty"`            // Max number of streams
 	Consumer         int64 `json:"consumer,omitempty"`           // Max number of consumers
-	MaxMaxBytes      int64 `json:"max_max_bytes,omitempty"`      // Max max bytes a stream can have. (0 means disabled/unlimited)
+	MaxStreamBytes   int64 `json:"max_stream_bytes,omitempty"`   // Max max bytes a stream can have. (0 means disabled/unlimited)
 	MaxBytesRequired bool  `json:"max_bytes_required,omitempty"` // Max bytes required by all Streams
 }
 
@@ -63,8 +63,8 @@ type JetStreamLimits struct {
 func (j *JetStreamLimits) IsUnlimited() bool {
 	lim := *j
 	// workaround in case NoLimit was used instead of 0
-	if lim.MaxMaxBytes < 0 {
-		lim.MaxMaxBytes = 0
+	if lim.MaxStreamBytes < 0 {
+		lim.MaxStreamBytes = 0
 	}
 	return lim == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, 0, false}
 }
@@ -73,8 +73,8 @@ func (j *JetStreamLimits) Validate(vr *ValidationResults) {
 	if j.MemoryStorage == 0 && j.DiskStorage == 0 {
 		return
 	}
-	if j.MaxMaxBytes > 0 && !j.MaxBytesRequired {
-		vr.AddError(`MaxMaxBytes depends on MaxBytesRequired being true`)
+	if j.MaxStreamBytes > 0 && !j.MaxBytesRequired {
+		vr.AddError(`MaxStreamBytes depends on MaxBytesRequired being true`)
 	}
 }
 
