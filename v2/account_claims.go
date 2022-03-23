@@ -55,12 +55,27 @@ type JetStreamLimits struct {
 	DiskStorage      int64 `json:"disk_storage,omitempty"`       // Max number of bytes stored on disk across all streams. (0 means disabled)
 	Streams          int64 `json:"streams,omitempty"`            // Max number of streams
 	Consumer         int64 `json:"consumer,omitempty"`           // Max number of consumers
+	MaxStreamBytes   int64 `json:"max_stream_bytes,omitempty"`   // Max max bytes a stream can have. (0 means disabled/unlimited)
 	MaxBytesRequired bool  `json:"max_bytes_required,omitempty"` // Max bytes required by all Streams
 }
 
 // IsUnlimited returns true if all limits are unlimited
 func (j *JetStreamLimits) IsUnlimited() bool {
-	return *j == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, false}
+	lim := *j
+	// workaround in case NoLimit was used instead of 0
+	if lim.MaxStreamBytes < 0 {
+		lim.MaxStreamBytes = 0
+	}
+	return lim == JetStreamLimits{NoLimit, NoLimit, NoLimit, NoLimit, 0, false}
+}
+
+func (j *JetStreamLimits) Validate(vr *ValidationResults) {
+	if j.MemoryStorage == 0 && j.DiskStorage == 0 {
+		return
+	}
+	if j.MaxStreamBytes > 0 && !j.MaxBytesRequired {
+		vr.AddError(`MaxStreamBytes depends on MaxBytesRequired being true`)
+	}
 }
 
 type JetStreamTieredLimits map[string]JetStreamLimits
@@ -109,8 +124,13 @@ func (o *OperatorLimits) Validate(vr *ValidationResults) {
 			vr.AddError("JetStream Limits and tiered JetStream Limits are mutually exclusive")
 		}
 		if _, ok := o.JetStreamTieredLimits[""]; ok {
-			vr.AddError(`Tiered JetStream Limits can nont contain a blank "" tier name`)
+			vr.AddError(`Tiered JetStream Limits can not contain a blank "" tier name`)
 		}
+		for _, j := range o.JetStreamTieredLimits {
+			j.Validate(vr)
+		}
+	} else {
+		o.JetStreamLimits.Validate(vr)
 	}
 }
 
@@ -218,7 +238,7 @@ func NewAccountClaims(subject string) *AccountClaims {
 	c.Limits = OperatorLimits{
 		NatsLimits{NoLimit, NoLimit, NoLimit},
 		AccountLimits{NoLimit, NoLimit, true, NoLimit, NoLimit},
-		JetStreamLimits{0, 0, 0, 0, false},
+		JetStreamLimits{0, 0, 0, 0, 0, false},
 		JetStreamTieredLimits{},
 	}
 	c.Subject = subject

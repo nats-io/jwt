@@ -317,15 +317,22 @@ func TestJetstreamLimits(t *testing.T) {
 		acc1.Limits.JetStreamLimits.MemoryStorage != 0 ||
 		acc1.Limits.JetStreamLimits.Consumer != 0 ||
 		acc1.Limits.JetStreamLimits.Streams != 0 ||
-		acc1.Limits.JetStreamLimits.MaxBytesRequired != false {
+		acc1.Limits.JetStreamLimits.MaxBytesRequired != false ||
+		acc1.Limits.JetStreamLimits.MaxStreamBytes != 0 {
 		t.Fatalf("Expected unlimited operator limits")
 	}
 	acc1.Limits.Consumer = 1
 	acc1.Limits.Streams = 2
 	acc1.Limits.MemoryStorage = 3
 	acc1.Limits.DiskStorage = 4
-	acc1.Limits.MaxBytesRequired = true
+	acc1.Limits.MaxStreamBytes = 1000
 	vr := CreateValidationResults()
+	acc1.Validate(vr)
+	if vr.IsEmpty() {
+		t.Fatal("account should be invalid")
+	}
+	acc1.Limits.MaxBytesRequired = true
+	vr = CreateValidationResults()
 	acc1.Validate(vr)
 	if !vr.IsEmpty() {
 		t.Fatal("valid account should have no validation issues")
