@@ -319,7 +319,8 @@ func TestJetstreamLimits(t *testing.T) {
 		acc1.Limits.JetStreamLimits.Streams != 0 ||
 		acc1.Limits.JetStreamLimits.MaxBytesRequired != false ||
 		acc1.Limits.JetStreamLimits.MemoryMaxStreamBytes != 0 ||
-		acc1.Limits.JetStreamLimits.DiskMaxStreamBytes != 0 {
+		acc1.Limits.JetStreamLimits.DiskMaxStreamBytes != 0 ||
+		acc1.Limits.JetStreamLimits.MaxAckPending != 0 {
 		t.Fatalf("Expected unlimited operator limits")
 	}
 	acc1.Limits.Consumer = 1
@@ -329,6 +330,7 @@ func TestJetstreamLimits(t *testing.T) {
 	acc1.Limits.MemoryMaxStreamBytes = 1000
 	acc1.Limits.DiskMaxStreamBytes = 1000
 	acc1.Limits.MaxBytesRequired = true
+	acc1.Limits.MaxAckPending = 200
 	vr := CreateValidationResults()
 	acc1.Validate(vr)
 	if !vr.IsEmpty() {
