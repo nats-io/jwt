@@ -16,7 +16,6 @@
 package jwt
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -165,7 +164,7 @@ func TestInvalidAccountClaimIssuer(t *testing.T) {
 		bad := encode(temp, i.kp, t)
 		_, err = DecodeAccountClaims(bad)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to decode account signed by %q", i.name)
@@ -199,7 +198,7 @@ func TestInvalidAccountSubjects(t *testing.T) {
 		}
 		_, err = c.Encode(i.kp)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to encode account with with %q subject", i.name)

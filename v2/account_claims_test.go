@@ -16,7 +16,6 @@
 package jwt
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -151,7 +150,7 @@ func TestInvalidAccountClaimIssuer(t *testing.T) {
 		bad := encode(temp, i.kp, t)
 		_, err = DecodeAccountClaims(bad)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to decode account signed by %q", i.name)
@@ -182,7 +181,7 @@ func TestInvalidAccountSubjects(t *testing.T) {
 		c := NewAccountClaims(pk)
 		_, err = c.Encode(i.kp)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to encode account with with %q subject", i.name)
@@ -319,7 +318,8 @@ func TestJetstreamLimits(t *testing.T) {
 		acc1.Limits.JetStreamLimits.Streams != 0 ||
 		acc1.Limits.JetStreamLimits.MaxBytesRequired != false ||
 		acc1.Limits.JetStreamLimits.MemoryMaxStreamBytes != 0 ||
-		acc1.Limits.JetStreamLimits.DiskMaxStreamBytes != 0 {
+		acc1.Limits.JetStreamLimits.DiskMaxStreamBytes != 0 ||
+		acc1.Limits.JetStreamLimits.MaxAckPending != 0 {
 		t.Fatalf("Expected unlimited operator limits")
 	}
 	acc1.Limits.Consumer = 1
@@ -329,6 +329,7 @@ func TestJetstreamLimits(t *testing.T) {
 	acc1.Limits.MemoryMaxStreamBytes = 1000
 	acc1.Limits.DiskMaxStreamBytes = 1000
 	acc1.Limits.MaxBytesRequired = true
+	acc1.Limits.MaxAckPending = 200
 	vr := CreateValidationResults()
 	acc1.Validate(vr)
 	if !vr.IsEmpty() {

@@ -16,7 +16,6 @@
 package jwt
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -73,7 +72,7 @@ func TestClusterClaimsIssuer(t *testing.T) {
 		bad := encode(temp, i.kp, t)
 		_, err = DecodeClusterClaims(bad)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to decode cluster signed by %q", i.name)
@@ -101,7 +100,7 @@ func TestClusterSubjects(t *testing.T) {
 		c := NewClusterClaims(publicKey(i.kp, t))
 		_, err := c.Encode(createOperatorNKey(t))
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to encode cluster with with %q subject", i.name)
