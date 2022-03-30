@@ -16,7 +16,6 @@
 package jwt
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -73,7 +72,7 @@ func TestServerClaimsIssuer(t *testing.T) {
 		bad := encode(temp, i.kp, t)
 		_, err = DecodeServerClaims(bad)
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to decode server signed by %q", i.name)
@@ -101,7 +100,7 @@ func TestServerSubjects(t *testing.T) {
 		c := NewServerClaims(publicKey(i.kp, t))
 		_, err := c.Encode(createOperatorNKey(t))
 		if i.ok && err != nil {
-			t.Fatal(fmt.Sprintf("unexpected error for %q: %v", i.name, err))
+			t.Fatalf("unexpected error for %q: %v", i.name, err)
 		}
 		if !i.ok && err == nil {
 			t.Logf("should have failed to encode server with with %q subject", i.name)
