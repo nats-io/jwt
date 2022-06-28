@@ -3,8 +3,8 @@ os:
   - windows
 language: go
 go:
+  - 1.18.x
   - 1.17.x
-  - 1.16.x
 git:
   depth: false
 env:
@@ -13,10 +13,10 @@ env:
 before_script:
   - cd $TRAVIS_BUILD_DIR/${V}
   - go get -t ./...
-  - go install honnef.co/go/tools/cmd/staticcheck@v0.2.2
+  - go install honnef.co/go/tools/cmd/staticcheck@latest
   - go install github.com/client9/misspell/cmd/misspell@latest
-  - go get github.com/mattn/goveralls
-  - go get github.com/wadey/gocovmerge
+  - go install github.com/mattn/goveralls@latest
+  - go install github.com/wadey/gocovmerge@latest
   - go vet ./...
   - misspell -error -locale US .
   - staticcheck ./...
@@ -31,6 +31,6 @@ deploy:
   skip_cleanup: true
   script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service travis-ci
   on:
-    # Does not matter what is the value of ${V} here, just that we want to do the
-    # release only once. So we put all conditions that reduce the matrix to 1 run.
-    condition: ${V} = "v2" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ 1.17
+    # Does not matter what is the value of ${V} here, just that we want to post
+    # coverage only once. So we put all conditions that reduce the matrix to 1 run.
+    condition: ${V} = "v2" && $TRAVIS_OS_NAME = linux && $TRAVIS_GO_VERSION =~ 1.18
