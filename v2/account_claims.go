@@ -27,12 +27,12 @@ import (
 const NoLimit = -1
 
 type AccountLimits struct {
-	Imports         int64 `json:"imports,omitempty"`   // Max number of imports
-	Exports         int64 `json:"exports,omitempty"`   // Max number of exports
-	WildcardExports bool  `json:"wildcards,omitempty"` // Are wildcards allowed in exports
+	Imports         int64 `json:"imports,omitempty"`         // Max number of imports
+	Exports         int64 `json:"exports,omitempty"`         // Max number of exports
+	WildcardExports bool  `json:"wildcards,omitempty"`       // Are wildcards allowed in exports
 	DisallowBearer  bool  `json:"disallow_bearer,omitempty"` // User JWT can't be bearer token
-	Conn            int64 `json:"conn,omitempty"` // Max number of active connections
-	LeafNodeConn    int64 `json:"leaf,omitempty"` // Max number of active leaf node connections
+	Conn            int64 `json:"conn,omitempty"`            // Max number of active connections
+	LeafNodeConn    int64 `json:"leaf,omitempty"`            // Max number of active leaf node connections
 }
 
 // IsUnlimited returns true if all limits are unlimited
@@ -167,15 +167,54 @@ func (a *Account) AddMapping(sub Subject, to ...WeightedMapping) {
 	a.Mappings[sub] = to
 }
 
+// Enable external authorization for account users.
+// AuthUsers are those users specified to bypass the authorization callout and should be used for the authorization service itself.
+// AllowedAccounts specifies which accounts, if any, that the authorization service can bind an authorized user to.
+// The authorization response, a user JWT, will still need to be signed by the correct account.
+type ExternalAuthorization struct {
+	AuthUsers       StringList `json:"auth_users"`
+	AllowedAccounts StringList `json:"allowed_accounts,omitempty"`
+}
+
+func (ac *ExternalAuthorization) IsEnabled() bool {
+	return len(ac.AuthUsers) > 0
+}
+
+// Helper function to determine if external authorization is enabled.
+func (a *Account) HasExternalAuthorization() bool {
+	return a.Authorization.IsEnabled()
+}
+
+// Helper function to setup external authorization.
+func (a *Account) EnableExternalAuthorization(users ...string) {
+	a.Authorization.AuthUsers.Add(users...)
+}
+
+func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
+	// Make sure users are all valid user nkeys.
+	// Make sure allowed accounts are all valid account nkeys.
+	for _, u := range ac.AuthUsers {
+		if !nkeys.IsValidPublicUserKey(u) {
+			vr.AddError("AuthUser %q is not a valid user public key", u)
+		}
+	}
+	for _, a := range ac.AllowedAccounts {
+		if !nkeys.IsValidPublicAccountKey(a) {
+			vr.AddError("Account %q is not a valid account public key", a)
+		}
+	}
+}
+
 // Account holds account specific claims data
 type Account struct {
-	Imports            Imports        `json:"imports,omitempty"`
-	Exports            Exports        `json:"exports,omitempty"`
-	Limits             OperatorLimits `json:"limits,omitempty"`
-	SigningKeys        SigningKeys    `json:"signing_keys,omitempty"`
-	Revocations        RevocationList `json:"revocations,omitempty"`
-	DefaultPermissions Permissions    `json:"default_permissions,omitempty"`
-	Mappings           Mapping        `json:"mappings,omitempty"`
+	Imports            Imports               `json:"imports,omitempty"`
+	Exports            Exports               `json:"exports,omitempty"`
+	Limits             OperatorLimits        `json:"limits,omitempty"`
+	SigningKeys        SigningKeys           `json:"signing_keys,omitempty"`
+	Revocations        RevocationList        `json:"revocations,omitempty"`
+	DefaultPermissions Permissions           `json:"default_permissions,omitempty"`
+	Mappings           Mapping               `json:"mappings,omitempty"`
+	Authorization      ExternalAuthorization `json:"authorization,omitempty"`
 	Info
 	GenericFields
 }
@@ -187,6 +226,7 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	a.Limits.Validate(vr)
 	a.DefaultPermissions.Validate(vr)
 	a.Mappings.Validate(vr)
+	a.Authorization.Validate(vr)
 
 	if !a.Limits.IsEmpty() && a.Limits.Imports >= 0 && int64(len(a.Imports)) > a.Limits.Imports {
 		vr.AddError("the account contains more imports than allowed by the operator")

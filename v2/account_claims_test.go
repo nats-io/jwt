@@ -697,3 +697,51 @@ func TestAccountMapping(t *testing.T) { // don't block encoding!!!
 		t.Fatal("Expected errors due to wildcard in weighted mapping")
 	}
 }
+
+func TestAccountExternalAuthorization(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	ukp := createUserNKey(t)
+	account.EnableExternalAuthorization(publicKey(ukp, t))
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+
+	akp2 := createAccountNKey(t)
+	account.Authorization.AllowedAccounts.Add(publicKey(akp2, t))
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+
+	if !account.HasExternalAuthorization() {
+		t.Fatalf("Expected to have authorization enabled")
+	}
+
+	vr = &ValidationResults{}
+	account.Authorization = ExternalAuthorization{}
+
+	account.Authorization.AuthUsers.Add("Z")
+	account.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error on bad auth user")
+	}
+
+	vr = &ValidationResults{}
+	account.Authorization = ExternalAuthorization{}
+	account.Authorization.AllowedAccounts.Add("Z")
+	account.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error on bad allowed account")
+	}
+
+	account.Authorization = ExternalAuthorization{}
+	if account.Authorization.IsEnabled() {
+		t.Fatalf("Expected not to have authorization enabled")
+	}
+}
