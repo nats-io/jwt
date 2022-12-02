@@ -42,9 +42,9 @@ type ClientInformation struct {
 	Nonce   string  `json:"nonce,omitempty"`
 }
 
-// ClientOptions represents options that were set in the CONNECT protocol from the client
+// ConnectOptions represents options that were set in the CONNECT protocol from the client
 // during authorization.
-type ClientOptions struct {
+type ConnectOptions struct {
 	JWT         string `json:"jwt,omitempty"`
 	Nkey        string `json:"nkey,omitempty"`
 	SignedNonce string `json:"sig,omitempty"`
@@ -71,10 +71,10 @@ type ClientTLS struct {
 // AuthorizationRequest represents all the information we know about the client that
 // will be sent to an external authorization service.
 type AuthorizationRequest struct {
-	Server      ServerID          `json:"server_id"`
-	Information ClientInformation `json:"client_info"`
-	Options     ClientOptions     `json:"client_opts"`
-	TLS         *ClientTLS        `json:"client_tls,omitempty"`
+	Server            ServerID          `json:"server_id"`
+	ClientInformation ClientInformation `json:"client_info"`
+	ConnectOptions    ConnectOptions    `json:"connect_opts"`
+	TLS               *ClientTLS        `json:"client_tls,omitempty"`
 	GenericFields
 }
 
