@@ -745,3 +745,19 @@ func TestAccountExternalAuthorization(t *testing.T) {
 		t.Fatalf("Expected not to have authorization enabled")
 	}
 }
+
+func TestAccountExternalAuthorizationRequiresOneUser(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	account.Authorization.AllowedAccounts.Add(publicKey(createAccountNKey(t), t))
+
+	vr := &ValidationResults{}
+	account.Validate(vr)
+
+	AssertEquals(len(vr.Errors()), 1, t)
+	AssertEquals("External authorization cannot have accounts without users specified",
+		vr.Errors()[0].Error(),
+		t)
+}
