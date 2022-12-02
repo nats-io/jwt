@@ -110,6 +110,10 @@ func Decode(token string) (Claims, error) {
 				if nkeys.IsValidPublicUserKey(issuer) {
 					ok = true
 				}
+			case nkeys.PrefixByteServer:
+				if nkeys.IsValidPublicServerKey(issuer) {
+					ok = true
+				}
 			}
 		}
 		if !ok {
@@ -140,6 +144,8 @@ func loadClaims(data []byte) (int, Claims, error) {
 		claim, err = loadUser(data, id.Version())
 	case ActivationClaim:
 		claim, err = loadActivation(data, id.Version())
+	case AuthorizationRequestClaim:
+		claim, err = loadAuthorization(data, id.Version())
 	case "cluster":
 		return -1, nil, errors.New("ClusterClaims are not supported")
 	case "server":

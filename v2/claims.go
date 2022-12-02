@@ -39,6 +39,8 @@ const (
 	UserClaim = "user"
 	// ActivationClaim is the type of an activation JWT
 	ActivationClaim = "activation"
+	// AuthorizationRequestClaim is the type of an auth request claim JWT
+	AuthorizationRequestClaim = "authorization"
 	// GenericClaim is a type that doesn't match Operator/Account/User/ActionClaim
 	GenericClaim = "generic"
 )
@@ -50,6 +52,8 @@ func IsGenericClaimType(s string) bool {
 	case AccountClaim:
 		fallthrough
 	case UserClaim:
+		fallthrough
+	case AuthorizationRequestClaim:
 		fallthrough
 	case ActivationClaim:
 		return false
