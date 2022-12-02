@@ -757,7 +757,7 @@ func TestAccountExternalAuthorizationRequiresOneUser(t *testing.T) {
 	account.Validate(vr)
 
 	AssertEquals(len(vr.Errors()), 1, t)
-	AssertEquals("External authorization cannot have accounts with no users specified",
+	AssertEquals("External authorization cannot have accounts without users specified",
 		vr.Errors()[0].Error(),
 		t)
 }

@@ -192,7 +192,7 @@ func (a *Account) EnableExternalAuthorization(users ...string) {
 
 func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 	if len(ac.AllowedAccounts) > 0 && len(ac.AuthUsers) == 0 {
-		vr.AddError("External authorization cannot have accounts with no users specified")
+		vr.AddError("External authorization cannot have accounts without users specified")
 	}
 	// Make sure users are all valid user nkeys.
 	// Make sure allowed accounts are all valid account nkeys.
