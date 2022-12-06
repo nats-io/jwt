@@ -171,9 +171,13 @@ func (a *Account) AddMapping(sub Subject, to ...WeightedMapping) {
 // AuthUsers are those users specified to bypass the authorization callout and should be used for the authorization service itself.
 // AllowedAccounts specifies which accounts, if any, that the authorization service can bind an authorized user to.
 // The authorization response, a user JWT, will still need to be signed by the correct account.
+// If optional XKey is specified, that is the public xkey (x25519) and the server will encrypt the request such that only the
+// holder of the private key can decrypt. The auth service can also optionally encrypt the response back to the server using it's
+// publick xkey which will be in the authorization request.
 type ExternalAuthorization struct {
 	AuthUsers       StringList `json:"auth_users"`
 	AllowedAccounts StringList `json:"allowed_accounts,omitempty"`
+	XKey            string     `json:"xkey,omitempty"`
 }
 
 func (ac *ExternalAuthorization) IsEnabled() bool {
@@ -205,6 +209,9 @@ func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 		if !nkeys.IsValidPublicAccountKey(a) {
 			vr.AddError("Account %q is not a valid account public key", a)
 		}
+	}
+	if ac.XKey != "" && !nkeys.IsValidPublicCurveKey(ac.XKey) {
+		vr.AddError("XKey %q is not a valid public xkey", ac.XKey)
 	}
 }
 

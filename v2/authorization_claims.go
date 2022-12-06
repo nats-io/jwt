@@ -26,6 +26,7 @@ type ServerID struct {
 	Name string `json:"name"`
 	Host string `json:"host"`
 	ID   string `json:"id"`
+	XKey string `json:"xkey,omitempty"`
 }
 
 // ClientInformation is information about a client that is trying to authorize.
