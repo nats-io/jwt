@@ -73,6 +73,7 @@ type ClientTLS struct {
 // will be sent to an external authorization service.
 type AuthorizationRequest struct {
 	Server            ServerID          `json:"server_id"`
+	UserNkey          string            `json:"user_nkey"`
 	ClientInformation ClientInformation `json:"client_info"`
 	ConnectOptions    ConnectOptions    `json:"connect_opts"`
 	TLS               *ClientTLS        `json:"client_tls,omitempty"`
@@ -98,6 +99,11 @@ func NewAuthorizationRequestClaims(subject string) *AuthorizationRequestClaims {
 
 // Validate checks the generic and specific parts of the auth request jwt.
 func (ac *AuthorizationRequestClaims) Validate(vr *ValidationResults) {
+	if ac.UserNkey == "" {
+		vr.AddError("User nkey is required")
+	} else if !nkeys.IsValidPublicUserKey(ac.UserNkey) {
+		vr.AddError("User nkey %q is not a valid user public key", ac.UserNkey)
+	}
 	ac.ClaimsData.Validate(vr)
 }
 

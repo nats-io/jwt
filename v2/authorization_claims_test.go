@@ -27,8 +27,30 @@ func TestNewAuthorizationClaims(t *testing.T) {
 	ac.Server.Name = "NATS-1"
 
 	vr := CreateValidationResults()
-	ac.Validate(vr)
 
+	// Make sure that user nkey is required.
+	ac.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error on an nkey user not being specified")
+	}
+
+	// Make sure it is required to be valid public user nkey.
+	ac.UserNkey = "derek"
+	vr = CreateValidationResults()
+	ac.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error on invalid user nkey")
+	}
+
+	kp, err := nkeys.CreateUser()
+	if err != nil {
+		t.Fatalf("Error creating user: %v", err)
+	}
+	pub, _ := kp.PublicKey()
+
+	ac.UserNkey = pub
+	vr = CreateValidationResults()
+	ac.Validate(vr)
 	if !vr.IsEmpty() {
 		t.Fatal("Valid authorization request will have no validation results")
 	}
