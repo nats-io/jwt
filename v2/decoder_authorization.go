@@ -19,10 +19,18 @@ import (
 	"encoding/json"
 )
 
-func loadAuthorization(data []byte, version int) (*AuthorizationRequestClaims, error) {
+func loadAuthorizationRequest(data []byte, version int) (*AuthorizationRequestClaims, error) {
 	var ac AuthorizationRequestClaims
 	if err := json.Unmarshal(data, &ac); err != nil {
 		return nil, err
 	}
 	return &ac, nil
+}
+
+func loadAuthorizationResponse(data []byte, version int) (*AuthorizationResponseClaims, error) {
+	var arc AuthorizationResponseClaims
+	if err := json.Unmarshal(data, &arc); err != nil {
+		return nil, err
+	}
+	return &arc, nil
 }
