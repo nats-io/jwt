@@ -21,7 +21,7 @@ import (
 	"github.com/nats-io/nkeys"
 )
 
-func TestNewAuthorizationClaims(t *testing.T) {
+func TestNewAuthorizationRequestClaims(t *testing.T) {
 	skp, _ := nkeys.CreateServer()
 	ac := NewAuthorizationRequestClaims("TEST")
 	ac.Server.Name = "NATS-1"
@@ -64,4 +64,68 @@ func TestNewAuthorizationClaims(t *testing.T) {
 
 	AssertEquals(ac.String(), ac2.String(), t)
 	AssertEquals(ac.Server.Name, ac2.Server.Name, t)
+}
+
+func TestNewAuthorizationResponseClaims(t *testing.T) {
+	// Make sure one or other is set.
+	var empty AuthorizationResponseClaims
+	vr := CreateValidationResults()
+	empty.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error on an empty authorization response")
+	}
+
+	// Make sure both can not be set.
+	// Create user, account etc.
+	akp := createAccountNKey(t)
+	ukp := createUserNKey(t)
+
+	uclaim := NewUserClaims(publicKey(ukp, t))
+	uclaim.Audience = publicKey(akp, t)
+
+	arc := NewAuthorizationResponseClaims("TEST")
+	arc.User = uclaim
+	arc.Error = &AuthorizationError{Description: "BAD"}
+
+	vr = CreateValidationResults()
+	arc.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatalf("Expected blocking error when both user and error are set")
+	}
+
+	// Clear error and make sure ok.
+	arc.Error = nil
+	// should be server public key.
+	skp := createServerNKey(t)
+	arc.Audience = publicKey(skp, t)
+
+	vr = CreateValidationResults()
+	arc.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Valid authorization response will have no validation results")
+	}
+
+	arcJWT := encode(arc, akp, t)
+	arc2, err := DecodeAuthorizationResponseClaims(arcJWT)
+	if err != nil {
+		t.Fatal("error decoding authorization response jwt", err)
+	}
+	AssertEquals(arc.String(), arc2.String(), t)
+
+	// Check that error constructor works.
+	arc = NewAuthorizationResponseClaims("TEST")
+	arc.SetErrorDescription("BAD CERT")
+
+	vr = CreateValidationResults()
+	arc.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Valid authorization response will have no validation results")
+	}
+
+	arcJWT = encode(arc, akp, t)
+	arc2, err = DecodeAuthorizationResponseClaims(arcJWT)
+	if err != nil {
+		t.Fatal("error decoding authorization response jwt", err)
+	}
+	AssertEquals(arc.String(), arc2.String(), t)
 }

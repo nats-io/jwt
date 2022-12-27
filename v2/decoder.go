@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The NATS Authors
+ * Copyright 2020-2022 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -145,7 +145,9 @@ func loadClaims(data []byte) (int, Claims, error) {
 	case ActivationClaim:
 		claim, err = loadActivation(data, id.Version())
 	case AuthorizationRequestClaim:
-		claim, err = loadAuthorization(data, id.Version())
+		claim, err = loadAuthorizationRequest(data, id.Version())
+	case AuthorizationResponseClaim:
+		claim, err = loadAuthorizationResponse(data, id.Version())
 	case "cluster":
 		return -1, nil, errors.New("ClusterClaims are not supported")
 	case "server":
