@@ -164,8 +164,9 @@ type AuthorizationError struct {
 // AuthorizationResponse represents a response to an authorization callout.
 // Will be a valid user or an error.
 type AuthorizationResponse struct {
-	User  *UserClaims         `json:"user_claims,omitempty"`
-	Error *AuthorizationError `json:"error,omitempty"`
+	User          *UserClaims         `json:"user_claims,omitempty"`
+	Error         *AuthorizationError `json:"error,omitempty"`
+	IssuerAccount string              `json:"issuer_account,omitempty"`
 	GenericFields
 }
 
