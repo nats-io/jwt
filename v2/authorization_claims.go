@@ -167,6 +167,7 @@ type AuthorizationResponse struct {
 	User          *UserClaims         `json:"user_claims,omitempty"`
 	Error         *AuthorizationError `json:"error,omitempty"`
 	IssuerAccount string              `json:"issuer_account,omitempty"`
+	Jwt           string              `json:"jwt,omitempty"`
 	GenericFields
 }
 
