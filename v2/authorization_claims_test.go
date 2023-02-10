@@ -23,7 +23,15 @@ import (
 
 func TestNewAuthorizationRequestClaims(t *testing.T) {
 	skp, _ := nkeys.CreateServer()
-	ac := NewAuthorizationRequestClaims("TEST")
+
+	kp, err := nkeys.CreateUser()
+	if err != nil {
+		t.Fatalf("Error creating user: %v", err)
+	}
+	pub, _ := kp.PublicKey()
+
+	// the subject of the claim is the user we are generating an authorization response
+	ac := NewAuthorizationRequestClaims(pub)
 	ac.Server.Name = "NATS-1"
 
 	vr := CreateValidationResults()
@@ -41,12 +49,6 @@ func TestNewAuthorizationRequestClaims(t *testing.T) {
 	if vr.IsEmpty() || !vr.IsBlocking(false) {
 		t.Fatalf("Expected blocking error on invalid user nkey")
 	}
-
-	kp, err := nkeys.CreateUser()
-	if err != nil {
-		t.Fatalf("Error creating user: %v", err)
-	}
-	pub, _ := kp.PublicKey()
 
 	ac.UserNkey = pub
 	vr = CreateValidationResults()
@@ -66,66 +68,90 @@ func TestNewAuthorizationRequestClaims(t *testing.T) {
 	AssertEquals(ac.Server.Name, ac2.Server.Name, t)
 }
 
-func TestNewAuthorizationResponseClaims(t *testing.T) {
-	// Make sure one or other is set.
-	var empty AuthorizationResponseClaims
+func TestAuthorizationResponse_EmptyShouldFail(t *testing.T) {
+	rc := NewAuthorizationResponseClaims("$G")
 	vr := CreateValidationResults()
-	empty.Validate(vr)
+	rc.Validate(vr)
 	if vr.IsEmpty() || !vr.IsBlocking(false) {
-		t.Fatalf("Expected blocking error on an empty authorization response")
+		t.Fatal("Expected blocking errors")
 	}
+	errs := vr.Errors()
+	AssertEquals(3, len(errs), t)
+	AssertEquals("Subject must be a user public key", errs[0].Error(), t)
+	AssertEquals("Audience must be a server public key", errs[1].Error(), t)
+	AssertEquals("Error or Jwt is required", errs[2].Error(), t)
+}
 
-	// Make sure both can not be set.
-	// Create user, account etc.
+func TestAuthorizationResponse_SubjMustBeServer(t *testing.T) {
+	rc := NewAuthorizationResponseClaims(publicKey(createUserNKey(t), t))
+	rc.Error = "bad"
+	vr := CreateValidationResults()
+	rc.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking errors")
+	}
+	errs := vr.Errors()
+	AssertEquals(1, len(errs), t)
+	AssertEquals("Audience must be a server public key", errs[0].Error(), t)
+
+	rc = NewAuthorizationResponseClaims(publicKey(createUserNKey(t), t))
+	rc.Audience = publicKey(createServerNKey(t), t)
+	rc.Error = "bad"
+	vr = CreateValidationResults()
+	rc.Validate(vr)
+	AssertEquals(true, vr.IsEmpty(), t)
+}
+
+func TestAuthorizationResponse_OneOfErrOrJwt(t *testing.T) {
+	rc := NewAuthorizationResponseClaims(publicKey(createUserNKey(t), t))
+	rc.Audience = publicKey(createServerNKey(t), t)
+	rc.Error = "bad"
+	rc.Jwt = "jwt"
+	vr := CreateValidationResults()
+	rc.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking errors")
+	}
+	errs := vr.Errors()
+	AssertEquals(1, len(errs), t)
+	AssertEquals("Only Error or Jwt can be set", errs[0].Error(), t)
+}
+
+func TestAuthorizationResponse_IssuerAccount(t *testing.T) {
+	rc := NewAuthorizationResponseClaims(publicKey(createUserNKey(t), t))
+	rc.Audience = publicKey(createServerNKey(t), t)
+	rc.Jwt = "jwt"
+	rc.IssuerAccount = rc.Subject
+	vr := CreateValidationResults()
+	rc.Validate(vr)
+	if vr.IsEmpty() || !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking errors")
+	}
+	errs := vr.Errors()
+	AssertEquals(1, len(errs), t)
+	AssertEquals("issuer_account is not an account public key", errs[0].Error(), t)
+
 	akp := createAccountNKey(t)
-	ukp := createUserNKey(t)
-
-	uclaim := NewUserClaims(publicKey(ukp, t))
-	uclaim.Audience = publicKey(akp, t)
-
-	arc := NewAuthorizationResponseClaims("TEST")
-	arc.User = uclaim
-	arc.Error = &AuthorizationError{Description: "BAD"}
-
+	rc.IssuerAccount = publicKey(akp, t)
 	vr = CreateValidationResults()
-	arc.Validate(vr)
-	if vr.IsEmpty() || !vr.IsBlocking(false) {
-		t.Fatalf("Expected blocking error when both user and error are set")
-	}
+	rc.Validate(vr)
+	AssertEquals(true, vr.IsEmpty(), t)
+}
 
-	// Clear error and make sure ok.
-	arc.Error = nil
-	// should be server public key.
-	skp := createServerNKey(t)
-	arc.Audience = publicKey(skp, t)
+func TestAuthorizationResponse_Decode(t *testing.T) {
+	rc := NewAuthorizationResponseClaims(publicKey(createUserNKey(t), t))
+	rc.Audience = publicKey(createServerNKey(t), t)
+	rc.Jwt = "jwt"
+	akp := createAccountNKey(t)
+	tok, err := rc.Encode(akp)
+	AssertNoError(err, t)
 
-	vr = CreateValidationResults()
-	arc.Validate(vr)
-	if !vr.IsEmpty() {
-		t.Fatal("Valid authorization response will have no validation results")
-	}
-
-	arcJWT := encode(arc, akp, t)
-	arc2, err := DecodeAuthorizationResponseClaims(arcJWT)
-	if err != nil {
-		t.Fatal("error decoding authorization response jwt", err)
-	}
-	AssertEquals(arc.String(), arc2.String(), t)
-
-	// Check that error constructor works.
-	arc = NewAuthorizationResponseClaims("TEST")
-	arc.SetErrorDescription("BAD CERT")
-
-	vr = CreateValidationResults()
-	arc.Validate(vr)
-	if !vr.IsEmpty() {
-		t.Fatal("Valid authorization response will have no validation results")
-	}
-
-	arcJWT = encode(arc, akp, t)
-	arc2, err = DecodeAuthorizationResponseClaims(arcJWT)
-	if err != nil {
-		t.Fatal("error decoding authorization response jwt", err)
-	}
-	AssertEquals(arc.String(), arc2.String(), t)
+	r, err := DecodeAuthorizationResponseClaims(tok)
+	AssertNoError(err, t)
+	vr := CreateValidationResults()
+	r.Validate(vr)
+	AssertEquals(true, vr.IsEmpty(), t)
+	AssertEquals("jwt", r.Jwt, t)
+	AssertTrue(nkeys.IsValidPublicUserKey(r.Subject), t)
+	AssertTrue(nkeys.IsValidPublicServerKey(r.Audience), t)
 }

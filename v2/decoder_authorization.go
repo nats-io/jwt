@@ -28,9 +28,9 @@ func loadAuthorizationRequest(data []byte, version int) (*AuthorizationRequestCl
 }
 
 func loadAuthorizationResponse(data []byte, version int) (*AuthorizationResponseClaims, error) {
-	var arc AuthorizationResponseClaims
-	if err := json.Unmarshal(data, &arc); err != nil {
+	var ac AuthorizationResponseClaims
+	if err := json.Unmarshal(data, &ac); err != nil {
 		return nil, err
 	}
-	return &arc, nil
+	return &ac, nil
 }

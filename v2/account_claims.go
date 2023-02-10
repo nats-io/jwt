@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The NATS Authors
+ * Copyright 2018-2023 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -355,13 +355,20 @@ func (a *AccountClaims) Claims() *ClaimsData {
 }
 
 // DidSign checks the claims against the account's public key and its signing keys
-func (a *AccountClaims) DidSign(uc Claims) bool {
-	if uc != nil {
-		issuer := uc.Claims().Issuer
+func (a *AccountClaims) DidSign(c Claims) bool {
+	if c != nil {
+		issuer := c.Claims().Issuer
 		if issuer == a.Subject {
 			return true
 		}
-		return a.SigningKeys.Contains(issuer)
+		uc, ok := c.(*UserClaims)
+		if ok && uc.IssuerAccount == a.Subject {
+			return a.SigningKeys.Contains(issuer)
+		}
+		at, ok := c.(*ActivationClaims)
+		if ok && at.IssuerAccount == a.Subject {
+			return a.SigningKeys.Contains(issuer)
+		}
 	}
 	return false
 }

@@ -80,6 +80,7 @@ type AuthorizationRequest struct {
 	ClientInformation ClientInformation `json:"client_info"`
 	ConnectOptions    ConnectOptions    `json:"connect_opts"`
 	TLS               *ClientTLS        `json:"client_tls,omitempty"`
+	RequestNonce      string            `json:"request_nonce,omitempty"`
 	GenericFields
 }
 
@@ -156,100 +157,91 @@ func (ac *AuthorizationRequestClaims) updateVersion() {
 	ac.GenericFields.Version = libVersion
 }
 
-// Represents an authorization response error.
-type AuthorizationError struct {
-	Description string `json:"description"`
-}
-
-// AuthorizationResponse represents a response to an authorization callout.
-// Will be a valid user or an error.
 type AuthorizationResponse struct {
-	User  *UserClaims         `json:"user_claims,omitempty"`
-	Error *AuthorizationError `json:"error,omitempty"`
+	Jwt   string `json:"jwt,omitempty"`
+	Error string `json:"error,omitempty"`
+	// IssuerAccount stores the public key for the account the issuer represents.
+	// When set, the claim was issued by a signing key.
+	IssuerAccount string `json:"issuer_account,omitempty"`
 	GenericFields
 }
 
-// AuthorizationResponseClaims defines an external auth response.
-// This will be signed by the trusted account issuer.
-// Will contain a valid user JWT or an error.
-// These wil be signed by a NATS server.
 type AuthorizationResponseClaims struct {
 	ClaimsData
 	AuthorizationResponse `json:"nats"`
 }
 
-// Create a new response claim for the given subject.
 func NewAuthorizationResponseClaims(subject string) *AuthorizationResponseClaims {
 	if subject == "" {
 		return nil
 	}
-	var arc AuthorizationResponseClaims
-	arc.Subject = subject
-	return &arc
+	var ac AuthorizationResponseClaims
+	ac.Subject = subject
+	return &ac
 }
 
-// Set's and error description.
-func (arc *AuthorizationResponseClaims) SetErrorDescription(errDescription string) {
-	if arc.Error != nil {
-		arc.Error.Description = errDescription
-	} else {
-		arc.Error = &AuthorizationError{Description: errDescription}
-	}
-}
-
-// Validate checks the generic and specific parts of the auth request jwt.
-func (arc *AuthorizationResponseClaims) Validate(vr *ValidationResults) {
-	if arc.User == nil && arc.Error == nil {
-		vr.AddError("User or error required")
-	}
-	if arc.User != nil && arc.Error != nil {
-		vr.AddError("User and error can not both be set")
-	}
-	arc.ClaimsData.Validate(vr)
-}
-
-// Encode tries to turn the auth request claims into a JWT string.
-func (arc *AuthorizationResponseClaims) Encode(pair nkeys.KeyPair) (string, error) {
-	arc.Type = AuthorizationResponseClaim
-	return arc.ClaimsData.encode(pair, arc)
-}
-
-// DecodeAuthorizationResponseClaims tries to parse an auth response claim from a JWT string
+// DecodeAuthorizationResponseClaims tries to parse an auth request claims from a JWT string
 func DecodeAuthorizationResponseClaims(token string) (*AuthorizationResponseClaims, error) {
 	claims, err := Decode(token)
 	if err != nil {
 		return nil, err
 	}
-	arc, ok := claims.(*AuthorizationResponseClaims)
+	ac, ok := claims.(*AuthorizationResponseClaims)
 	if !ok {
-		return nil, errors.New("not an authorization response claim")
+		return nil, errors.New("not an authorization request claim")
 	}
-	return arc, nil
+	return ac, nil
 }
 
-// ExpectedPrefixes defines the types that can encode an auth response jwt which is accounts.
-func (arc *AuthorizationResponseClaims) ExpectedPrefixes() []nkeys.PrefixByte {
+// ExpectedPrefixes defines the types that can encode an auth request jwt, servers.
+func (ar *AuthorizationResponseClaims) ExpectedPrefixes() []nkeys.PrefixByte {
 	return []nkeys.PrefixByte{nkeys.PrefixByteAccount}
 }
 
-func (arc *AuthorizationResponseClaims) ClaimType() ClaimType {
-	return arc.Type
+func (ar *AuthorizationResponseClaims) ClaimType() ClaimType {
+	return ar.Type
 }
 
-// Claims returns the response claims data.
-func (arc *AuthorizationResponseClaims) Claims() *ClaimsData {
-	return &arc.ClaimsData
+// Claims returns the request claims data.
+func (ar *AuthorizationResponseClaims) Claims() *ClaimsData {
+	return &ar.ClaimsData
 }
 
 // Payload pulls the request specific payload out of the claims.
-func (arc *AuthorizationResponseClaims) Payload() interface{} {
-	return &arc.AuthorizationResponse
+func (ar *AuthorizationResponseClaims) Payload() interface{} {
+	return &ar.AuthorizationResponse
 }
 
-func (arc *AuthorizationResponseClaims) String() string {
-	return arc.ClaimsData.String(arc)
+func (ar *AuthorizationResponseClaims) String() string {
+	return ar.ClaimsData.String(ar)
 }
 
-func (arc *AuthorizationResponseClaims) updateVersion() {
-	arc.GenericFields.Version = libVersion
+func (ar *AuthorizationResponseClaims) updateVersion() {
+	ar.GenericFields.Version = libVersion
+}
+
+// Validate checks the generic and specific parts of the auth request jwt.
+func (ar *AuthorizationResponseClaims) Validate(vr *ValidationResults) {
+	if !nkeys.IsValidPublicUserKey(ar.Subject) {
+		vr.AddError("Subject must be a user public key")
+	}
+	if !nkeys.IsValidPublicServerKey(ar.Audience) {
+		vr.AddError("Audience must be a server public key")
+	}
+	if ar.Error == "" && ar.Jwt == "" {
+		vr.AddError("Error or Jwt is required")
+	}
+	if ar.Error != "" && ar.Jwt != "" {
+		vr.AddError("Only Error or Jwt can be set")
+	}
+	if ar.IssuerAccount != "" && !nkeys.IsValidPublicAccountKey(ar.IssuerAccount) {
+		vr.AddError("issuer_account is not an account public key")
+	}
+	ar.ClaimsData.Validate(vr)
+}
+
+// Encode tries to turn the auth request claims into a JWT string.
+func (ar *AuthorizationResponseClaims) Encode(pair nkeys.KeyPair) (string, error) {
+	ar.Type = AuthorizationResponseClaim
+	return ar.ClaimsData.encode(pair, ar)
 }
