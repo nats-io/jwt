@@ -6,13 +6,18 @@ jobs:
     name: ${{ matrix.config.kind }} ${{ matrix.config.os }}
     strategy:
       matrix:
-        go: [1.19]
+        include:
+          - go: '1.19.x'
+            os: ubuntu-latest
+            canonical: true
+          - go: '1.19.x'
+            os: windows-latest
+            canonical: false
 
     env:
-      GOPATH: /home/runner/work/jwt
       GO111MODULE: "on"
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -24,11 +29,13 @@ jobs:
         with:
           go-version: ${{matrix.go}}
 
+
       - name: Install deps
         shell: bash --noprofile --norc -x -eo pipefail {0}
         run: |
           go install honnef.co/go/tools/cmd/staticcheck@latest
           go install github.com/client9/misspell/cmd/misspell@latest
+          go install github.com/wadey/gocovmerge@latest
 
       - name: Lint
         shell: bash --noprofile --norc -x -eo pipefail {0}
@@ -38,8 +45,9 @@ jobs:
           $(exit $(go fmt $GO_LIST | wc -l))
           go vet $GO_LIST
           which misspell
-          find . -type f -name "*.go" | xargs $GOPATH/bin/misspell -error -locale US
-          $GOPATH/bin/staticcheck $GO_LIST
+          find . -type f -name "*.go" | xargs misspell -error -locale US
+          staticcheck $GO_LIST
+        if: matrix.canonical
 
       - name: Tests
         shell: bash --noprofile --norc -x -eo pipefail {0}
@@ -47,6 +55,26 @@ jobs:
           set -e
           mkdir -p cov
           go get -t ./...
-          go test -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
-          go test -modfile=v2/go_test.mod -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt/v2 .
+          go test -v -race -covermode=atomic -coverprofile=./cov/v1.out -coverpkg=github.com/nats-io/jwt .
+          cd v2
+          go test -modfile=go_test.mod -v -race -covermode=atomic -coverprofile=../cov/v2.out -coverpkg=github.com/nats-io/jwt/v2 .
+          cd ..
+          gocovmerge ./cov/*.out > coverage.out
           set +e
+        if: matrix.canonical
+
+      - name: Tests (Windows)
+        shell: bash --noprofile --norc -x -eo pipefail {0}
+        run: |
+          set -e
+          go get -t ./...
+          go test -v -race .
+          go test -modfile=v2/go_test.mod -v -race .
+          set +e
+        if: runner.os == 'Windows'
+
+      - name: Coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+        if: matrix.canonical
