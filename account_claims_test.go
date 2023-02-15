@@ -428,6 +428,7 @@ func TestAccountSignedBy(t *testing.T) {
 
 	// claim signed by alternate key
 	uc := NewUserClaims(upk)
+	uc.IssuerAccount = apk1
 	utoken, err := uc.Encode(akp2)
 	if err != nil {
 		t.Fatal(err)
