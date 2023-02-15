@@ -1,0 +1,52 @@
+name: nsc testing
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: ${{ matrix.config.kind }} ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        go: [1.19]
+
+    env:
+      GOPATH: /home/runner/work/jwt
+      GO111MODULE: "on"
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{matrix.go}}
+
+      - name: Install deps
+        shell: bash --noprofile --norc -x -eo pipefail {0}
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/client9/misspell/cmd/misspell@latest
+
+      - name: Lint
+        shell: bash --noprofile --norc -x -eo pipefail {0}
+        run: |
+          GO_LIST=$(go list ./...)
+          go build
+          $(exit $(go fmt $GO_LIST | wc -l))
+          go vet $GO_LIST
+          which misspell
+          find . -type f -name "*.go" | xargs $GOPATH/bin/misspell -error -locale US
+          $GOPATH/bin/staticcheck $GO_LIST
+
+      - name: Tests
+        shell: bash --noprofile --norc -x -eo pipefail {0}
+        run: |
+          set -e
+          mkdir -p cov
+          go get -t ./...
+          go test -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt .
+          go test -modfile=v2/go_test.mod -v -race -covermode=atomic -coverprofile=./cov/coverage.out -coverpkg=github.com/nats-io/jwt/v2 .
+          set +e
