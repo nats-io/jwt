@@ -1,4 +1,4 @@
-name: nsc testing
+name: jwt testing
 on: [push, pull_request]
 
 jobs:

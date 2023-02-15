@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2023 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -428,6 +428,7 @@ func TestAccountSignedBy(t *testing.T) {
 
 	// claim signed by alternate key
 	uc := NewUserClaims(upk)
+	uc.IssuerAccount = apk1
 	utoken, err := uc.Encode(akp2)
 	if err != nil {
 		t.Fatal(err)
@@ -557,5 +558,42 @@ func TestUserRevocationAll(t *testing.T) {
 	}
 	if account.IsRevokedAt("foo", now.Add(time.Second)) {
 		t.Error("foo should have not been revoked")
+	}
+}
+
+func TestAccountClaims_DidSign(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	skp := createAccountNKey(t)
+	spk := publicKey(skp, t)
+
+	ac := NewAccountClaims(apk)
+	ac.SigningKeys.Add(spk)
+
+	upk := publicKey(createUserNKey(t), t)
+	uc := NewUserClaims(upk)
+	tok, err := uc.Encode(akp)
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	uc, err = DecodeUserClaims(tok)
+	if err != nil {
+		t.Fatal("error decoding")
+	}
+	if !ac.DidSign(uc) {
+		t.Fatal("expected account to have been issued")
+	}
+	uc = NewUserClaims(upk)
+	uc.IssuerAccount = publicKey(createAccountNKey(t), t)
+	tok, err = uc.Encode(skp)
+	if err != nil {
+		t.Fatalf("encode failed %v", err)
+	}
+	uc, err = DecodeUserClaims(tok)
+	if err != nil {
+		t.Fatalf("decode failed %v", err)
+	}
+	if ac.DidSign(uc) {
+		t.Fatal("this is not issued by account A")
 	}
 }

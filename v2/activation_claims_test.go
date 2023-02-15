@@ -331,15 +331,14 @@ func TestActivationClaimAccountIDValidation(t *testing.T) {
 	if ac.IssuerAccount != issuerAccountPK {
 		t.Fatal("expected activation account id to be different")
 	}
+	if !account.DidSign(ac) {
+		t.Fatal("expected account to have signed activation")
+	}
 
 	ac.IssuerAccount = publicKey(createUserNKey(t), t)
 	ac.Validate(&vr)
 	if len(vr.Issues) != 1 {
 		t.Fatal("expected validation error")
-	}
-
-	if !account.DidSign(ac) {
-		t.Fatal("expected account to have signed activation")
 	}
 }
 
