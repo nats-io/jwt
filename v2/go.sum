@@ -1,5 +1,6 @@
-github.com/nats-io/nkeys v0.3.1-0.20221205184623-5d8a6730c42c h1:3/I6jrE5AT258Nl8IZCu/9oGIfIsV/GL8aKQR8+Lpq4=
-github.com/nats-io/nkeys v0.3.1-0.20221205184623-5d8a6730c42c/go.mod h1:JOEZlxMfMnmaLwr+mpmP+RGIYSxLNBFsZykCGaI2PvA=
+github.com/nats-io/nkeys v0.2.0/go.mod h1:XdZpAbhgyyODYqjTawOnIOI7VlbKSarI9Gfy1tqEu/s=
+github.com/nats-io/nkeys v0.4.0 h1:cdwIfujyl9ojgWzuLiBKi+jHvpuo29Z9ZWRbjR2wuVQ=
+github.com/nats-io/nkeys v0.4.0/go.mod h1:0JoTSSl1Fh8IyVUm33tcBR/Ajqr+LRZGUVugZJBqq4I=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.6.0 h1:qfktjS5LUO+fFKeJXZ+ikTRijMmljikvG68fpMMruSc=
