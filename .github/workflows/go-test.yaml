@@ -79,4 +79,5 @@ jobs:
         uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: coverage.out
+          working-directory: ./v2
         if: matrix.canonical
