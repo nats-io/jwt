@@ -41,7 +41,7 @@ const (
 	ActivationClaim = "activation"
 	// AuthorizationRequestClaim is the type of an auth request claim JWT
 	AuthorizationRequestClaim = "authorization_request"
-	// AuthorizationResponseClaim is the type of an auth response claim JWT
+	// AuthorizationResponseClaim is the response for an auth request
 	AuthorizationResponseClaim = "authorization_response"
 	// GenericClaim is a type that doesn't match Operator/Account/User/ActionClaim
 	GenericClaim = "generic"
