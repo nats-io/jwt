@@ -20,9 +20,10 @@ import (
 	"testing"
 	"time"
 
-	v1jwt "github.com/nats-io/jwt"
-	. "github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
+
+	. "github.com/nats-io/jwt/v2"
+	v1jwt "github.com/nats-io/jwt/v2/v1compat"
 )
 
 func createExport(sub string) *v1jwt.Export {
