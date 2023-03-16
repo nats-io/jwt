@@ -4,7 +4,7 @@ build:
 	go build
 
 test:
-	./scripts/test.sh
+	../../../scripts/test.sh
 
 fmt:
 	gofmt -w -s *.go

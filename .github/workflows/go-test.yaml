@@ -40,6 +40,7 @@ jobs:
       - name: Lint
         shell: bash --noprofile --norc -x -eo pipefail {0}
         run: |
+          cd v2
           GO_LIST=$(go list ./...)
           go build
           $(exit $(go fmt $GO_LIST | wc -l))
@@ -54,12 +55,13 @@ jobs:
         run: |
           set -e
           mkdir -p cov
-          go get -t ./...
-          go test -v -race -covermode=atomic -coverprofile=./cov/v1.out -coverpkg=github.com/nats-io/jwt .
           cd v2
-          go test -modfile=go_test.mod -v -race -covermode=atomic -coverprofile=../cov/v2.out -coverpkg=github.com/nats-io/jwt/v2 .
-          cd ..
-          gocovmerge ./cov/*.out > coverage.out
+          go get -t ./...
+          go test -v -race -covermode=atomic -coverprofile=../cov/v2.out -coverpkg=github.com/nats-io/jwt/v2 .
+          cd v1compat
+          go test -v -race -covermode=atomic -coverprofile=../../cov/v1.out -coverpkg=github.com/nats-io/jwt/v2/v1compat .
+          cd ../..
+          gocovmerge ./cov/*.out > ./coverage.out
           set +e
         if: matrix.canonical
 
@@ -67,9 +69,9 @@ jobs:
         shell: bash --noprofile --norc -x -eo pipefail {0}
         run: |
           set -e
+          cd v2
           go get -t ./...
           go test -v -race .
-          go test -modfile=v2/go_test.mod -v -race .
           set +e
         if: runner.os == 'Windows'
 

@@ -22,8 +22,9 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/nats-io/jwt/v2"
 	"github.com/nats-io/nkeys"
+
+	. "github.com/nats-io/jwt/v2"
 )
 
 func Trace(message string) string {
