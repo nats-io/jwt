@@ -1,10 +1,8 @@
 module github.com/nats-io/jwt
 
-go 1.18
+go 1.19
 
-require (
-	github.com/nats-io/nkeys v0.3.0
-)
+require github.com/nats-io/nkeys v0.4.4
 
 require (
 	golang.org/x/crypto v0.6.0 // indirect

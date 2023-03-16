@@ -1,9 +1,10 @@
 module github.com/nats-io/jwt/v2
 
-go 1.18
+go 1.19
 
 require (
-	github.com/nats-io/nkeys v0.3.1-0.20221205184623-5d8a6730c42c
+	github.com/nats-io/jwt v1.2.2
+	github.com/nats-io/nkeys v0.4.4
 )
 
 require (
