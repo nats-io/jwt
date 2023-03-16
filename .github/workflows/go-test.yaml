@@ -78,6 +78,8 @@ jobs:
       - name: Coverage
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: coverage.out
+          # this needs to be where it can find a go.mod
           working-directory: ./v2
+          # this path-to-profile is relative to the working-directory
+          path-to-profile: ../coverage.out
         if: matrix.canonical
