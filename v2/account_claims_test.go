@@ -763,6 +763,37 @@ func TestAccountExternalAuthorizationRequiresOneUser(t *testing.T) {
 		t)
 }
 
+func TestAccountExternalAuthorizationAnyAccount(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	ukp := createUserNKey(t)
+	upk := publicKey(ukp, t)
+
+	account := NewAccountClaims(apk)
+	account.Authorization.AllowedAccounts.Add("*")
+	account.Authorization.AuthUsers.Add(upk)
+
+	vr := &ValidationResults{}
+	account.Validate(vr)
+	AssertEquals(len(vr.Errors()), 0, t)
+}
+
+func TestAccountExternalAuthorizationAnyAccountAndSpecificFails(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	ukp := createUserNKey(t)
+	upk := publicKey(ukp, t)
+
+	account := NewAccountClaims(apk)
+	account.Authorization.AllowedAccounts.Add("*", apk)
+	account.Authorization.AuthUsers.Add(upk)
+
+	vr := &ValidationResults{}
+	account.Validate(vr)
+	AssertEquals(len(vr.Errors()), 1, t)
+	AssertEquals(vr.Errors()[0].Error(), "AllowedAccounts can only be a list of accounts or '*'", t)
+}
+
 func TestAccountClaims_DidSign(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)

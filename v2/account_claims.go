@@ -206,7 +206,12 @@ func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 		}
 	}
 	for _, a := range ac.AllowedAccounts {
-		if !nkeys.IsValidPublicAccountKey(a) {
+		if a == "*" && len(ac.AllowedAccounts) > 1 {
+			vr.AddError("AllowedAccounts can only be a list of accounts or '*'")
+			continue
+		} else if a == "*" {
+			continue
+		} else if !nkeys.IsValidPublicAccountKey(a) {
 			vr.AddError("Account %q is not a valid account public key", a)
 		}
 	}
