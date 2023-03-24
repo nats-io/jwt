@@ -24,7 +24,10 @@ import (
 )
 
 // NoLimit is used to indicate a limit field is unlimited in value.
-const NoLimit = -1
+const (
+	NoLimit    = -1
+	AnyAccount = "*"
+)
 
 type AccountLimits struct {
 	Imports         int64 `json:"imports,omitempty"`         // Max number of imports
@@ -206,10 +209,10 @@ func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 		}
 	}
 	for _, a := range ac.AllowedAccounts {
-		if a == "*" && len(ac.AllowedAccounts) > 1 {
-			vr.AddError("AllowedAccounts can only be a list of accounts or '*'")
+		if a == AnyAccount && len(ac.AllowedAccounts) > 1 {
+			vr.AddError("AllowedAccounts can only be a list of accounts or %q", AnyAccount)
 			continue
-		} else if a == "*" {
+		} else if a == AnyAccount {
 			continue
 		} else if !nkeys.IsValidPublicAccountKey(a) {
 			vr.AddError("Account %q is not a valid account public key", a)

@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -791,7 +792,7 @@ func TestAccountExternalAuthorizationAnyAccountAndSpecificFails(t *testing.T) {
 	vr := &ValidationResults{}
 	account.Validate(vr)
 	AssertEquals(len(vr.Errors()), 1, t)
-	AssertEquals(vr.Errors()[0].Error(), "AllowedAccounts can only be a list of accounts or '*'", t)
+	AssertEquals(vr.Errors()[0].Error(), fmt.Sprintf("AllowedAccounts can only be a list of accounts or %q", AnyAccount), t)
 }
 
 func TestAccountClaims_DidSign(t *testing.T) {
