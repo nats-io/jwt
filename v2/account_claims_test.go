@@ -693,10 +693,18 @@ func TestAccountMapping(t *testing.T) { // don't block encoding!!!
 
 	vr = &ValidationResults{}
 	account.Mappings = Mapping{}
-	account.AddMapping("foo5", WeightedMapping{Subject: "to.*"})
+	account.AddMapping("foo5.>", WeightedMapping{Subject: "to.*.>"})
 	account.Validate(vr)
-	if !vr.IsBlocking(false) {
-		t.Fatal("Expected errors due to wildcard in weighted mapping")
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+
+	vr = &ValidationResults{}
+	account.Mappings = Mapping{}
+	account.AddMapping("foo6.>", WeightedMapping{Subject: "to.boo.>"})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
 	}
 }
 
