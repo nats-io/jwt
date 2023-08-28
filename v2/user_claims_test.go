@@ -405,3 +405,41 @@ func TestUserClaimRevocation(t *testing.T) {
 		t.Fatal("account validation shouldn't have failed")
 	}
 }
+
+func TestUserClaims_GetTags(t *testing.T) {
+	akp := createAccountNKey(t)
+	ukp := createUserNKey(t)
+	upk := publicKey(ukp, t)
+
+	uc := NewUserClaims(upk)
+	uc.User.Tags.Add("foo", "bar")
+	tags := uc.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+
+	token, err := uc.Encode(akp)
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	uc, err = DecodeUserClaims(token)
+	if err != nil {
+		t.Fatal("error decoding")
+	}
+	tags = uc.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+}

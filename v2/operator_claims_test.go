@@ -465,3 +465,40 @@ func TestTags(t *testing.T) {
 	AssertTrue(oc.GenericFields.Tags.Contains("two"), t)
 	AssertTrue(oc.GenericFields.Tags.Contains("three"), t)
 }
+
+func TestOperatorClaims_GetTags(t *testing.T) {
+	okp := createOperatorNKey(t)
+	opk := publicKey(okp, t)
+
+	oc := NewOperatorClaims(opk)
+	oc.Operator.Tags.Add("foo", "bar")
+	tags := oc.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+
+	token, err := oc.Encode(okp)
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	oc, err = DecodeOperatorClaims(token)
+	if err != nil {
+		t.Fatal("error decoding")
+	}
+	tags = oc.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+}
