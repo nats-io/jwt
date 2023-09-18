@@ -839,3 +839,40 @@ func TestAccountClaims_DidSign(t *testing.T) {
 		t.Fatal("this is not issued by account A")
 	}
 }
+
+func TestAccountClaims_GetTags(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	ac := NewAccountClaims(apk)
+	ac.Account.Tags.Add("foo", "bar")
+	tags := ac.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+
+	token, err := ac.Encode(akp)
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	ac, err = DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal("error decoding")
+	}
+	tags = ac.GetTags()
+	if len(tags) != 2 {
+		t.Fatal("expected 2 tags")
+	}
+	if tags[0] != "foo" {
+		t.Fatal("expected tag foo")
+	}
+	if tags[1] != "bar" {
+		t.Fatal("expected tag bar")
+	}
+}
