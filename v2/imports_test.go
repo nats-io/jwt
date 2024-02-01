@@ -291,30 +291,6 @@ func TestStreamImportWithWildcardPrefix(t *testing.T) {
 	}
 }
 
-func TestStreamImportInformationSharing(t *testing.T) {
-	ak := createAccountNKey(t)
-	akp := publicKey(ak, t)
-	// broken import share won't work with streams
-	i := &Import{Subject: "foo", Account: akp, Type: Stream, Share: true}
-	vr := CreateValidationResults()
-	i.Validate("", vr)
-
-	if len(vr.Issues) != 1 {
-		t.Errorf("should have registered 1 issues with this import, got %d", len(vr.Issues))
-	}
-	if !vr.IsBlocking(true) {
-		t.Fatalf("issue is expected to be blocking")
-	}
-	// import share will work with service
-	i.Type = Service
-	vr = CreateValidationResults()
-	i.Validate("", vr)
-
-	if len(vr.Issues) != 0 {
-		t.Errorf("should have registered 0 issues with this import, got %d", len(vr.Issues))
-	}
-}
-
 func TestImportsValidation(t *testing.T) {
 	ak := createAccountNKey(t)
 	akp := publicKey(ak, t)

@@ -83,9 +83,6 @@ func (i *Import) Validate(actPubKey string, vr *ValidationResults) {
 		}
 	}
 
-	if i.Share && !i.IsService() {
-		vr.AddError("sharing information (for latency tracking) is only valid for services: %q", i.Subject)
-	}
 	var act *ActivationClaims
 
 	if i.Token != "" {
