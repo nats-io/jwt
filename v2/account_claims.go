@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -229,6 +230,7 @@ type Account struct {
 	DefaultPermissions Permissions           `json:"default_permissions,omitempty"`
 	Mappings           Mapping               `json:"mappings,omitempty"`
 	Authorization      ExternalAuthorization `json:"authorization,omitempty"`
+	TraceDest          Subject               `json:"trace_dest,omitempty"`
 	Info
 	GenericFields
 }
@@ -241,6 +243,16 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	a.DefaultPermissions.Validate(vr)
 	a.Mappings.Validate(vr)
 	a.Authorization.Validate(vr)
+	if a.TraceDest != "" {
+		tvr := CreateValidationResults()
+		a.TraceDest.Validate(tvr)
+		if !tvr.IsEmpty() {
+			vr.AddError(fmt.Sprintf("the account TraceDest %s", tvr.Issues[0].Description))
+		}
+		if a.TraceDest.HasWildCards() {
+			vr.AddError("the account TraceDest subject %q is not a valid publish subject", a.TraceDest)
+		}
+	}
 
 	if !a.Limits.IsEmpty() && a.Limits.Imports >= 0 && int64(len(a.Imports)) > a.Limits.Imports {
 		vr.AddError("the account contains more imports than allowed by the operator")

@@ -876,3 +876,34 @@ func TestAccountClaims_GetTags(t *testing.T) {
 		t.Fatal("expected tag bar")
 	}
 }
+
+func TestAccountClaimsTraceDest(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	for _, test := range []struct {
+		name        string
+		invalidSubj Subject
+		expectErr   bool
+	}{
+		{"trace not specified", "", false},
+		{"trace dest has spaces", "invalid dest", true},
+		{"trace dest start with a dot", ".invalid.dest", true},
+		{"trace dest ends with a dot", "invalid.dest.", true},
+		{"trace dest has consecutive dots", "invalid..dest", true},
+		{"trace dest invalid publish dest", "invalid.publish.*.dest", true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			account.TraceDest = test.invalidSubj
+			vr := CreateValidationResults()
+			account.Validate(vr)
+
+			if test.expectErr && vr.IsEmpty() {
+				t.Fatal("account validation should have failed")
+			} else if !test.expectErr && !vr.IsEmpty() {
+				t.Fatalf("account validation should not have failed, got %+v", vr.Issues)
+			}
+		})
+	}
+}

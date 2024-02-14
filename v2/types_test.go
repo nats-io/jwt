@@ -186,6 +186,27 @@ func TestSubjectValid(t *testing.T) {
 		t.Fatalf("Subjects cannot have spaces")
 	}
 
+	s = ".start.with.dot"
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if vr.IsEmpty() || !strings.Contains(vr.Issues[0].Description, "start or end with a `.`") {
+		t.Fatalf("Did not get expected failure: %+v", vr.Issues)
+	}
+
+	s = "end.with.dot."
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if vr.IsEmpty() || !strings.Contains(vr.Issues[0].Description, "start or end with a `.`") {
+		t.Fatalf("Did not get expected failure: %+v", vr.Issues)
+	}
+
+	s = "consecutive..dot"
+	vr = CreateValidationResults()
+	s.Validate(vr)
+	if vr.IsEmpty() || !strings.Contains(vr.Issues[0].Description, "consecutive `.`") {
+		t.Fatalf("Did not get expected failure: %+v", vr.Issues)
+	}
+
 	s = "one"
 	vr = CreateValidationResults()
 	s.Validate(vr)
