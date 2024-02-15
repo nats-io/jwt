@@ -498,3 +498,27 @@ func TestImports_Validate(t *testing.T) {
 		}
 	}
 }
+
+func TestImportAllowTrace(t *testing.T) {
+	ak2 := createAccountNKey(t)
+	akp2 := publicKey(ak2, t)
+
+	// AllowTrace is only applicable to StreamImport
+	i := &Import{Subject: "foo", Account: akp2, Type: Service, AllowTrace: true}
+	vr := CreateValidationResults()
+	i.Validate("", vr)
+	if vr.IsEmpty() {
+		t.Fatalf("AllowTrace on service should have an validation issue")
+	}
+	issue := vr.Issues[0]
+	if !strings.Contains(issue.Description, "AllowTrace only valid for stream import") {
+		t.Fatalf("AllowTrace should be valid only for stream import, got %q", issue.Description)
+	}
+
+	i.Type = Stream
+	vr = CreateValidationResults()
+	i.Validate("", vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("validation should have been ok, got %+v", vr.Issues)
+	}
+}

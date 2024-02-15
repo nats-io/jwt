@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -438,5 +439,26 @@ func TestExport_ResponseThreshold(t *testing.T) {
 	exports.Validate(&vr)
 	if vr.IsEmpty() {
 		t.Fatal("expected this to fail due to negative duration")
+	}
+}
+
+func TestExportAllowTrace(t *testing.T) {
+	// AllowTrace is only applicable to ServiceExport
+	e := &Export{Subject: "foo", Type: Stream, AllowTrace: true}
+	vr := CreateValidationResults()
+	e.Validate(vr)
+	if vr.IsEmpty() {
+		t.Fatalf("AllowTrace on stream should have an validation issue")
+	}
+	issue := vr.Issues[0]
+	if !strings.Contains(issue.Description, "AllowTrace only valid for service export") {
+		t.Fatalf("AllowTrace should be valid only for service export, got %q", issue.Description)
+	}
+
+	e.Type = Service
+	vr = CreateValidationResults()
+	e.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("validation should have been ok, got %+v", vr.Issues)
 	}
 }
