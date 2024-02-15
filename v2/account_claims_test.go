@@ -882,12 +882,13 @@ func TestAccountClaimsTraceDest(t *testing.T) {
 	apk := publicKey(akp, t)
 
 	account := NewAccountClaims(apk)
-	for _, test := range []struct {
+	for i, test := range []struct {
 		name        string
 		invalidSubj Subject
 		expectErr   bool
 	}{
 		{"trace not specified", "", false},
+		{"trace created but with empty destination", "", true},
 		{"trace dest has spaces", "invalid dest", true},
 		{"trace dest start with a dot", ".invalid.dest", true},
 		{"trace dest ends with a dot", "invalid.dest.", true},
@@ -895,7 +896,9 @@ func TestAccountClaimsTraceDest(t *testing.T) {
 		{"trace dest invalid publish dest", "invalid.publish.*.dest", true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			account.TraceDest = test.invalidSubj
+			if i > 0 {
+				account.Trace = &MsgTrace{Destination: test.invalidSubj}
+			}
 			vr := CreateValidationResults()
 			account.Validate(vr)
 
