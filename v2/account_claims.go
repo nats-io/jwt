@@ -175,7 +175,7 @@ func (a *Account) AddMapping(sub Subject, to ...WeightedMapping) {
 // holder of the private key can decrypt. The auth service can also optionally encrypt the response back to the server using it's
 // publick xkey which will be in the authorization request.
 type ExternalAuthorization struct {
-	AuthUsers       StringList `json:"auth_users"`
+	AuthUsers       StringList `json:"auth_users,omitempty"`
 	AllowedAccounts StringList `json:"allowed_accounts,omitempty"`
 	XKey            string     `json:"xkey,omitempty"`
 }
