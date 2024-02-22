@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -906,6 +907,51 @@ func TestAccountClaimsTraceDest(t *testing.T) {
 				t.Fatal("account validation should have failed")
 			} else if !test.expectErr && !vr.IsEmpty() {
 				t.Fatalf("account validation should not have failed, got %+v", vr.Issues)
+			}
+		})
+	}
+}
+
+func TestAccountClaimsTraceDestSampling(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	for _, test := range []struct {
+		name      string
+		dest      string
+		sampling  int
+		expectErr string
+	}{
+		{"sampling without destination", "", 10, "subject cannot be empty"},
+		{"sampling negative", "dest", -1, "should be in the range [1..100]"},
+		{"sampling above 100", "dest", 101, "should be in the range [1..100]"},
+		{"sampling at 50", "dest", 50, ""},
+		{"sampling at zero sets to 100", "dest", 0, ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			account.Trace = &MsgTrace{Destination: Subject(test.dest), Sampling: test.sampling}
+			vr := CreateValidationResults()
+			account.Validate(vr)
+
+			if test.expectErr == "" {
+				if !vr.IsEmpty() {
+					t.Fatalf("account validation should not have failed, got %+v", vr.Issues)
+				}
+				if test.sampling == 0 {
+					if account.Trace.Sampling != 100 {
+						t.Fatalf("account sampling should have been set to 100 got %d", account.Trace.Sampling)
+					}
+				} else if test.sampling != account.Trace.Sampling {
+					t.Fatalf("account sampling should be %d, got %d", test.sampling, account.Trace.Sampling)
+				}
+			} else {
+				if vr.IsEmpty() {
+					t.Fatal("account validation should have failed")
+				}
+				if !strings.Contains(vr.Issues[0].Description, test.expectErr) {
+					t.Fatalf("account validation should have failed with error %q, got %q", test.expectErr, vr.Issues[0].Description)
+				}
 			}
 		})
 	}
