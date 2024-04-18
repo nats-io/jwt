@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The NATS Authors
+ * Copyright 2020-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -251,6 +251,56 @@ func TestGetKeys(t *testing.T) {
 	}
 }
 
+func TestScopeJSON(t *testing.T) {
+	ac, apk := makeAccount(t, nil, nil)
+	pk := publicKey(createAccountNKey(t), t)
+	us := NewUserScope()
+	us.Key = pk
+	us.Role = "Admin"
+	us.Description = "Admin Key"
+	us.Template = UserPermissionLimits{
+		Permissions: Permissions{
+			Pub: Permission{Allow: []string{"foo"}},
+		},
+	}
+	ac.SigningKeys.AddScopedSigner(us)
+
+	token, err := ac.Encode(apk)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ac, err = DecodeAccountClaims(token)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s, ok := ac.SigningKeys.GetScope(pk)
+	if !ok {
+		t.Fatal("expected to find a scope admin")
+	}
+	us, ok = s.(*UserScope)
+	if !ok {
+		t.Fatal("expected to find an user scope")
+	}
+
+	if us.Key != pk {
+		t.Fatal("expected public key to match")
+	}
+
+	if !us.Template.Permissions.Pub.Allow.Contains("foo") {
+		t.Fatal("expected permissions to contain foo")
+	}
+
+	if us.Description != "Admin Key" {
+		t.Fatal("expected description to match")
+	}
+
+	if us.Role != "Admin" {
+		t.Fatal("expected role to match")
+	}
+}
+
 func TestJson(t *testing.T) {
 	ac, apk := makeAccount(t, nil, nil)
 	ac.SigningKeys.Add(publicKey(createAccountNKey(t), t))
@@ -278,5 +328,4 @@ func TestJson(t *testing.T) {
 	if len(myAcc.SigningKeys) != 3 {
 		t.Fatalf("Expected 3 signing keys got: %d", len(myAcc.SigningKeys))
 	}
-
 }
