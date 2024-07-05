@@ -709,6 +709,40 @@ func TestAccountMapping(t *testing.T) { // don't block encoding!!!
 	}
 }
 
+func TestAccountClusterMany100MappingOK(t *testing.T) { // don't block encoding!!!
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	account.AddMapping("q",
+		WeightedMapping{Subject: "qq", Weight: 100, Cluster: "A"},
+		WeightedMapping{Subject: "qq", Weight: 100, Cluster: "B"},
+		WeightedMapping{Subject: "bb", Weight: 100, Cluster: "C"},
+		WeightedMapping{Subject: "qq", Weight: 100})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+}
+
+func TestAccountClusterNoOver100Mapping(t *testing.T) { // don't block encoding!!!
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	account.AddMapping("q",
+		WeightedMapping{Subject: "qq", Weight: 100, Cluster: "A"},
+		WeightedMapping{Subject: "qq", Weight: 5, Cluster: "A"})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("Expected blocking error as sum of weights is > 100")
+	}
+}
+
 func TestAccountExternalAuthorization(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
