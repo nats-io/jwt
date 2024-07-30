@@ -241,6 +241,7 @@ type Account struct {
 	Mappings           Mapping               `json:"mappings,omitempty"`
 	Authorization      ExternalAuthorization `json:"authorization,omitempty"`
 	Trace              *MsgTrace             `json:"trace,omitempty"`
+	NRGAccount         string                `json:"nrg_account,omitempty"`
 	Info
 	GenericFields
 }
