@@ -7,10 +7,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - go: '1.19.x'
+          - go: "stable"
             os: ubuntu-latest
             canonical: true
-          - go: '1.19.x'
+          - go: "stable"
             os: windows-latest
             canonical: false
 
@@ -28,7 +28,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{matrix.go}}
-
 
       - name: Install deps
         shell: bash --noprofile --norc -x -eo pipefail {0}
