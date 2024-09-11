@@ -990,3 +990,37 @@ func TestAccountClaimsTraceDestSampling(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterTraffic_Valid(t *testing.T) {
+	type clustertest struct {
+		input string
+		ok    bool
+	}
+
+	tests := []clustertest{
+		{input: "", ok: true},
+		{input: "system", ok: true},
+		{input: "SYSTEM", ok: false},
+		{input: "owner", ok: true},
+		{input: "OWNER", ok: false},
+		{input: "unknown", ok: false},
+		{input: "account", ok: false},
+		{input: "account:", ok: false},
+		{input: "account:A", ok: false},
+		{input: "account:B", ok: false},
+		// seed - reject
+		{input: "account:SAAEVKMPCBXPP5JG5J4DWQQJTL6TJJE35UCTYON4E2AMPMHOVJPTUSWIZY", ok: false},
+		{input: "account:ABDFLVEVLA2IOTEEP44IGMZE2SFRBNVCXH5DUGRQ36AUVB2I44TJTNIA", ok: true},
+	}
+
+	for _, test := range tests {
+		ct := ClusterTraffic(test.input)
+		err := ct.Valid()
+		if test.ok && err != nil {
+			t.Fatalf("unexpected err for input %q: %v", test.input, err)
+		}
+		if !test.ok && err == nil {
+			t.Fatalf("expected to fail input %q", test.input)
+		}
+	}
+}

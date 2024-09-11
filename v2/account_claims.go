@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nkeys"
@@ -230,6 +231,35 @@ func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 	}
 }
 
+const (
+	ClusterTrafficSystem       = "system"
+	ClusterTrafficOwner        = "owner"
+	ClusterTrafficOtherAccount = "account:"
+)
+
+type ClusterTraffic string
+
+func (ct ClusterTraffic) Valid() error {
+	if ct == "" || ct == ClusterTrafficSystem || ct == ClusterTrafficOwner {
+		return nil
+	}
+
+	if strings.HasPrefix(string(ct), ClusterTrafficOtherAccount) {
+		// so in JWT we would expect this to be an account ID
+		id := ct[len(ClusterTrafficOtherAccount):]
+		if !strings.HasPrefix(string(id), "A") {
+			return errors.New("cluster traffic should be an account public key")
+		}
+		_, err := nkeys.FromPublicKey(string(id))
+		if err != nil {
+			return errors.New("cluster traffic is not a public account key")
+		}
+	} else {
+		return fmt.Errorf("unknown cluster traffic option: %q", ct)
+	}
+	return nil
+}
+
 // Account holds account specific claims data
 type Account struct {
 	Imports            Imports               `json:"imports,omitempty"`
@@ -241,7 +271,7 @@ type Account struct {
 	Mappings           Mapping               `json:"mappings,omitempty"`
 	Authorization      ExternalAuthorization `json:"authorization,omitempty"`
 	Trace              *MsgTrace             `json:"trace,omitempty"`
-	ClusterTraffic     string                `json:"cluster_traffic,omitempty"`
+	ClusterTraffic     ClusterTraffic        `json:"cluster_traffic,omitempty"`
 	Info
 	GenericFields
 }
@@ -309,6 +339,10 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	}
 	a.SigningKeys.Validate(vr)
 	a.Info.Validate(vr)
+
+	if err := a.ClusterTraffic.Valid(); err != nil {
+		vr.AddError(err.Error())
+	}
 }
 
 // AccountClaims defines the body of an account JWT
