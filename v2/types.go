@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -427,20 +427,38 @@ type TagList []string
 
 // Contains returns true if the list contains the tags
 func (u *TagList) Contains(p string) bool {
-	p = strings.ToLower(strings.TrimSpace(p))
-	for _, t := range *u {
-		if t == p {
-			return true
+	return u.find(p) != -1
+}
+
+func (u *TagList) Equals(other *TagList) bool {
+	if len(*u) != len(*other) {
+		return false
+	}
+	for _, v := range *u {
+		if other.find(v) == -1 {
+			return false
 		}
 	}
-	return false
+	return true
+}
+
+func (u *TagList) find(p string) int {
+	for idx, t := range *u {
+		if p == t {
+			return idx
+		}
+	}
+	return -1
 }
 
 // Add appends 1 or more tags to a list
 func (u *TagList) Add(p ...string) {
 	for _, v := range p {
-		v = strings.ToLower(strings.TrimSpace(v))
-		if !u.Contains(v) && v != "" {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			continue
+		}
+		if !u.Contains(v) {
 			*u = append(*u, v)
 		}
 	}
@@ -449,29 +467,47 @@ func (u *TagList) Add(p ...string) {
 // Remove removes 1 or more tags from a list
 func (u *TagList) Remove(p ...string) {
 	for _, v := range p {
-		v = strings.ToLower(strings.TrimSpace(v))
-		for i, t := range *u {
-			if t == v {
-				a := *u
-				*u = append(a[:i], a[i+1:]...)
-				break
-			}
+		v = strings.TrimSpace(v)
+		idx := u.find(v)
+		if idx != -1 {
+			a := *u
+			*u = append(a[:idx], a[idx+1:]...)
 		}
 	}
 }
 
-type CIDRList TagList
+type CIDRList []string
 
 func (c *CIDRList) Contains(p string) bool {
-	return (*TagList)(c).Contains(p)
+	p = strings.ToLower(strings.TrimSpace(p))
+	for _, t := range *c {
+		if t == p {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *CIDRList) Add(p ...string) {
-	(*TagList)(c).Add(p...)
+	for _, v := range p {
+		v = strings.ToLower(strings.TrimSpace(v))
+		if !c.Contains(v) && v != "" {
+			*c = append(*c, v)
+		}
+	}
 }
 
 func (c *CIDRList) Remove(p ...string) {
-	(*TagList)(c).Remove(p...)
+	for _, v := range p {
+		v = strings.ToLower(strings.TrimSpace(v))
+		for i, t := range *c {
+			if t == v {
+				a := *c
+				*c = append(a[:i], a[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 func (c *CIDRList) Set(values string) {
