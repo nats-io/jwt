@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/nats-io/nkeys"
@@ -232,9 +231,8 @@ func (ac *ExternalAuthorization) Validate(vr *ValidationResults) {
 }
 
 const (
-	ClusterTrafficSystem       = "system"
-	ClusterTrafficOwner        = "owner"
-	ClusterTrafficOtherAccount = "account:"
+	ClusterTrafficSystem = "system"
+	ClusterTrafficOwner  = "owner"
 )
 
 type ClusterTraffic string
@@ -243,21 +241,7 @@ func (ct ClusterTraffic) Valid() error {
 	if ct == "" || ct == ClusterTrafficSystem || ct == ClusterTrafficOwner {
 		return nil
 	}
-
-	if strings.HasPrefix(string(ct), ClusterTrafficOtherAccount) {
-		// so in JWT we would expect this to be an account ID
-		id := ct[len(ClusterTrafficOtherAccount):]
-		if !strings.HasPrefix(string(id), "A") {
-			return errors.New("cluster traffic should be an account public key")
-		}
-		_, err := nkeys.FromPublicKey(string(id))
-		if err != nil {
-			return errors.New("cluster traffic is not a public account key")
-		}
-	} else {
-		return fmt.Errorf("unknown cluster traffic option: %q", ct)
-	}
-	return nil
+	return fmt.Errorf("unknown cluster traffic option: %q", ct)
 }
 
 // Account holds account specific claims data

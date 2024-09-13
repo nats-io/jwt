@@ -1005,12 +1005,6 @@ func TestClusterTraffic_Valid(t *testing.T) {
 		{input: "OWNER", ok: false},
 		{input: "unknown", ok: false},
 		{input: "account", ok: false},
-		{input: "account:", ok: false},
-		{input: "account:A", ok: false},
-		{input: "account:B", ok: false},
-		// seed - reject
-		{input: "account:SAAEVKMPCBXPP5JG5J4DWQQJTL6TJJE35UCTYON4E2AMPMHOVJPTUSWIZY", ok: false},
-		{input: "account:ABDFLVEVLA2IOTEEP44IGMZE2SFRBNVCXH5DUGRQ36AUVB2I44TJTNIA", ok: true},
 	}
 
 	for _, test := range tests {
