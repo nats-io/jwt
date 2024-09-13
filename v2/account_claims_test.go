@@ -990,3 +990,31 @@ func TestAccountClaimsTraceDestSampling(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterTraffic_Valid(t *testing.T) {
+	type clustertest struct {
+		input string
+		ok    bool
+	}
+
+	tests := []clustertest{
+		{input: "", ok: true},
+		{input: "system", ok: true},
+		{input: "SYSTEM", ok: false},
+		{input: "owner", ok: true},
+		{input: "OWNER", ok: false},
+		{input: "unknown", ok: false},
+		{input: "account", ok: false},
+	}
+
+	for _, test := range tests {
+		ct := ClusterTraffic(test.input)
+		err := ct.Valid()
+		if test.ok && err != nil {
+			t.Fatalf("unexpected err for input %q: %v", test.input, err)
+		}
+		if !test.ok && err == nil {
+			t.Fatalf("expected to fail input %q", test.input)
+		}
+	}
+}
