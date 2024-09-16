@@ -132,6 +132,22 @@ func TestTagList(t *testing.T) {
 	AssertEquals(false, tags.Contains("ONE"), t)
 }
 
+func TestCaseSensitiveTagList(t *testing.T) {
+	tags := TagList{}
+	tags.AddCaseSensitive("One")
+
+	AssertEquals(false, tags.ContainsCaseSensitive("one"), t)
+	AssertEquals(true, tags.ContainsCaseSensitive("One"), t)
+	AssertEquals("One", tags[0], t)
+
+	tags.AddCaseSensitive("TWO")
+	err := tags.RemoveCaseSensitive("two")
+	if err == nil {
+		t.Fatal("expected to not find two")
+	}
+	AssertNoError(tags.RemoveCaseSensitive("TWO"), t)
+}
+
 func TestStringList(t *testing.T) {
 	slist := StringList{}
 

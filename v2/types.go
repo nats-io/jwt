@@ -425,7 +425,29 @@ func (u *StringList) Remove(p ...string) {
 // All tag list methods lower case the strings in the arguments
 type TagList []string
 
-// Contains returns true if the list contains the tags
+// Equals return true if both TagLists have the same values (this is case-sensitive)
+func (u *TagList) Equals(other *TagList) bool {
+	if len(*u) != len(*other) {
+		return false
+	}
+	for _, v := range *u {
+		if other.find(v) == -1 {
+			return false
+		}
+	}
+	return true
+}
+
+func (u *TagList) find(p string) int {
+	for idx, t := range *u {
+		if p == t {
+			return idx
+		}
+	}
+	return -1
+}
+
+// Contains assumes tags are all lower-cased - use ContainsCaseSensitive
 func (u *TagList) Contains(p string) bool {
 	p = strings.ToLower(strings.TrimSpace(p))
 	for _, t := range *u {
@@ -436,7 +458,17 @@ func (u *TagList) Contains(p string) bool {
 	return false
 }
 
-// Add appends 1 or more tags to a list
+func (u *TagList) ContainsCaseSensitive(p string) bool {
+	p = strings.TrimSpace(p)
+	for _, t := range *u {
+		if t == p {
+			return true
+		}
+	}
+	return false
+}
+
+// Add assumes tags are all lower-cased - use AddCaseSensitive
 func (u *TagList) Add(p ...string) {
 	for _, v := range p {
 		v = strings.ToLower(strings.TrimSpace(v))
@@ -446,7 +478,16 @@ func (u *TagList) Add(p ...string) {
 	}
 }
 
-// Remove removes 1 or more tags from a list
+func (u *TagList) AddCaseSensitive(p ...string) {
+	for _, v := range p {
+		v = strings.TrimSpace(v)
+		if !u.ContainsCaseSensitive(v) && v != "" {
+			*u = append(*u, v)
+		}
+	}
+}
+
+// Remove assumes tags are all lower-cased - use RemoveCaseSensitive
 func (u *TagList) Remove(p ...string) {
 	for _, v := range p {
 		v = strings.ToLower(strings.TrimSpace(v))
@@ -458,6 +499,25 @@ func (u *TagList) Remove(p ...string) {
 			}
 		}
 	}
+}
+
+func (u *TagList) RemoveCaseSensitive(p ...string) error {
+	for _, v := range p {
+		found := false
+		v = strings.TrimSpace(v)
+		for i, t := range *u {
+			if t == v {
+				a := *u
+				*u = append(a[:i], a[i+1:]...)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("tag %q not found", v)
+		}
+	}
+	return nil
 }
 
 type CIDRList TagList
