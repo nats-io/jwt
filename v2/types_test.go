@@ -163,6 +163,19 @@ func TestStringList(t *testing.T) {
 	AssertEquals(true, slist.Contains("ONE"), t)
 }
 
+func TestStringListEquals(t *testing.T) {
+	a := &StringList{"a", "B", "c"}
+	b := &StringList{"a", "B", "c"}
+	AssertTrue(a.Equals(b), t)
+
+	a = &StringList{"a", "B", "c"}
+	b = &StringList{"a", "b", "c"}
+	AssertFalse(a.Equals(b), t)
+
+	AssertEquals(a.find("b"), -1, t)
+	AssertEquals(a.find("B"), 1, t)
+}
+
 func TestSubjectValid(t *testing.T) {
 	var s Subject
 

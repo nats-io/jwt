@@ -389,6 +389,27 @@ func (p *Permissions) Validate(vr *ValidationResults) {
 // StringList is a wrapper for an array of strings
 type StringList []string
 
+func (u *StringList) Equals(other *StringList) bool {
+	if len(*u) != len(*other) {
+		return false
+	}
+	for _, v := range *u {
+		if other.find(v) == -1 {
+			return false
+		}
+	}
+	return true
+}
+
+func (u *StringList) find(p string) int {
+	for idx, t := range *u {
+		if p == t {
+			return idx
+		}
+	}
+	return -1
+}
+
 // Contains returns true if the list contains the string
 func (u *StringList) Contains(p string) bool {
 	for _, t := range *u {
