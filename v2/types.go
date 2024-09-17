@@ -465,15 +465,18 @@ func (u *TagList) Add(p ...string) {
 }
 
 // Remove removes 1 or more tags from a list
-func (u *TagList) Remove(p ...string) {
+func (u *TagList) Remove(p ...string) error {
 	for _, v := range p {
 		v = strings.TrimSpace(v)
 		idx := u.find(v)
 		if idx != -1 {
 			a := *u
 			*u = append(a[:idx], a[idx+1:]...)
+		} else {
+			return fmt.Errorf("unable to remove tag: %q - not found", v)
 		}
 	}
+	return nil
 }
 
 type CIDRList []string

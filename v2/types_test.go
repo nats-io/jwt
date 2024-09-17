@@ -126,7 +126,10 @@ func TestTagList(t *testing.T) {
 	AssertEquals(true, tags.Contains("TWO"), t)
 	AssertEquals("TWO", tags[1], t)
 
-	tags.Remove("ONE")
+	err := tags.Remove("ONE")
+	if err == nil {
+		t.Fatal("removing tag that doesn't exist should have failed")
+	}
 	AssertEquals("one", tags[0], t)
 	AssertEquals(true, tags.Contains("TWO"), t)
 }
@@ -476,23 +479,27 @@ func TestTagList_Add(t *testing.T) {
 
 func TestTagList_Delete(t *testing.T) {
 	type test struct {
-		v        string
-		a        TagList
-		shouldBe TagList
+		v          string
+		a          TagList
+		shouldBe   TagList
+		shouldFail bool
 	}
 
 	tests := []test{
-		{v: "A", a: TagList{}, shouldBe: TagList{}},
+		{v: "A", a: TagList{}, shouldBe: TagList{}, shouldFail: true},
 		{v: "A", a: TagList{"A"}, shouldBe: TagList{}},
-		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A"}},
-		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello"}},
-		{v: "a:a", a: TagList{"a:A"}, shouldBe: TagList{"a:A"}},
+		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A"}, shouldFail: true},
+		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello"}, shouldFail: true},
+		{v: "a:a", a: TagList{"a:A"}, shouldBe: TagList{"a:A"}, shouldFail: true},
 	}
 
 	for idx, test := range tests {
-		test.a.Remove(test.v)
+		err := test.a.Remove(test.v)
+		if test.shouldFail && err == nil {
+			t.Fatalf("[%d] expected delete to fail: %v", idx, test.a)
+		}
 		if !test.a.Equals(&test.shouldBe) {
-			t.Errorf("[%d] expected lists to be equal: %v", idx, test.a)
+			t.Fatalf("[%d] expected lists to be equal: %v", idx, test.a)
 		}
 	}
 }
