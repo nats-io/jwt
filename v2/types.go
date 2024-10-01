@@ -500,6 +500,48 @@ func (u *TagList) Remove(p ...string) error {
 	return nil
 }
 
+// FindTag returns all the tags that start with the specified name.
+// To be a valid tag, the tag must include a name + ':' + value
+// Tag names are case-insensitive
+func (u *TagList) FindTag(v string) *TagList {
+	var matches TagList
+	// must have a suffix that is name+":"
+	if !strings.HasSuffix(v, ":") {
+		v = fmt.Sprintf("%s:", v)
+	}
+	// to be a valid tag it must have a name
+	if v == ":" {
+		return &matches
+	}
+	for _, t := range *u {
+		idx := strings.Index(t, ":")
+		if idx != -1 {
+			prefix := t[:idx+1]
+			value := t[idx+1:]
+			// to be a valid tag, it must match the name and have a value
+			if strings.EqualFold(v, prefix) && len(value) > 0 {
+				matches = append(matches, t)
+			}
+		}
+	}
+	return &matches
+}
+
+// GetValuesForTag returns all value portions of a tag. Tag names
+// are case-insensitive
+func (u *TagList) GetValuesForTag(v string) *TagList {
+	tags := u.FindTag(v)
+	if !strings.HasSuffix(v, ":") {
+		v = fmt.Sprintf("%s:", v)
+	}
+	start := len(v)
+	a := *tags
+	for idx, t := range a {
+		a[idx] = t[start:]
+	}
+	return &a
+}
+
 // RemoveEqualsFold removes 1 or more tags from a list as long as their
 // values are equal regardless of fold.
 func (u *TagList) RemoveEqualsFold(p ...string) error {

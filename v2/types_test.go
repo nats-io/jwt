@@ -553,3 +553,49 @@ func TestTagList_EqualsFoldDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestTagMatches(t *testing.T) {
+	type test struct {
+		tag     string
+		src     TagList
+		matches TagList
+	}
+
+	tests := []test{
+		{tag: "A", src: TagList{}, matches: TagList{}},
+		{tag: "A", src: TagList{"a:hello"}, matches: TagList{"a:hello"}},
+		{tag: "a:", src: TagList{"A:one"}, matches: TagList{"A:one"}},
+		{tag: ":", src: TagList{":one"}, matches: TagList{}},
+		{tag: "b", src: TagList{"b:"}, matches: TagList{}},
+	}
+
+	for idx, test := range tests {
+		m := test.src.FindTag(test.tag)
+		if !test.matches.Equals(m) {
+			t.Fatalf("[%d] expected tag matches on %s: %v but got %v", idx, test.tag, test.matches, *m)
+		}
+	}
+}
+
+func TestTagValues(t *testing.T) {
+	type test struct {
+		tag     string
+		src     TagList
+		matches TagList
+	}
+
+	tests := []test{
+		{tag: "A", src: TagList{}, matches: TagList{}},
+		{tag: "A:", src: TagList{"a:hello"}, matches: TagList{"hello"}},
+		{tag: "a", src: TagList{"A:one"}, matches: TagList{"one"}},
+		{tag: ":", src: TagList{":one"}, matches: TagList{}},
+		{tag: "b", src: TagList{"b:"}, matches: TagList{}},
+	}
+
+	for idx, test := range tests {
+		m := test.src.GetValuesForTag(test.tag)
+		if !test.matches.Equals(m) {
+			t.Fatalf("[%d] expected tag matches on %s: %v but got %v", idx, test.tag, test.matches, *m)
+		}
+	}
+}
