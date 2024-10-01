@@ -453,6 +453,29 @@ func TestTagList_CasePreservingContains(t *testing.T) {
 	}
 }
 
+func TestTagList_EqualsFoldContains(t *testing.T) {
+	type test struct {
+		v  string
+		a  TagList
+		ok bool
+	}
+
+	tests := []test{
+		{v: "A", a: TagList{}, ok: false},
+		{v: "A", a: TagList{"a"}, ok: true},
+		{v: "A", a: TagList{"A"}, ok: true},
+		{v: "a", a: TagList{"a:hello"}, ok: false},
+		{v: "a:a", a: TagList{"a:c"}, ok: false},
+	}
+
+	for idx, test := range tests {
+		found := test.a.ContainsEqualsFold(test.v)
+		if !found && test.ok {
+			t.Errorf("[%d] expected to contain %q", idx, test.v)
+		}
+	}
+}
+
 func TestTagList_Add(t *testing.T) {
 	type test struct {
 		v        string
@@ -495,6 +518,33 @@ func TestTagList_Delete(t *testing.T) {
 
 	for idx, test := range tests {
 		err := test.a.Remove(test.v)
+		if test.shouldFail && err == nil {
+			t.Fatalf("[%d] expected delete to fail: %v", idx, test.a)
+		}
+		if !test.a.Equals(&test.shouldBe) {
+			t.Fatalf("[%d] expected lists to be equal: %v", idx, test.a)
+		}
+	}
+}
+
+func TestTagList_EqualsFoldDelete(t *testing.T) {
+	type test struct {
+		v          string
+		a          TagList
+		shouldBe   TagList
+		shouldFail bool
+	}
+
+	tests := []test{
+		{v: "A", a: TagList{}, shouldBe: TagList{}, shouldFail: true},
+		{v: "A", a: TagList{"A"}, shouldBe: TagList{}},
+		{v: "a", a: TagList{"A"}, shouldBe: TagList{}},
+		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{}},
+		{v: "a:a", a: TagList{"a:A"}, shouldBe: TagList{}},
+	}
+
+	for idx, test := range tests {
+		err := test.a.RemoveEqualsFold(test.v)
 		if test.shouldFail && err == nil {
 			t.Fatalf("[%d] expected delete to fail: %v", idx, test.a)
 		}

@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -422,24 +423,44 @@ func (u *StringList) Remove(p ...string) {
 }
 
 // TagList is a unique array of lower case strings
-// All tag list methods lower case the strings in the arguments
 type TagList []string
 
-// Contains returns true if the list contains the tags
+// Contains returns true if the list contains the tag
 func (u *TagList) Contains(p string) bool {
 	return u.find(p) != -1
 }
 
+// ContainsEqualsFold returns true if the list contain the tag regardless of case
+func (u *TagList) ContainsEqualsFold(p string) bool {
+	return u.findEqualsFold(p) != -1
+}
+
+// Equals returns true if the lists are strictly equal
 func (u *TagList) Equals(other *TagList) bool {
 	if len(*u) != len(*other) {
 		return false
 	}
-	for _, v := range *u {
-		if other.find(v) == -1 {
+
+	a := sort.StringSlice(*u)
+	sort.Sort(a)
+	b := sort.StringSlice(*other)
+	sort.Sort(b)
+
+	for i, v := range a {
+		if v != b[i] {
 			return false
 		}
 	}
 	return true
+}
+
+func (u *TagList) findEqualsFold(p string) int {
+	for idx, t := range *u {
+		if strings.EqualFold(p, t) {
+			return idx
+		}
+	}
+	return -1
 }
 
 func (u *TagList) find(p string) int {
@@ -451,7 +472,7 @@ func (u *TagList) find(p string) int {
 	return -1
 }
 
-// Add appends 1 or more tags to a list
+// Add appends 1 or more tags to a list, case of the arguments is preserved.
 func (u *TagList) Add(p ...string) {
 	for _, v := range p {
 		v = strings.TrimSpace(v)
@@ -464,11 +485,27 @@ func (u *TagList) Add(p ...string) {
 	}
 }
 
-// Remove removes 1 or more tags from a list
+// Remove removes 1 or more tags from a list, tags must be strictly equal
 func (u *TagList) Remove(p ...string) error {
 	for _, v := range p {
 		v = strings.TrimSpace(v)
 		idx := u.find(v)
+		if idx != -1 {
+			a := *u
+			*u = append(a[:idx], a[idx+1:]...)
+		} else {
+			return fmt.Errorf("unable to remove tag: %q - not found", v)
+		}
+	}
+	return nil
+}
+
+// RemoveEqualsFold removes 1 or more tags from a list as long as their
+// values are equal regardless of fold.
+func (u *TagList) RemoveEqualsFold(p ...string) error {
+	for _, v := range p {
+		v = strings.TrimSpace(v)
+		idx := u.findEqualsFold(v)
 		if idx != -1 {
 			a := *u
 			*u = append(a[:idx], a[idx+1:]...)

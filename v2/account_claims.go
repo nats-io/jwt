@@ -255,7 +255,7 @@ type Account struct {
 	Mappings           Mapping               `json:"mappings,omitempty"`
 	Authorization      ExternalAuthorization `json:"authorization,omitempty"`
 	Trace              *MsgTrace             `json:"trace,omitempty"`
-	ClusterTraffic     ClusterTraffic        `json:"cluster_traffic,omitempty"`
+	ClusterTraffic     string                `json:"cluster_traffic,omitempty"`
 	Info
 	GenericFields
 }
@@ -324,7 +324,7 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	a.SigningKeys.Validate(vr)
 	a.Info.Validate(vr)
 
-	if err := a.ClusterTraffic.Valid(); err != nil {
+	if err := ClusterTraffic(a.ClusterTraffic).Valid(); err != nil {
 		vr.AddError(err.Error())
 	}
 }
