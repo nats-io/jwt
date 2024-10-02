@@ -21,6 +21,7 @@ import (
 	"net"
 	"net/url"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -421,96 +422,166 @@ func (u *StringList) Remove(p ...string) {
 	}
 }
 
-// TagList is a unique array of lower case strings
+// TagList is a unique array of strings.
 // All tag list methods lower case the strings in the arguments
 type TagList []string
 
-// Contains returns true if the list contains the tags
+// Contains returns true if the list contains the tags.
 func (u *TagList) Contains(p string) bool {
+	p = strings.ToLower(strings.TrimSpace(p))
 	return u.find(p) != -1
 }
 
-func (u *TagList) Equals(other *TagList) bool {
-	if len(*u) != len(*other) {
-		return false
-	}
-	for _, v := range *u {
-		if other.find(v) == -1 {
-			return false
-		}
-	}
-	return true
+func (u *TagList) ContainsExact(p string) bool {
+	p = strings.TrimSpace(p)
+	return u.findExact(p) != -1
 }
 
 func (u *TagList) find(p string) int {
 	for idx, t := range *u {
-		if p == t {
+		if strings.EqualFold(t, p) {
 			return idx
 		}
 	}
 	return -1
 }
 
-// Add appends 1 or more tags to a list
+func (u *TagList) findExact(p string) int {
+	for idx, t := range *u {
+		if t == p {
+			return idx
+		}
+	}
+	return -1
+}
+
+// Add appends 1 or more tags to a list, tags are converted to lowercase.
 func (u *TagList) Add(p ...string) {
 	for _, v := range p {
-		v = strings.TrimSpace(v)
-		if v == "" {
-			continue
-		}
-		if !u.Contains(v) {
+		v = strings.ToLower(strings.TrimSpace(v))
+		idx := u.find(v)
+		if idx != -1 {
+			a := *u
+			a[idx] = v
+		} else {
 			*u = append(*u, v)
 		}
 	}
 }
 
-// Remove removes 1 or more tags from a list
-func (u *TagList) Remove(p ...string) error {
+func (u *TagList) AddExact(p ...string) {
 	for _, v := range p {
 		v = strings.TrimSpace(v)
-		idx := u.find(v)
-		if idx != -1 {
-			a := *u
-			*u = append(a[:idx], a[idx+1:]...)
-		} else {
-			return fmt.Errorf("unable to remove tag: %q - not found", v)
+		idx := u.findExact(v)
+		if idx == -1 {
+			*u = append(*u, v)
 		}
 	}
-	return nil
 }
 
-type CIDRList []string
-
-func (c *CIDRList) Contains(p string) bool {
-	p = strings.ToLower(strings.TrimSpace(p))
-	for _, t := range *c {
-		if t == p {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *CIDRList) Add(p ...string) {
+// Remove removes 1 or more tags from a list, removal is case-insensitive,
+// and can remove any value that is EqualsFold
+func (u *TagList) Remove(p ...string) {
 	for _, v := range p {
-		v = strings.ToLower(strings.TrimSpace(v))
-		if !c.Contains(v) && v != "" {
-			*c = append(*c, v)
-		}
-	}
-}
-
-func (c *CIDRList) Remove(p ...string) {
-	for _, v := range p {
-		v = strings.ToLower(strings.TrimSpace(v))
-		for i, t := range *c {
-			if t == v {
-				a := *c
-				*c = append(a[:i], a[i+1:]...)
+		v = strings.TrimSpace(v)
+		for {
+			idx := u.find(v)
+			if idx != -1 {
+				a := *u
+				*u = append(a[:idx], a[idx+1:]...)
+			} else {
 				break
 			}
 		}
 	}
+}
+
+func (u *TagList) RemoveExact(p ...string) error {
+	for _, v := range p {
+		v = strings.TrimSpace(v)
+		idx := u.findExact(v)
+		if idx == -1 {
+			return fmt.Errorf("tag \"%q\" not found", v)
+		}
+		a := *u
+		*u = append(a[:idx], a[idx+1:]...)
+	}
+	return nil
+}
+
+// FindTag finds entries that start with the specified name
+// followed by a colon (:). Names are case-insensitive for
+// matches. This function returns the name+:+value (the entire "entry").
+func (u *TagList) FindTag(v string) *TagList {
+	var matches TagList
+	// must have a suffix that is name+":"
+	if !strings.HasSuffix(v, ":") {
+		v = fmt.Sprintf("%s:", v)
+	}
+	// to be a valid tag it must have a name
+	if v == ":" {
+		return &matches
+	}
+	for _, t := range *u {
+		idx := strings.Index(t, ":")
+		if idx != -1 {
+			prefix := t[:idx+1]
+			value := t[idx+1:]
+			// to be a valid tag, it must match the name and have a value
+			if strings.EqualFold(v, prefix) && len(value) > 0 {
+				matches = append(matches, t)
+			}
+		}
+	}
+	return &matches
+}
+
+// GetTagValueFor finds entries that start with the specified name
+// followed by a colon (:). Names are case-insensitive for
+// matches. This function returns the value portion of the entry
+func (u *TagList) GetTagValueFor(v string) *TagList {
+	tags := u.FindTag(v)
+	if !strings.HasSuffix(v, ":") {
+		v = fmt.Sprintf("%s:", v)
+	}
+	start := len(v)
+	a := *tags
+	for idx, t := range a {
+		a[idx] = t[start:]
+	}
+	return &a
+}
+
+func (u *TagList) Equals(other *TagList) bool {
+	if len(*u) != len(*other) {
+		return false
+	}
+
+	a := sort.StringSlice(*u)
+	sort.Sort(a)
+	b := sort.StringSlice(*other)
+	sort.Sort(b)
+
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+type CIDRList TagList
+
+func (c *CIDRList) Contains(p string) bool {
+	return (*TagList)(c).Contains(p)
+}
+
+func (c *CIDRList) Add(p ...string) {
+	(*TagList)(c).Add(p...)
+}
+
+func (c *CIDRList) Remove(p ...string) {
+	(*TagList)(c).Remove(p...)
 }
 
 func (c *CIDRList) Set(values string) {

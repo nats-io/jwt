@@ -459,6 +459,7 @@ func TestTags(t *testing.T) {
 	}
 
 	AssertTrue(oc.GenericFields.Tags.Contains("one"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("ONE"), t)
 	AssertTrue(oc.GenericFields.Tags.Contains("TWO"), t)
 	AssertTrue(oc.GenericFields.Tags.Contains("three"), t)
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 The NATS Authors
+ * Copyright 2018 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -111,27 +111,138 @@ func TestTimeRangeValidation(t *testing.T) {
 	}
 }
 
-func TestTagList(t *testing.T) {
+func TestTagAdd(t *testing.T) {
 	tags := TagList{}
-
+	tags.Add("ONE")
+	AssertEquals("one", tags[0], t)
+	// dupes are not allowed
+	tags.Add("ONE")
 	tags.Add("one")
+	AssertEquals(1, len(tags), t)
+}
 
-	AssertEquals(true, tags.Contains("one"), t)
-	AssertEquals(false, tags.Contains("ONE"), t)
+func TestTagAddMultiple(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE", "two", "Three")
+	AssertEquals(3, len(tags), t)
 	AssertEquals("one", tags[0], t)
+	AssertEquals("two", tags[1], t)
+	AssertEquals("three", tags[2], t)
+}
 
-	tags.Add("TWO")
+func TestTagAddMultipleExact(t *testing.T) {
+	tags := TagList{}
+	tags.AddExact("ONE", "two", "Three")
+	AssertEquals(3, len(tags), t)
+	AssertEquals("ONE", tags[0], t)
+	AssertEquals("two", tags[1], t)
+	AssertEquals("Three", tags[2], t)
+}
 
-	AssertEquals(false, tags.Contains("two"), t)
-	AssertEquals(true, tags.Contains("TWO"), t)
-	AssertEquals("TWO", tags[1], t)
+func TestTagRemoveMultiple(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE", "TWo", "Three")
+	AssertEquals(3, len(tags), t)
+	AssertEquals("one", tags[0], t)
+	AssertEquals("two", tags[1], t)
+	AssertEquals("three", tags[2], t)
 
-	err := tags.Remove("ONE")
+	tags.Remove("onE", "threE")
+	AssertEquals(1, len(tags), t)
+	AssertEquals("two", tags[0], t)
+}
+
+func TestTagRemoveMultipleExact(t *testing.T) {
+	tags := TagList{}
+	tags.AddExact("ONE", "TWo", "Three")
+	AssertEquals(3, len(tags), t)
+	AssertEquals("ONE", tags[0], t)
+	AssertEquals("TWo", tags[1], t)
+	AssertEquals("Three", tags[2], t)
+
+	// fails if not found
+	err := tags.RemoveExact("three")
 	if err == nil {
-		t.Fatal("removing tag that doesn't exist should have failed")
+		t.Fatal("expected error")
 	}
+	AssertEquals(3, len(tags), t)
+
+	err = tags.RemoveExact("ONE", "Three")
+	AssertNoError(err, t)
+	AssertEquals(1, len(tags), t)
+	AssertEquals("TWo", tags[0], t)
+}
+
+func TestTagList_Remove(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE")
 	AssertEquals("one", tags[0], t)
-	AssertEquals(true, tags.Contains("TWO"), t)
+	tags.Remove("one")
+	AssertEquals(0, len(tags), t)
+
+	tags.AddExact("one")
+	tags.AddExact("ONE")
+	AssertEquals(2, len(tags), t)
+	tags.Remove("One")
+	AssertEquals(0, len(tags), t)
+}
+
+func TestTagList_AddExact(t *testing.T) {
+	tags := TagList{}
+	tags.AddExact("ONE")
+	AssertEquals("ONE", tags[0], t)
+	// dupes are not allowed
+	tags.AddExact("ONE")
+	AssertEquals(1, len(tags), t)
+	tags.AddExact("one")
+	AssertEquals(2, len(tags), t)
+	AssertEquals("one", tags[1], t)
+}
+
+func TestTagList_RemoveExact(t *testing.T) {
+	tags := TagList{}
+	tags.AddExact("ONE")
+	AssertEquals("ONE", tags[0], t)
+	tags.AddExact("one")
+	AssertEquals(2, len(tags), t)
+	AssertEquals("one", tags[1], t)
+
+	err := tags.RemoveExact("ONE")
+	AssertNoError(err, t)
+	AssertEquals(1, len(tags), t)
+	AssertEquals("one", tags[0], t)
+}
+
+func TestTagList_Contains(t *testing.T) {
+	tags := TagList{}
+	tags.AddExact("ONE")
+	AssertTrue(tags.Contains("one"), t)
+	AssertFalse(tags.ContainsExact("one"), t)
+
+	tags.Add("HELLO")
+	AssertEquals("hello", tags[1], t)
+	AssertTrue(tags.Contains("HELLO"), t)
+	AssertFalse(tags.ContainsExact("HELLO"), t)
+}
+
+func TestTagList_FindTag(t *testing.T) {
+	tags := TagList{"A:hello", "a:hola", "b:hi"}
+	matches := tags.FindTag("a")
+	AssertTrue(matches.Equals(&TagList{"A:hello", "a:hola"}), t)
+
+	matches = tags.FindTag("x")
+	AssertEquals(0, len(*matches), t)
+	AssertTrue(matches.Equals(&TagList{}), t)
+}
+
+func TestTagList_GetTagValueFor(t *testing.T) {
+	tags := TagList{"A:Hello", "a:hola", "b:hi"}
+	matches := tags.GetTagValueFor("a")
+	AssertTrue(matches.Equals(&TagList{"Hello", "hola"}), t)
+
+	matches = tags.GetTagValueFor("x")
+	AssertEquals(0, len(*matches), t)
+	AssertTrue(matches.Equals(&TagList{}), t)
 }
 
 func TestStringList(t *testing.T) {
@@ -426,80 +537,6 @@ func TestInvalidInfo(t *testing.T) {
 		}
 		if !vr.IsBlocking(true) {
 			t.Errorf("invalid info needs to be blocking")
-		}
-	}
-}
-
-func TestTagList_CasePreservingContains(t *testing.T) {
-	type test struct {
-		v  string
-		a  TagList
-		ok bool
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, ok: false},
-		{v: "A", a: TagList{"A"}, ok: true},
-		{v: "a", a: TagList{"A"}, ok: false},
-		{v: "a", a: TagList{"a:hello"}, ok: false},
-		{v: "a:a", a: TagList{"a:c"}, ok: false},
-	}
-
-	for idx, test := range tests {
-		found := test.a.Contains(test.v)
-		if !found && test.ok {
-			t.Errorf("[%d] expected to contain %q", idx, test.v)
-		}
-	}
-}
-
-func TestTagList_Add(t *testing.T) {
-	type test struct {
-		v        string
-		a        TagList
-		shouldBe TagList
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, shouldBe: TagList{"A"}},
-		{v: "A", a: TagList{"A"}, shouldBe: TagList{"A"}},
-		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A", "a"}},
-		{v: "a", a: TagList{"a:hello"}, shouldBe: TagList{"a", "a:hello"}},
-		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello", "a:Hello"}},
-		{v: "a:a", a: TagList{"a:c"}, shouldBe: TagList{"a:a", "a:c"}},
-	}
-
-	for idx, test := range tests {
-		test.a.Add(test.v)
-		if !test.a.Equals(&test.shouldBe) {
-			t.Errorf("[%d] expected lists to be equal: %v", idx, test.a)
-		}
-	}
-}
-
-func TestTagList_Delete(t *testing.T) {
-	type test struct {
-		v          string
-		a          TagList
-		shouldBe   TagList
-		shouldFail bool
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, shouldBe: TagList{}, shouldFail: true},
-		{v: "A", a: TagList{"A"}, shouldBe: TagList{}},
-		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A"}, shouldFail: true},
-		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello"}, shouldFail: true},
-		{v: "a:a", a: TagList{"a:A"}, shouldBe: TagList{"a:A"}, shouldFail: true},
-	}
-
-	for idx, test := range tests {
-		err := test.a.Remove(test.v)
-		if test.shouldFail && err == nil {
-			t.Fatalf("[%d] expected delete to fail: %v", idx, test.a)
-		}
-		if !test.a.Equals(&test.shouldBe) {
-			t.Fatalf("[%d] expected lists to be equal: %v", idx, test.a)
 		}
 	}
 }
