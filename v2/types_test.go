@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 The NATS Authors
+ * Copyright 2018 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -111,27 +111,71 @@ func TestTimeRangeValidation(t *testing.T) {
 	}
 }
 
-func TestTagList(t *testing.T) {
+func TestTagAdd(t *testing.T) {
 	tags := TagList{}
+	tags.Add("ONE")
+	AssertEquals("ONE", tags[0], t)
+	// dupes are not allowed
+	tags.Add("ONE")
+	AssertEquals(1, len(tags), t)
 
 	tags.Add("one")
-
-	AssertEquals(true, tags.Contains("one"), t)
-	AssertEquals(false, tags.Contains("ONE"), t)
 	AssertEquals("one", tags[0], t)
+	AssertEquals(1, len(tags), t)
+}
 
-	tags.Add("TWO")
+func TestTagAddMultiple(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE", "two", "Three", "tHree")
+	AssertEquals(3, len(tags), t)
+	AssertEquals("ONE", tags[0], t)
+	AssertEquals("two", tags[1], t)
+	AssertEquals("tHree", tags[2], t)
+}
 
-	AssertEquals(false, tags.Contains("two"), t)
-	AssertEquals(true, tags.Contains("TWO"), t)
-	AssertEquals("TWO", tags[1], t)
+func TestTagRemoveMultiple(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE", "TWo", "Three")
+	AssertEquals(3, len(tags), t)
+	AssertEquals("ONE", tags[0], t)
+	AssertEquals("TWo", tags[1], t)
+	AssertEquals("Three", tags[2], t)
 
-	err := tags.Remove("ONE")
-	if err == nil {
-		t.Fatal("removing tag that doesn't exist should have failed")
-	}
-	AssertEquals("one", tags[0], t)
-	AssertEquals(true, tags.Contains("TWO"), t)
+	tags.Remove("onE", "threE")
+	AssertEquals(1, len(tags), t)
+	AssertEquals("TWo", tags[0], t)
+}
+
+func TestTagList_Contains(t *testing.T) {
+	tags := TagList{}
+	tags.Add("ONE", "TwO", "three")
+	AssertTrue(tags.Contains("one"), t)
+	AssertTrue(tags.Contains("tWo"), t)
+	AssertTrue(tags.Contains("THREE"), t)
+}
+
+func TestTagList_FilterTag(t *testing.T) {
+	tags := TagList{"A:hello", "a:hola", "b:hi"}
+	matches, err := tags.FilterTag("a")
+	AssertNoError(err, t)
+	AssertTrue(matches.Equals(&TagList{"A:hello", "a:hola"}), t)
+
+	matches, err = tags.FilterTag("x")
+	AssertNoError(err, t)
+	AssertEquals(0, len(*matches), t)
+	AssertTrue(matches.Equals(&TagList{}), t)
+}
+
+func TestTagList_GetTagValueFor(t *testing.T) {
+	tags := TagList{"A:Hello", "a:hola", "b:hi"}
+	matches, err := tags.TagValueFor("a")
+	AssertNoError(err, t)
+	AssertTrue(matches.Equals(&TagList{"Hello", "hola"}), t)
+
+	matches, err = tags.TagValueFor("x")
+	AssertNoError(err, t)
+	AssertEquals(0, len(*matches), t)
+	AssertTrue(matches.Equals(&TagList{}), t)
 }
 
 func TestStringList(t *testing.T) {
@@ -426,80 +470,6 @@ func TestInvalidInfo(t *testing.T) {
 		}
 		if !vr.IsBlocking(true) {
 			t.Errorf("invalid info needs to be blocking")
-		}
-	}
-}
-
-func TestTagList_CasePreservingContains(t *testing.T) {
-	type test struct {
-		v  string
-		a  TagList
-		ok bool
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, ok: false},
-		{v: "A", a: TagList{"A"}, ok: true},
-		{v: "a", a: TagList{"A"}, ok: false},
-		{v: "a", a: TagList{"a:hello"}, ok: false},
-		{v: "a:a", a: TagList{"a:c"}, ok: false},
-	}
-
-	for idx, test := range tests {
-		found := test.a.Contains(test.v)
-		if !found && test.ok {
-			t.Errorf("[%d] expected to contain %q", idx, test.v)
-		}
-	}
-}
-
-func TestTagList_Add(t *testing.T) {
-	type test struct {
-		v        string
-		a        TagList
-		shouldBe TagList
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, shouldBe: TagList{"A"}},
-		{v: "A", a: TagList{"A"}, shouldBe: TagList{"A"}},
-		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A", "a"}},
-		{v: "a", a: TagList{"a:hello"}, shouldBe: TagList{"a", "a:hello"}},
-		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello", "a:Hello"}},
-		{v: "a:a", a: TagList{"a:c"}, shouldBe: TagList{"a:a", "a:c"}},
-	}
-
-	for idx, test := range tests {
-		test.a.Add(test.v)
-		if !test.a.Equals(&test.shouldBe) {
-			t.Errorf("[%d] expected lists to be equal: %v", idx, test.a)
-		}
-	}
-}
-
-func TestTagList_Delete(t *testing.T) {
-	type test struct {
-		v          string
-		a          TagList
-		shouldBe   TagList
-		shouldFail bool
-	}
-
-	tests := []test{
-		{v: "A", a: TagList{}, shouldBe: TagList{}, shouldFail: true},
-		{v: "A", a: TagList{"A"}, shouldBe: TagList{}},
-		{v: "a", a: TagList{"A"}, shouldBe: TagList{"A"}, shouldFail: true},
-		{v: "a:Hello", a: TagList{"a:hello"}, shouldBe: TagList{"a:hello"}, shouldFail: true},
-		{v: "a:a", a: TagList{"a:A"}, shouldBe: TagList{"a:A"}, shouldFail: true},
-	}
-
-	for idx, test := range tests {
-		err := test.a.Remove(test.v)
-		if test.shouldFail && err == nil {
-			t.Fatalf("[%d] expected delete to fail: %v", idx, test.a)
-		}
-		if !test.a.Equals(&test.shouldBe) {
-			t.Fatalf("[%d] expected lists to be equal: %v", idx, test.a)
 		}
 	}
 }
