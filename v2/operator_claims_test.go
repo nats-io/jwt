@@ -457,9 +457,12 @@ func TestTags(t *testing.T) {
 	if len(oc2.GenericFields.Tags) != 3 {
 		t.Fatal("expected 3 tags")
 	}
+	for _, v := range oc.GenericFields.Tags {
+		AssertFalse(v == "TWO", t)
+	}
 
 	AssertTrue(oc.GenericFields.Tags.Contains("one"), t)
-	AssertTrue(oc.GenericFields.Tags.Contains("TWO"), t)
+	AssertTrue(oc.GenericFields.Tags.Contains("two"), t)
 	AssertTrue(oc.GenericFields.Tags.Contains("three"), t)
 }
 
