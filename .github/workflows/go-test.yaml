@@ -7,10 +7,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - go: "stable"
+          - go: stable
             os: ubuntu-latest
             canonical: true
-          - go: "stable"
+          - go: stable
             os: windows-latest
             canonical: false
 
@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 1
 
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{matrix.go}}
 

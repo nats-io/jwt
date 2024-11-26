@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -393,5 +393,39 @@ func TestActivationClaimRevocation(t *testing.T) {
 	account.Validate(&vr)
 	if !vr.IsEmpty() {
 		t.Fatal("account validation shouldn't have failed")
+	}
+}
+
+func TestActivationClaimsSignFn(t *testing.T) {
+	akp := createAccountNKey(t)
+	target := createAccountNKey(t)
+
+	act := NewActivationClaims(publicKey(target, t))
+	act.ImportSubject = "foo"
+	act.ImportType = Stream
+	ok := false
+	s, err := act.EncodeWithSigner(akp, func(pub string, data []byte) ([]byte, error) {
+		ok = true
+		if pub != publicKey(akp, t) {
+			t.Fatal("expected pub key to match account")
+		}
+		return akp.Sign(data)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("expected ok to be true")
+	}
+
+	act, err = DecodeActivationClaims(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	vr := CreateValidationResults()
+	act.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
 	}
 }

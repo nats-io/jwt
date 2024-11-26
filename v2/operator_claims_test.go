@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -501,4 +501,33 @@ func TestOperatorClaims_GetTags(t *testing.T) {
 	if tags[1] != "bar" {
 		t.Fatal("expected tag bar")
 	}
+}
+
+func TestNewOperatorClaimSignerFn(t *testing.T) {
+	kp := createOperatorNKey(t)
+
+	ok := false
+	oc := NewOperatorClaims(publicKey(kp, t))
+	token, err := oc.EncodeWithSigner(kp, func(pub string, data []byte) ([]byte, error) {
+		ok = true
+		return kp.Sign(data)
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("expected ok to be true")
+	}
+
+	oc, err = DecodeOperatorClaims(token)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+
+	vr := CreateValidationResults()
+	oc.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
+	}
+
 }

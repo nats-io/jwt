@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1016,5 +1016,45 @@ func TestClusterTraffic_Valid(t *testing.T) {
 		if !test.ok && err == nil {
 			t.Fatalf("expected to fail input %q", test.input)
 		}
+	}
+}
+
+func TestSignFn(t *testing.T) {
+	okp := createOperatorNKey(t)
+	opub := publicKey(okp, t)
+	opk, err := nkeys.FromPublicKey(opub)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	akp := createAccountNKey(t)
+	pub := publicKey(akp, t)
+
+	var ok bool
+	ac := NewAccountClaims(pub)
+	ac.Name = "A"
+	s, err := ac.EncodeWithSigner(opk, func(pub string, data []byte) ([]byte, error) {
+		if pub != opub {
+			t.Fatal("expected pub key in callback to match")
+		}
+		ok = true
+		return okp.Sign(data)
+	})
+
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	if !ok {
+		t.Fatal("expected ok to be true")
+	}
+
+	ac, err = DecodeAccountClaims(s)
+	if err != nil {
+		t.Fatal("error decoding encoded jwt")
+	}
+	vr := CreateValidationResults()
+	ac.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
 	}
 }
