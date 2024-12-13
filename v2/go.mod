@@ -2,7 +2,7 @@ module github.com/nats-io/jwt/v2
 
 go 1.22
 
-require github.com/nats-io/nkeys v0.4.8
+require github.com/nats-io/nkeys v0.4.9
 
 retract (
 	v2.7.1 // contains retractions only
@@ -10,6 +10,6 @@ retract (
 )
 
 require (
-	golang.org/x/crypto v0.29.0 // indirect
-	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/sys v0.28.0 // indirect
 )
