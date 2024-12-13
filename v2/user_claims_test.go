@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -443,5 +443,38 @@ func TestUserClaims_GetTags(t *testing.T) {
 	}
 	if tags[1] != "bar" {
 		t.Fatal("expected tag bar")
+	}
+}
+
+func TestUserClaimsSignerFn(t *testing.T) {
+	akp := createAccountNKey(t)
+	ukp := createUserNKey(t)
+
+	uc := NewUserClaims(publicKey(ukp, t))
+	if !uc.Limits.IsUnlimited() {
+		t.Fatal("unlimited after creation")
+	}
+
+	ok := false
+	tok, err := uc.EncodeWithSigner(akp, func(pub string, data []byte) ([]byte, error) {
+		ok = true
+		return akp.Sign(data)
+	})
+	if err != nil {
+		t.Fatal("error encoding")
+	}
+	if !ok {
+		t.Fatal("fn didn't sign")
+	}
+
+	uc2, err := DecodeUserClaims(tok)
+	if err != nil {
+		t.Fatal("failed to decode uc", err)
+	}
+
+	vr := CreateValidationResults()
+	uc2.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
 	}
 }

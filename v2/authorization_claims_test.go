@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 The NATS Authors
+ * Copyright 2022-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -154,4 +154,41 @@ func TestAuthorizationResponse_Decode(t *testing.T) {
 	AssertEquals("jwt", r.Jwt, t)
 	AssertTrue(nkeys.IsValidPublicUserKey(r.Subject), t)
 	AssertTrue(nkeys.IsValidPublicServerKey(r.Audience), t)
+}
+
+func TestNewAuthorizationRequestSignerFn(t *testing.T) {
+	skp, _ := nkeys.CreateServer()
+
+	kp, err := nkeys.CreateUser()
+	if err != nil {
+		t.Fatalf("Error creating user: %v", err)
+	}
+
+	// the subject of the claim is the user we are generating an authorization response
+	ac := NewAuthorizationRequestClaims(publicKey(kp, t))
+	ac.Server.Name = "NATS-1"
+	ac.UserNkey = publicKey(kp, t)
+
+	ok := false
+	ar, err := ac.EncodeWithSigner(skp, func(pub string, data []byte) ([]byte, error) {
+		ok = true
+		return skp.Sign(data)
+	})
+	if err != nil {
+		t.Fatal("error signing request")
+	}
+	if !ok {
+		t.Fatal("not signed by signer function")
+	}
+
+	ac2, err := DecodeAuthorizationRequestClaims(ar)
+	if err != nil {
+		t.Fatal("error decoding authorization request jwt", err)
+	}
+
+	vr := CreateValidationResults()
+	ac2.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
+	}
 }

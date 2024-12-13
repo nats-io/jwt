@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -68,7 +68,7 @@ func TestBadType(t *testing.T) {
 	c := NewGenericClaims(publicKey(createUserNKey(t), t))
 	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp, c)
+	token, err := c.doEncode(&h, kp, c, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestBadAlgo(t *testing.T) {
 	c := NewGenericClaims(publicKey(createUserNKey(t), t))
 	c.Data["foo"] = "bar"
 
-	if _, err := c.doEncode(&h, kp, c); err == nil {
+	if _, err := c.doEncode(&h, kp, c, nil); err == nil {
 		t.Fatal("expected an error due to bad algorithm")
 	}
 
@@ -105,7 +105,7 @@ func TestBadAlgo(t *testing.T) {
 	c = NewGenericClaims(publicKey(createUserNKey(t), t))
 	c.Data["foo"] = "bar"
 
-	if _, err := c.doEncode(&h, kp, c); err == nil {
+	if _, err := c.doEncode(&h, kp, c, nil); err == nil {
 		t.Fatal("expected an error due to bad algorithm")
 	}
 }
@@ -120,7 +120,7 @@ func TestBadJWT(t *testing.T) {
 	c := NewGenericClaims(publicKey(createUserNKey(t), t))
 	c.Data["foo"] = "bar"
 
-	token, err := c.doEncode(&h, kp, c)
+	token, err := c.doEncode(&h, kp, c, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -144,14 +144,14 @@ func TestBadJWT(t *testing.T) {
 
 func TestBadSignature(t *testing.T) {
 	kp := createAccountNKey(t)
-	for algo, error := range map[string]string{
+	for algo, anErr := range map[string]string{
 		AlgorithmNkey: "claim failed V2 signature verification",
 	} {
 		h := Header{TokenTypeJwt, algo}
 		c := NewGenericClaims(publicKey(createUserNKey(t), t))
 		c.Data["foo"] = "bar"
 
-		token, err := c.doEncode(&h, kp, c)
+		token, err := c.doEncode(&h, kp, c, nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -167,7 +167,7 @@ func TestBadSignature(t *testing.T) {
 			t.Fatal("nil error on bad token")
 		}
 
-		if err.Error() != error {
+		if err.Error() != anErr {
 			m := fmt.Sprintf("expected failed signature: %q", err.Error())
 			t.Fatal(m)
 		}
@@ -358,7 +358,9 @@ func TestClaimsStringIsJSON(t *testing.T) {
 	claims.Data["foo"] = "bar"
 
 	claims2 := NewGenericClaims(publicKey(akp, t))
-	json.Unmarshal([]byte(claims.String()), claims2)
+	if json.Unmarshal([]byte(claims.String()), claims2) != nil {
+		t.Fatal("failed to unmarshal claims")
+	}
 	if claims2.Data["foo"] != "bar" {
 		t.Fatalf("Failed to decode expected claim from String representation: %q", claims.String())
 	}
@@ -367,7 +369,7 @@ func TestClaimsStringIsJSON(t *testing.T) {
 func TestDoEncodeNilHeader(t *testing.T) {
 	akp := createAccountNKey(t)
 	claims := NewGenericClaims(publicKey(akp, t))
-	_, err := claims.doEncode(nil, nil, claims)
+	_, err := claims.doEncode(nil, nil, claims, nil)
 	if err == nil {
 		t.Fatal("should have failed to encode")
 	}
@@ -379,7 +381,7 @@ func TestDoEncodeNilHeader(t *testing.T) {
 func TestDoEncodeNilKeyPair(t *testing.T) {
 	akp := createAccountNKey(t)
 	claims := NewGenericClaims(publicKey(akp, t))
-	_, err := claims.doEncode(&Header{}, nil, claims)
+	_, err := claims.doEncode(&Header{}, nil, claims, nil)
 	if err == nil {
 		t.Fatal("should have failed to encode")
 	}

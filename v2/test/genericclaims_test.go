@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The NATS Authors
+ * Copyright 2018-2024 The NATS Authors
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -118,5 +118,37 @@ func TestGenericClaimsCanHaveCustomTypeFromV1(t *testing.T) {
 	}
 	if gc2.Data["type"] != "my_type" {
 		t.Fatalf("expected internal type to be 'my_type': %v", gc2.Data["type"])
+	}
+}
+
+func TestGenericClaimsSignerFn(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	gc := NewGenericClaims(apk)
+	gc.Expires = time.Now().Add(time.Hour).UTC().Unix()
+	gc.Name = "alberto"
+	gc.Data["hello"] = "world"
+	gc.Data["count"] = 5
+	gc.Data["type"] = "my_type"
+
+	ok := false
+	gcJwt, err := gc.EncodeWithSigner(akp, func(pub string, data []byte) ([]byte, error) {
+		ok = true
+		return akp.Sign(data)
+	})
+	if err != nil {
+		t.Fatal("failed to encode")
+	}
+	if !ok {
+		t.Fatal("didn't encode with function")
+	}
+
+	gc2, err := DecodeGeneric(gcJwt)
+	if err != nil {
+		t.Fatal("failed to decode", err)
+	}
+	if gc2.ClaimType() != GenericClaim {
+		t.Fatalf("expected claimtype to be generic got: %v", gc2.ClaimType())
 	}
 }
