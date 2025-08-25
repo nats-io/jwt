@@ -70,6 +70,7 @@ type ClientTLS struct {
 	Cipher         string       `json:"cipher,omitempty"`
 	Certs          StringList   `json:"certs,omitempty"`
 	VerifiedChains []StringList `json:"verified_chains,omitempty"`
+	ServerName     string       `json:"server_name,omitempty"`
 }
 
 // AuthorizationRequest represents all the information we know about the client that
