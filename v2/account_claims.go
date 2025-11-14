@@ -140,10 +140,9 @@ type WeightedMapping struct {
 	Cluster string  `json:"cluster,omitempty"`
 }
 
+// GetWeight returns the weight value.
+// Deprecated: use Weight field directly.
 func (m *WeightedMapping) GetWeight() uint8 {
-	if m.Weight == 0 {
-		return 100
-	}
 	return m.Weight
 }
 
@@ -164,7 +163,7 @@ func (m *Mapping) Validate(vr *ValidationResults) {
 					vr.AddError("Mapping %q in cluster %q exceeds 100%% among all of it's weighted to mappings", ubFrom, e.Cluster)
 				}
 			} else {
-				total += e.GetWeight()
+				total += e.Weight
 			}
 		}
 		if total > 100 {

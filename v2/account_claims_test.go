@@ -685,7 +685,7 @@ func TestAccountMapping(t *testing.T) { // don't block encoding!!!
 	vr = &ValidationResults{}
 	account.Mappings = Mapping{}
 	account.AddMapping("foo4",
-		WeightedMapping{Subject: "to1"}, // no weight means 100
+		WeightedMapping{Subject: "to1", Weight: 100},
 		WeightedMapping{Subject: "to2", Weight: 1})
 	account.Validate(vr)
 	if !vr.IsBlocking(false) {
@@ -740,6 +740,45 @@ func TestAccountClusterNoOver100Mapping(t *testing.T) { // don't block encoding!
 	account.Validate(vr)
 	if !vr.IsBlocking(false) {
 		t.Fatal("Expected blocking error as sum of weights is > 100")
+	}
+}
+
+func TestAccountClusterMappingWithZeroWeights(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	// multiple mappings with weight 0 should be allowed and not count toward total
+	account.AddMapping("q",
+		WeightedMapping{Subject: "qq", Weight: 0, Cluster: "A"},   // 0 weight in cluster A
+		WeightedMapping{Subject: "bb", Weight: 100, Cluster: "A"}, // 100 weight in cluster A (total: 100)
+		WeightedMapping{Subject: "cc", Weight: 0, Cluster: "B"},   // 0 weight in cluster B
+		WeightedMapping{Subject: "dd", Weight: 0, Cluster: "B"},   // another 0 weight in cluster B
+		WeightedMapping{Subject: "ee", Weight: 50, Cluster: "B"},  // 50 weight in cluster B (total: 50)
+		WeightedMapping{Subject: "ff", Weight: 0},                 // 0 weight non-cluster
+		WeightedMapping{Subject: "gg", Weight: 50})                // 50 weight non-cluster (total: 50)
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+}
+
+func TestAccountMappingWith30And0Weights(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	// weight 30 + weight 0 = 30, should be valid
+	account.AddMapping("q",
+		WeightedMapping{Subject: "qq", Weight: 30},
+		WeightedMapping{Subject: "bb", Weight: 0})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
 	}
 }
 
