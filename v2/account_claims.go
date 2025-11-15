@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -136,8 +137,31 @@ func (o *OperatorLimits) Validate(vr *ValidationResults) {
 // WeightedMapping for publishes
 type WeightedMapping struct {
 	Subject Subject `json:"subject"`
-	Weight  uint8   `json:"weight,omitempty"`
+	Weight  uint8   `json:"weight"`
 	Cluster string  `json:"cluster,omitempty"`
+}
+
+// UnmarshalJSON implements custom JSON unmarshalling for backward compatibility.
+// If weight field is missing (old JWTs), it defaults to 100 so existing JWTs that
+// omit the weight will continue to work properly
+func (m *WeightedMapping) UnmarshalJSON(data []byte) error {
+	temp := &struct {
+		Subject Subject `json:"subject"`
+		Weight  *uint8  `json:"weight"` // pointer to detect if field is present
+		Cluster string  `json:"cluster,omitempty"`
+	}{}
+	if err := json.Unmarshal(data, temp); err != nil {
+		return err
+	}
+	m.Subject = temp.Subject
+	m.Cluster = temp.Cluster
+	// if weight field is not present in JSON (old JWT), default to 100
+	if temp.Weight == nil {
+		m.Weight = 100
+	} else {
+		m.Weight = *temp.Weight
+	}
+	return nil
 }
 
 // GetWeight returns the weight value.

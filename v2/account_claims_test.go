@@ -16,6 +16,7 @@
 package jwt
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -779,6 +780,70 @@ func TestAccountMappingWith30And0Weights(t *testing.T) {
 	account.Validate(vr)
 	if !vr.IsEmpty() {
 		t.Fatal("Expected no errors")
+	}
+}
+
+func TestAccountMappingBackwardCompatibility(t *testing.T) {
+	// test that old JWTs without weight field get weight 100 on unmarshal
+	oldJWT := `{"subject":"hello", "to": "hi"}`
+
+	var m WeightedMapping
+	err := json.Unmarshal([]byte(oldJWT), &m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// verify weight defaults to 100 for old JWTs without weight field
+	if m.Weight != 100 {
+		t.Fatalf("Expected weight 100 for old JWT without weight field, got: %d", m.Weight)
+	}
+
+	// test that new JWTs with weight 0 keep weight 0
+	newJWT := `{"subject":"hello", "to": "hi", "weight": 0}`
+	err = json.Unmarshal([]byte(newJWT), &m)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if m.Weight != 0 {
+		t.Fatalf("Expected weight 0 for new JWT with weight:0, got: %d", m.Weight)
+	}
+}
+
+func TestAccountMappingOldJWT(t *testing.T) {
+	// old JWT with mapping that doesn't have weight field
+	oldJWT := `eyJ0eXAiOiJKV1QiLCJhbGciOiJlZDI1NTE5LW5rZXkifQ.eyJqdGkiOiJCTFE3UllWSEs3QVZCN0gzRVgzRUpWRlNORTRPUEVUTkg1VlNZQkpVVTdUVTVCWkVDNjVRIiwiaWF0IjoxNzYzMjE2MDI5LCJpc3MiOiJPREo3Q0UyVklCWTdHM0dYVVZFTVFYR1ZRNlJSRlRPWFdaNEpOVzVBMklZTlNHNVk2VDRWNFNBUyIsIm5hbWUiOiJNIiwic3ViIjoiQUFYUVE3TFdQWUZGT1g1S0ZBNU02VjY3VVBOTzJKTUFKVTdKUVJRQkRDVjdRSUhGNllIUDU3Q0siLCJuYXRzIjp7ImxpbWl0cyI6eyJzdWJzIjotMSwiZGF0YSI6LTEsInBheWxvYWQiOi0xLCJpbXBvcnRzIjotMSwiZXhwb3J0cyI6LTEsIndpbGRjYXJkcyI6dHJ1ZSwiY29ubiI6LTEsImxlYWYiOi0xfSwiZGVmYXVsdF9wZXJtaXNzaW9ucyI6eyJwdWIiOnt9LCJzdWIiOnt9fSwibWFwcGluZ3MiOnsiYSI6W3sic3ViamVjdCI6ImIifV19LCJhdXRob3JpemF0aW9uIjp7fSwidHlwZSI6ImFjY291bnQiLCJ2ZXJzaW9uIjoyfX0.qFxSSQKqHxpl2qS21x1Yj8zqDufGLIp9Gncb-YBf3P-CYxB31Dtp5swSYOmsA8zEGYMdnynY7z_73LweHqedAg`
+
+	account, err := DecodeAccountClaims(oldJWT)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// verify mapping was loaded
+	if len(account.Mappings) != 1 {
+		t.Fatalf("Expected 1 mapping, got %d", len(account.Mappings))
+	}
+
+	// verify mapping "a" -> "b" exists and has weight 100 (default for old JWTs)
+	mappingsA, ok := account.Mappings["a"]
+	if !ok {
+		t.Fatal("Expected mapping 'a' to exist")
+	}
+	if len(mappingsA) != 1 {
+		t.Fatalf("Expected 1 mapping for 'a', got %d", len(mappingsA))
+	}
+	if mappingsA[0].Subject != "b" {
+		t.Fatalf("Expected subject 'b', got %s", mappingsA[0].Subject)
+	}
+	if mappingsA[0].Weight != 100 {
+		t.Fatalf("Expected weight 100 for old JWT mapping without weight field, got %d", mappingsA[0].Weight)
+	}
+
+	// validate should pass
+	vr := &ValidationResults{}
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatalf("Expected no validation errors, got: %v", vr.Issues)
 	}
 }
 
