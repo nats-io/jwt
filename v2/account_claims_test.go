@@ -847,6 +847,21 @@ func TestAccountMappingOldJWT(t *testing.T) {
 	}
 }
 
+func TestSelfMapping(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	// this is a self mapping - check there's no rejection of the sub
+	account.AddMapping("q",
+		WeightedMapping{Subject: "q", Weight: 0})
+	account.Validate(vr)
+	if !vr.IsEmpty() {
+		t.Fatal("Expected no errors")
+	}
+}
+
 func TestAccountExternalAuthorization(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
