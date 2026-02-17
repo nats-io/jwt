@@ -291,6 +291,22 @@ func Test_ParseCreds(t *testing.T) {
 	}
 }
 
+func Test_FormatUserConfigMismatchedNKey(t *testing.T) {
+	token, _ := makeJWT(t)
+
+	// different user nkey that doesn't match the JWT subject
+	otherKp := createUserNKey(t)
+	otherSeed := seedKey(otherKp, t)
+
+	_, err := FormatUserConfig(token, otherSeed)
+	if err == nil {
+		t.Fatal("expected error for mismatched nkey")
+	}
+	if !strings.Contains(err.Error(), "does not match") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func Test_ParseCredsWithCrLfs(t *testing.T) {
 	token, kp := makeJWT(t)
 	d, err := FormatUserConfig(token, seedKey(kp, t))
