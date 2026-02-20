@@ -499,6 +499,118 @@ func TestImports_Validate(t *testing.T) {
 	}
 }
 
+func TestImports_Validate_ServiceConflicts(t *testing.T) {
+	acctA := publicKey(createAccountNKey(t), t)
+	acctB := publicKey(createAccountNKey(t), t)
+
+	testCases := []struct {
+		test    string
+		imports []*Import
+		valid   bool
+	}{
+		{
+			test: "Same subject from same account",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", Type: Service},
+				{Account: acctA, Subject: "order.create", Type: Service},
+			},
+			valid: false,
+		},
+		{
+			test: "Same subject from same account, to same local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", LocalSubject: "external.order.create", Type: Service},
+				{Account: acctA, Subject: "order.create", LocalSubject: "external.order.create", Type: Service},
+			},
+			valid: false,
+		},
+		{
+			test: "Same subject from same account, to same local subject (using To)",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", To: "external.order.create", Type: Service},
+				{Account: acctA, Subject: "order.create", To: "external.order.create", Type: Service},
+			},
+			valid: false,
+		},
+		{
+			test: "Same subject from same account, to same local subject (using To and LocalSubject)",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", To: "external.order.create", Type: Service},
+				{Account: acctA, Subject: "order.create", LocalSubject: "external.order.create", Type: Service},
+			},
+			valid: false,
+		},
+		{
+			test: "Same subject from same account, but different local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", LocalSubject: "service-a.order.create", Type: Service},
+				{Account: acctA, Subject: "order.create", LocalSubject: "service-b.order.create", Type: Service},
+			},
+			valid: true,
+		},
+		{
+			test: "Different subjects from same account, to same local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "service-a.ping", LocalSubject: "deps.ping", Type: Service},
+				{Account: acctA, Subject: "service-b.ping", LocalSubject: "deps.ping", Type: Service},
+			},
+			valid: false, // nats-server does not allow this today, hence it should be rejected here as well.
+		},
+		{
+			test: "Same subject from different accounts",
+			imports: []*Import{
+				{Account: acctA, Subject: "$JS.FC.>", Type: Service},
+				{Account: acctB, Subject: "$JS.FC.>", Type: Service},
+			},
+			valid: true,
+		},
+		{
+			test: "Same subject from different accounts, to same local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", LocalSubject: "external.order.create", Type: Service},
+				{Account: acctB, Subject: "order.create", LocalSubject: "external.order.create", Type: Service},
+			},
+			valid: true,
+		},
+		{
+			test: "Same subject from different accounts, but different local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "order.create", LocalSubject: "external.a.order.create", Type: Service},
+				{Account: acctB, Subject: "order.create", LocalSubject: "external.b.order.create", Type: Service},
+			},
+			valid: true,
+		},
+		{
+			test: "Different subjects from different accounts, to same local subject",
+			imports: []*Import{
+				{Account: acctA, Subject: "service-a.ping", LocalSubject: "deps.ping", Type: Service},
+				{Account: acctB, Subject: "service-a.ping", LocalSubject: "deps.ping", Type: Service},
+			},
+			valid: true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.test, func(t *testing.T) {
+			// Given
+			var imports Imports
+			imports.Add(testCase.imports...)
+			vr := ValidationResults{}
+
+			// When
+			imports.Validate("", &vr)
+
+			// Then
+			valid := !vr.IsBlocking(true)
+			if testCase.valid && !valid {
+				t.Fatalf("expected valid, got: %+v", vr.Issues)
+			} else if !testCase.valid && valid {
+				t.Fatalf("expected error, got no blocking validation issues")
+			}
+		})
+	}
+}
+
 func TestImportAllowTrace(t *testing.T) {
 	ak2 := createAccountNKey(t)
 	akp2 := publicKey(ak2, t)
