@@ -5,29 +5,24 @@ jobs:
   test:
     name: ${{ matrix.config.kind }} ${{ matrix.config.os }}
     strategy:
+      fail-fast: false
       matrix:
-        include:
-          - go: stable
-            os: ubuntu-latest
-            canonical: true
-          - go: stable
-            os: windows-latest
-            canonical: false
-
+        os: [ubuntu-latest, windows-latest]
     env:
       GO111MODULE: "on"
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: ${{matrix.go}}
+          go-version: stable
+          check-latest: true
 
       - name: Install deps
         shell: bash --noprofile --norc -x -eo pipefail {0}
