@@ -286,7 +286,7 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 		tvr := CreateValidationResults()
 		a.Trace.Destination.Validate(tvr)
 		if !tvr.IsEmpty() {
-			vr.AddError(fmt.Sprintf("the account Trace.Destination %s", tvr.Issues[0].Description))
+			vr.AddError("the account Trace.Destination %s", tvr.Issues[0].Description)
 		}
 		if a.Trace.Destination.HasWildCards() {
 			vr.AddError("the account Trace.Destination subject %q is not a valid publish subject", a.Trace.Destination)
@@ -325,7 +325,7 @@ func (a *Account) Validate(acct *AccountClaims, vr *ValidationResults) {
 	a.Info.Validate(vr)
 
 	if err := a.ClusterTraffic.Valid(); err != nil {
-		vr.AddError(err.Error())
+		vr.AddError("%s", err.Error())
 	}
 }
 
