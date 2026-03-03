@@ -138,6 +138,18 @@ func FormatUserConfig(jwtString string, seed []byte) ([]byte, error) {
 		return nil, fmt.Errorf("nkey seed is not an user seed")
 	}
 
+	kp, err := nkeys.FromSeed(seed)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := kp.PublicKey()
+	if err != nil {
+		return nil, err
+	}
+	if pk != gc.Claims().Subject {
+		return nil, fmt.Errorf("nkey seed does not match the jwt subject")
+	}
+
 	d, err := DecorateSeed(seed)
 	if err != nil {
 		return nil, err
