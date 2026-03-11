@@ -307,6 +307,19 @@ func Test_FormatUserConfigMismatchedNKey(t *testing.T) {
 	}
 }
 
+func Test_DecorateSeedShortInput(t *testing.T) {
+	inputs := [][]byte{nil, {}, []byte(""), []byte(" "), []byte("S")}
+	for _, input := range inputs {
+		_, err := DecorateSeed(input)
+		if err == nil {
+			t.Fatalf("expected error for input %q", input)
+		}
+		if err.Error() != "seed is too short" {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
 func Test_ParseCredsWithCrLfs(t *testing.T) {
 	token, kp := makeJWT(t)
 	d, err := FormatUserConfig(token, seedKey(kp, t))

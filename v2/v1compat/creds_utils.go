@@ -62,6 +62,9 @@ func formatJwt(kind string, jwtString string) ([]byte, error) {
 func DecorateSeed(seed []byte) ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	ts := bytes.TrimSpace(seed)
+	if len(ts) < 2 {
+		return nil, errors.New("seed is too short")
+	}
 	pre := string(ts[0:2])
 	kind := ""
 	switch pre {
