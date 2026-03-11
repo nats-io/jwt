@@ -195,6 +195,19 @@ func Test_FailsOnNonUserJWT(t *testing.T) {
 	}
 }
 
+func Test_DecorateSeedShortInput(t *testing.T) {
+	inputs := [][]byte{nil, {}, []byte(""), []byte(" "), []byte("S")}
+	for _, input := range inputs {
+		_, err := DecorateSeed(input)
+		if err == nil {
+			t.Fatalf("expected error for input %q", input)
+		}
+		if err.Error() != "seed is too short" {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	}
+}
+
 func Test_DecorateNKeys(t *testing.T) {
 	var kps []nkeys.KeyPair
 	kps = append(kps, createOperatorNKey(t))
