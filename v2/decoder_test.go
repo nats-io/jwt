@@ -401,3 +401,14 @@ func TestUsingURLDecoder(t *testing.T) {
 		t.Fatal("should have returned activation")
 	}
 }
+
+func TestDecodeTokenSizeLimit(t *testing.T) {
+	token := strings.Repeat("a", MaxTokenSize+1)
+	_, err := Decode(token)
+	if err == nil {
+		t.Fatal("expected error for oversized token")
+	}
+	if !strings.Contains(err.Error(), "exceeds maximum") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
