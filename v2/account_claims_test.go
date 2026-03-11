@@ -743,6 +743,57 @@ func TestAccountClusterNoOver100Mapping(t *testing.T) { // don't block encoding!
 	}
 }
 
+func TestAccountWeightExceeds100(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	account.AddMapping("q",
+		WeightedMapping{Subject: "a", Weight: 200})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("expected blocking error for individual weight > 100")
+	}
+}
+
+func TestAccountWeightOverflowDetected(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	// three weights of 90 sum to 270, which overflowed uint8 to 14
+	account.AddMapping("q",
+		WeightedMapping{Subject: "a", Weight: 90},
+		WeightedMapping{Subject: "b", Weight: 90},
+		WeightedMapping{Subject: "c", Weight: 90})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("expected blocking error for weights summing to 270")
+	}
+}
+
+func TestAccountClusterWeightOverflowDetected(t *testing.T) {
+	akp := createAccountNKey(t)
+	apk := publicKey(akp, t)
+
+	account := NewAccountClaims(apk)
+	vr := &ValidationResults{}
+
+	// same overflow but per-cluster
+	account.AddMapping("q",
+		WeightedMapping{Subject: "a", Weight: 90, Cluster: "A"},
+		WeightedMapping{Subject: "b", Weight: 90, Cluster: "A"},
+		WeightedMapping{Subject: "c", Weight: 90, Cluster: "A"})
+	account.Validate(vr)
+	if !vr.IsBlocking(false) {
+		t.Fatal("expected blocking error for cluster weights summing to 270")
+	}
+}
+
 func TestAccountExternalAuthorization(t *testing.T) {
 	akp := createAccountNKey(t)
 	apk := publicKey(akp, t)
