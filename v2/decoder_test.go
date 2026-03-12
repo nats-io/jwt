@@ -17,6 +17,7 @@ package jwt
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -399,5 +400,24 @@ func TestUsingURLDecoder(t *testing.T) {
 	}
 	if ac == nil {
 		t.Fatal("should have returned activation")
+	}
+}
+
+func TestDecodeTokenSizeLimit(t *testing.T) {
+	// over limit should fail with ErrTokenTooLarge
+	token := strings.Repeat("a", MaxTokenSize+1)
+	_, err := Decode(token)
+	if err == nil {
+		t.Fatal("expected error for oversized token")
+	}
+	if !errors.Is(err, ErrTokenTooLarge) {
+		t.Fatalf("expected ErrTokenTooLarge, got: %v", err)
+	}
+
+	// exactly at limit should not be rejected for size
+	token = strings.Repeat("a", MaxTokenSize)
+	_, err = Decode(token)
+	if err != nil && errors.Is(err, ErrTokenTooLarge) {
+		t.Fatal("token at exactly MaxTokenSize should not be rejected for size")
 	}
 }
