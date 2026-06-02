@@ -1109,3 +1109,57 @@ func TestSignFn(t *testing.T) {
 		t.Fatalf("claims validation should not have failed, got %+v", vr.Issues)
 	}
 }
+
+func TestNewAccountClaimsShouldNotEnableJetStream(t *testing.T) {
+	uut := NewAccountClaims("test")
+
+	if uut.Limits.IsJSEnabled() {
+		t.Fatal("breaking change detected, default AccountClaims enables JS")
+	}
+}
+
+func TestNewAccountClaimsShouldEnableJetStream(t *testing.T) {
+	type claimsModifier func(claims *AccountClaims)
+	type testCase struct {
+		description string
+		mod         claimsModifier
+	}
+
+	tests := []testCase{
+		{
+			description: "DiskStorage set to NoLimit",
+			mod: func(claims *AccountClaims) {
+				claims.Limits.MemoryStorage = NoLimit
+			},
+		},
+		{
+			description: "DiskStorage set to a limit",
+			mod: func(claims *AccountClaims) {
+				claims.Limits.MemoryStorage = 5368709120
+			},
+		},
+		{
+			description: "MemoryStorage set to NoLimit",
+			mod: func(claims *AccountClaims) {
+				claims.Limits.MemoryStorage = NoLimit
+			},
+		},
+		{
+			description: "MemoryStorage set to a limit",
+			mod: func(claims *AccountClaims) {
+				claims.Limits.MemoryStorage = 5368709120
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			uut := NewAccountClaims("test")
+			test.mod(uut)
+
+			if !uut.Limits.IsJSEnabled() {
+				t.Fatal("expected JetStream to be enabled")
+			}
+		})
+	}
+}
