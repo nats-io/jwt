@@ -119,6 +119,12 @@ func (s Subject) IsContainedIn(other Subject) bool {
 			return true
 		}
 
+		// A full-tail wildcard is wider than one token. `foo.>` is not
+		// contained in `foo.*`, and `>` is not contained in `*`.
+		if myTok == ">" && tok != ">" {
+			return false
+		}
+
 		if tok != myTok && tok != "*" {
 			return false
 		}

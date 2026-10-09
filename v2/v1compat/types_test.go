@@ -268,4 +268,24 @@ func TestSubjectContainment(t *testing.T) {
 	s = "one"
 	o = "one.two"
 	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = "foo.>"
+	o = "foo.*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = ">"
+	o = "*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = "*.>"
+	o = "*.*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = "foo.*"
+	o = "foo.>"
+	AssertEquals(true, s.IsContainedIn(o), t)
+
+	s = "foo.>"
+	o = "foo.>"
+	AssertEquals(true, s.IsContainedIn(o), t)
 }

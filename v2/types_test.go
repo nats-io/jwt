@@ -298,6 +298,36 @@ func TestSubjectContainment(t *testing.T) {
 	s = "one"
 	o = "one.two"
 	AssertEquals(false, s.IsContainedIn(o), t)
+
+	// A full-tail wildcard is wider than one token.
+	s = "foo.>"
+	o = "foo.*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = ">"
+	o = "*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = "*.>"
+	o = "*.*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	s = "a.b.>"
+	o = "*.*.*"
+	AssertEquals(false, s.IsContainedIn(o), t)
+
+	// The single-token form is still contained in the tail wildcard.
+	s = "foo.*"
+	o = "foo.>"
+	AssertEquals(true, s.IsContainedIn(o), t)
+
+	s = "*"
+	o = ">"
+	AssertEquals(true, s.IsContainedIn(o), t)
+
+	s = "foo.>"
+	o = "foo.>"
+	AssertEquals(true, s.IsContainedIn(o), t)
 }
 
 func TestPermissions_Validate(t *testing.T) {
