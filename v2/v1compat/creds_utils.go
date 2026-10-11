@@ -37,7 +37,7 @@ func DecorateJWT(jwtString string) ([]byte, error) {
 func formatJwt(kind string, jwtString string) ([]byte, error) {
 	templ := `-----BEGIN NATS %s JWT-----
 %s
-------END NATS %s JWT------
+-----END NATS %s JWT-----
 
 `
 	w := bytes.NewBuffer(nil)
@@ -58,7 +58,7 @@ func formatJwt(kind string, jwtString string) ([]byte, error) {
 //
 //	-----BEGIN USER NKEY SEED-----
 //	SUAIO3FHUX5PNV2LQIIP7TZ3N4L7TX3W53MQGEIVYFIGA635OZCKEYHFLM
-//	------END USER NKEY SEED------
+//	-----END USER NKEY SEED-----
 func DecorateSeed(seed []byte) ([]byte, error) {
 	w := bytes.NewBuffer(nil)
 	ts := bytes.TrimSpace(seed)
@@ -90,7 +90,7 @@ NKEYs are sensitive and should be treated as secrets.
 	w.Write(ts)
 
 	footer := `
-------END %s NKEY SEED------
+-----END %s NKEY SEED-----
 
 *************************************************************
 `
@@ -106,7 +106,7 @@ var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}.*[-]{3,}\r?\n)([\w\-.=]+
 // An user config file looks like this:
 //  -----BEGIN NATS USER JWT-----
 //  eyJ0eXAiOiJqd3QiLCJhbGciOiJlZDI1NTE5...
-//  ------END NATS USER JWT------
+//  -----END NATS USER JWT-----
 //
 //  ************************* IMPORTANT *************************
 //  NKEY Seed printed below can be used sign and prove identity.
@@ -114,7 +114,7 @@ var userConfigRE = regexp.MustCompile(`\s*(?:(?:[-]{3,}.*[-]{3,}\r?\n)([\w\-.=]+
 //
 //  -----BEGIN USER NKEY SEED-----
 //  SUAIO3FHUX5PNV2LQIIP7TZ3N4L7TX3W53MQGEIVYFIGA635OZCKEYHFLM
-//  ------END USER NKEY SEED------
+//  -----END USER NKEY SEED-----
 
 // FormatUserConfig returns a decorated file with a decorated JWT and decorated seed
 func FormatUserConfig(jwtString string, seed []byte) ([]byte, error) {
