@@ -2,7 +2,7 @@ module github.com/nats-io/jwt/v2
 
 go 1.25.0
 
-require github.com/nats-io/nkeys v0.4.16
+require github.com/nats-io/nkeys v0.4.17
 
 retract (
 	v2.7.1 // contains retractions only
